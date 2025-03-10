@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   function loginUser(email, password) {
-    fetch("/api/users/login", {
+    fetch("http://localhost:4010/user/authenticate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -48,8 +48,10 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.success) {
-          window.location.href = "/html/dashboard.html";
+        console.log(data);
+        if (data.token) {
+          document.cookie = `token=${data.token}; path=/`;
+          window.location.href = "/home";
         } else {
           alert("Erro no login: " + data.message);
         }

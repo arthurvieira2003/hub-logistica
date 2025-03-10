@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HUB Logística</title>
+    <script src="../javascripts/auth-check.js"></script>
     <link rel="stylesheet" href="../styles/index.css" />
     <link
       rel="stylesheet"
@@ -13,6 +14,11 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Cropper.js CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
+    />
   </head>
   <body>
     <header>
@@ -20,6 +26,44 @@
         <div class="logo">
           <i class="fas fa-truck-fast"></i>
           <h1>HUB Logística</h1>
+        </div>
+        <div class="user-profile">
+          <div class="user-info">
+            <div class="user-name" id="userName">Carregando...</div>
+            <div class="user-email" id="userEmail">Carregando...</div>
+          </div>
+          <div class="user-avatar">
+            <div class="avatar-circle" id="userAvatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="status-indicator" id="userStatus"></div>
+            <div class="user-dropdown">
+              <div class="user-photo-preview">
+                <div class="user-photo-container" id="userPhotoPreview">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                  <div class="user-name-preview" id="userNamePreview">
+                    Carregando...
+                  </div>
+                  <div class="user-status-preview">
+                    <span class="status-dot" id="userStatusDot"></span>
+                    <span id="userStatusText">Carregando...</span>
+                  </div>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item" id="updatePhotoButton">
+                <i class="fas fa-camera"></i>
+                <span>Atualizar foto</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item" id="logoutButton">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Sair</span>
+              </div>
+            </div>
+          </div>
         </div>
       </nav>
     </header>
@@ -95,6 +139,81 @@
       <p>&copy; 2025 Copapel - Todos os direitos reservados</p>
     </footer>
 
-    <script src="../javascripts/login.js"></script>
+    <!-- Modal para atualizar foto de perfil -->
+    <div class="modal" id="photoModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Atualizar foto de perfil</h3>
+          <button class="close-button" id="closeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="photo-preview">
+            <div class="avatar-preview" id="avatarPreview">
+              <i class="fas fa-user"></i>
+            </div>
+          </div>
+          <div class="photo-options">
+            <label for="photoUpload" class="upload-button">
+              <i class="fas fa-upload"></i>
+              Escolher arquivo
+            </label>
+            <input
+              type="file"
+              id="photoUpload"
+              accept="image/*"
+              style="display: none"
+            />
+            <button class="remove-photo-button" id="removePhoto">
+              <i class="fas fa-trash-alt"></i>
+              Remover foto
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-button" id="cancelPhotoUpdate">Cancelar</button>
+          <button class="save-button" id="savePhoto">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para recortar a foto -->
+    <div class="modal" id="cropperModal">
+      <div class="modal-content cropper-modal-content">
+        <div class="modal-header">
+          <h3>Recortar foto</h3>
+          <button class="close-button" id="closeCropperModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="cropper-container">
+            <img id="cropperImage" src="" alt="Imagem para recorte" />
+          </div>
+          <div class="cropper-controls">
+            <button class="control-button" id="rotateLeft">
+              <i class="fas fa-rotate-left"></i>
+            </button>
+            <button class="control-button" id="rotateRight">
+              <i class="fas fa-rotate-right"></i>
+            </button>
+            <button class="control-button" id="zoomIn">
+              <i class="fas fa-search-plus"></i>
+            </button>
+            <button class="control-button" id="zoomOut">
+              <i class="fas fa-search-minus"></i>
+            </button>
+            <button class="control-button" id="resetCropper">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="cancel-button" id="cancelCrop">Cancelar</button>
+          <button class="save-button" id="applyCrop">Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cropper.js Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="../javascripts/index.js"></script>
   </body>
 </html>

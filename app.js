@@ -9,6 +9,10 @@ app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/html/login.html");
 });
 
+app.get("/home", (req, res) => {
+  res.sendFile(__dirname + "/public/html/index.html");
+});
+
 app.listen(3060, () => {
   console.log("Servidor rodando na porta 3060");
 });
