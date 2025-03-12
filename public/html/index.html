@@ -19,127 +19,151 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
     />
+    <!-- Adicionar Tippy.js -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/tippy.js@6/themes/light.css"
+    />
+    <!-- Script para garantir que a sidebar esteja aberta antes do JavaScript ser carregado -->
+    <script>
+      // Função para garantir que a sidebar esteja aberta
+      function garantirSidebarAberta() {
+        var sidebar = document.querySelector(".sidebar");
+        var mainContent = document.querySelector(".main-content");
+        var toggleButton = document.getElementById("toggleSidebar");
+        var body = document.body;
+
+        if (sidebar) {
+          sidebar.classList.remove("collapsed");
+        }
+
+        if (mainContent) {
+          mainContent.classList.remove("expanded");
+        }
+
+        if (body) {
+          body.classList.remove("sidebar-collapsed");
+        }
+
+        if (toggleButton) {
+          toggleButton.innerHTML = '<i class="fas fa-times"></i>';
+          toggleButton.setAttribute("title", "Ocultar menu lateral");
+        }
+      }
+
+      // Executar imediatamente
+      document.addEventListener("DOMContentLoaded", garantirSidebarAberta);
+      // Executar após um pequeno atraso
+      setTimeout(garantirSidebarAberta, 0);
+      setTimeout(garantirSidebarAberta, 100);
+    </script>
   </head>
   <body>
-    <header>
-      <nav>
+    <!-- Toggle Sidebar Button -->
+    <button
+      id="toggleSidebar"
+      class="toggle-sidebar-button"
+      title="Ocultar menu lateral"
+    >
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
         <div class="logo">
           <i class="fas fa-truck-fast"></i>
           <h1>HUB Logística</h1>
         </div>
-        <div class="user-profile">
-          <div class="user-info">
-            <div class="user-name" id="userName">Carregando...</div>
-            <div class="user-email" id="userEmail">Carregando...</div>
-          </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="tool-button" data-tool="os">
+          <img
+            src="../assets/images/auvo-logo.svg"
+            alt="Auvo"
+            class="tool-icon svg-icon"
+          />
+          <span>Auvo</span>
+        </div>
+
+        <div class="tool-button" data-tool="contratos">
+          <i class="fas fa-file-contract"></i>
+          <span>Copasign</span>
+        </div>
+
+        <div class="tool-button" data-tool="fretes">
+          <i class="fas fa-calculator"></i>
+          <span>Fretes</span>
+        </div>
+
+        <div class="tool-button" data-tool="rastreamento">
+          <i class="fas fa-location-dot"></i>
+          <span>Rastreamento</span>
+        </div>
+
+        <div class="tool-button" data-tool="sesuite">
+          <img
+            src="/assets/images/se-suite-logo.svg"
+            alt="SESuite"
+            class="tool-icon svg-icon"
+          />
+          <span>SESuite</span>
+        </div>
+
+        <div class="tool-button" data-tool="armazem">
+          <img
+            src="/assets/images/xc-wms-logo.svg"
+            alt="WMS"
+            class="tool-icon svg-icon"
+          />
+          <span>WMS</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile" id="userProfileButton">
           <div class="user-avatar">
             <div class="avatar-circle" id="userAvatar">
               <i class="fas fa-user"></i>
             </div>
             <div class="status-indicator" id="userStatus"></div>
-            <div class="user-dropdown">
-              <div class="user-photo-preview">
-                <div class="user-photo-container" id="userPhotoPreview">
-                  <i class="fas fa-user"></i>
-                </div>
-                <div class="user-details">
-                  <div class="user-name-preview" id="userNamePreview">
-                    Carregando...
-                  </div>
-                  <div class="user-status-preview">
-                    <span class="status-dot" id="userStatusDot"></span>
-                    <span id="userStatusText">Carregando...</span>
-                  </div>
-                </div>
-              </div>
-              <div class="dropdown-divider"></div>
-              <div class="dropdown-item" id="updatePhotoButton">
-                <i class="fas fa-camera"></i>
-                <span>Atualizar foto</span>
-              </div>
-              <div class="dropdown-divider"></div>
-              <div class="dropdown-item" id="logoutButton">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Sair</span>
-              </div>
-            </div>
+          </div>
+          <div class="user-info">
+            <div class="user-name" id="userName">Carregando...</div>
+            <div class="user-email" id="userEmail">Carregando...</div>
           </div>
         </div>
-      </nav>
-    </header>
+      </div>
+    </aside>
 
-    <main>
-      <section class="tools-grid">
-        <div class="tool-card" data-tool="fretes">
-          <div class="desenvolvimento-overlay">
-            <h2>
-              <i class="fas fa-exclamation-triangle"></i> Em desenvolvimento
-            </h2>
-          </div>
-          <i class="fas fa-calculator"></i>
-          <h3>Conferência de Fretes</h3>
-          <button class="btn">Acessar</button>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <div class="tab-list" id="tabList">
+          <!-- Tabs will be added here dynamically -->
         </div>
+      </div>
 
-        <div class="tool-card" data-tool="rastreamento">
-          <i class="fas fa-location-dot"></i>
-          <h3>Rastreamento</h3>
-          <button class="btn">Acessar</button>
-        </div>
-
-        <div class="tool-card" data-tool="os">
+      <!-- Content Area -->
+      <div class="content-area" id="contentArea">
+        <!-- Tool content will be loaded here -->
+        <div class="welcome-screen" id="welcomeScreen">
           <img
-            src="../assets/images/auvo-logo.svg"
-            alt="Auvo"
-            class="auvo-logo"
+            src="../assets/images/colorless-logo.svg"
+            alt="Copapel"
+            class="welcome-logo"
           />
-          <h3>Auvo</h3>
-          <button class="btn">Acessar</button>
+          <h2>Bem-vindo ao HUB Logística</h2>
+          <p>Selecione uma ferramenta na barra lateral para começar</p>
         </div>
-
-        <div class="tool-card" data-tool="armazem">
-          <img
-            src="/assets/images/xc-wms-logo.svg"
-            alt="WMS"
-            class="wms-logo"
-          />
-          <h3>WMS</h3>
-          <button class="btn">Acessar</button>
-        </div>
-
-        <div class="tool-card" data-tool="contratos">
-          <div class="desenvolvimento-overlay">
-            <h2>
-              <i class="fas fa-exclamation-triangle"></i> Em desenvolvimento
-            </h2>
-          </div>
-          <i class="fas fa-file-contract"></i>
-          <h3>Contratos - Comodato</h3>
-          <button class="btn">Acessar</button>
-        </div>
-
-        <div class="tool-card" data-tool="sesuite">
-          <img
-            src="/assets/images/se-suite-logo.svg"
-            alt="SESuite"
-            class="sesuite-logo"
-          />
-          <h3>SESuite</h3>
-          <button class="btn">Acessar</button>
-        </div>
-      </section>
+      </div>
     </main>
 
-    <footer>
-      <img
-        src="../assets/images/colorless-logo.svg"
-        alt="Copapel"
-        class="logo"
-      />
-      <p>&copy; 2025 Copapel - Todos os direitos reservados</p>
-    </footer>
-
-    <!-- Modal para atualizar foto de perfil -->
+    <!-- Modals -->
     <div class="modal" id="photoModal">
       <div class="modal-content">
         <div class="modal-header">
@@ -176,7 +200,6 @@
       </div>
     </div>
 
-    <!-- Modal para recortar a foto -->
     <div class="modal" id="cropperModal">
       <div class="modal-content cropper-modal-content">
         <div class="modal-header">
@@ -212,7 +235,37 @@
       </div>
     </div>
 
-    <!-- Cropper.js Script -->
+    <!-- Template para o Tippy -->
+    <template id="userDropdownTemplate">
+      <div class="user-dropdown">
+        <div class="user-photo-preview">
+          <div class="user-photo-container" id="userPhotoPreview">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="user-details">
+            <div class="user-name-preview" id="userNamePreview">
+              Carregando...
+            </div>
+            <div class="user-status-preview">
+              <span class="status-dot" id="userStatusDot"></span>
+              <span id="userStatusText">Carregando...</span>
+            </div>
+          </div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item" id="updatePhotoButton">
+          <i class="fas fa-camera"></i>
+          <span>Atualizar foto</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item" id="logoutButton">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Sair</span>
+        </div>
+      </div>
+    </template>
+
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="../javascripts/index.js"></script>
   </body>

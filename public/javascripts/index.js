@@ -1,14 +1,46 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  // Forçar a sidebar a ficar aberta imediatamente
+  forceOpenSidebar();
+
   await loadUserData();
+  await getUserAvatar();
 
-  initializeToolCards();
-
-  initializeLogout();
-
+  initializeToolButtons();
+  initializeTabSystem();
+  initializeUserDropdown();
   initializePhotoModal();
-
   initializeCropperModal();
+  initializeSidebarToggle();
+
+  // Forçar novamente após a inicialização
+  forceOpenSidebar();
 });
+
+// Função para forçar a sidebar a ficar aberta
+function forceOpenSidebar() {
+  const sidebar = document.querySelector(".sidebar");
+  const mainContent = document.querySelector(".main-content");
+  const toggleButton = document.getElementById("toggleSidebar");
+  const body = document.body;
+
+  if (!sidebar || !mainContent || !toggleButton) return;
+
+  // Forçar a sidebar a ficar aberta
+  sidebar.classList.remove("collapsed");
+  mainContent.classList.remove("expanded");
+  body.classList.remove("sidebar-collapsed");
+  toggleButton.innerHTML = '<i class="fas fa-times"></i>';
+  toggleButton.setAttribute("title", "Ocultar menu lateral");
+}
+
+// Adicionar múltiplos eventos para garantir que a sidebar permaneça aberta
+window.addEventListener("load", forceOpenSidebar);
+window.addEventListener("resize", forceOpenSidebar);
+// Tentar várias vezes com diferentes atrasos
+setTimeout(forceOpenSidebar, 100);
+setTimeout(forceOpenSidebar, 500);
+setTimeout(forceOpenSidebar, 1000);
+setTimeout(forceOpenSidebar, 2000);
 
 async function loadUserData() {
   try {
@@ -22,17 +54,320 @@ async function loadUserData() {
   }
 }
 
-function initializeToolCards() {
-  const cards = document.querySelectorAll(".tool-card");
+function initializeToolButtons() {
+  const toolButtons = document.querySelectorAll(".tool-button");
+  const tabList = document.getElementById("tabList");
+  const contentArea = document.getElementById("contentArea");
+  const welcomeScreen = document.getElementById("welcomeScreen");
 
-  cards.forEach((card, index) => {
-    card.style.animationDelay = `${index * 0.1}s`;
+  // URLs das ferramentas externas
+  const externalTools = {
+    os: "https://auvo.com.br",
+    armazem: "https://wms.xclog.com.br",
+    sesuite: "https://sesuite.com.br",
+  };
 
-    card.addEventListener("click", () => {
-      const tool = card.dataset.tool;
-      console.log(`Redirecionando para a ferramenta: ${tool}`);
+  toolButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const tool = button.dataset.tool;
+
+      // Se for uma ferramenta externa, abrir em nova guia
+      if (externalTools[tool]) {
+        window.open(externalTools[tool], "_blank");
+        return;
+      }
+
+      // Verificar se a ferramenta já está aberta
+      const existingTab = document.querySelector(`.tab[data-tool="${tool}"]`);
+      if (existingTab) {
+        activateTab(existingTab);
+        return;
+      }
+
+      // Criar nova aba apenas para ferramentas internas
+      const toolName = button.querySelector("span").textContent;
+      const toolIcon = button.querySelector("i").cloneNode(true);
+
+      const tab = createTab(tool, toolName, toolIcon);
+      tabList.appendChild(tab);
+
+      // Criar conteúdo da ferramenta
+      const toolContent = createToolContent(tool);
+      contentArea.appendChild(toolContent);
+
+      // Esconder tela de boas-vindas
+      welcomeScreen.style.display = "none";
+
+      // Ativar a nova aba
+      activateTab(tab);
+
+      // Carregar o conteúdo da ferramenta
+      loadToolContent(tool, toolContent);
     });
   });
+}
+
+function createTab(tool, name, icon) {
+  const tab = document.createElement("div");
+  tab.className = "tab";
+  tab.dataset.tool = tool;
+
+  // Clonar o ícone e ajustar suas classes
+  const iconClone = icon.cloneNode(true);
+  if (iconClone.tagName === "IMG") {
+    iconClone.className = "tool-icon";
+  }
+
+  tab.appendChild(iconClone);
+  tab.appendChild(document.createTextNode(name));
+
+  const closeButton = document.createElement("div");
+  closeButton.className = "close-tab";
+  closeButton.innerHTML = "&times;";
+  closeButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeTab(tab);
+  });
+
+  tab.appendChild(closeButton);
+
+  tab.addEventListener("click", () => {
+    activateTab(tab);
+  });
+
+  return tab;
+}
+
+function createToolContent(tool) {
+  const content = document.createElement("div");
+  content.className = "tool-content";
+  content.dataset.tool = tool;
+
+  // Adicionar um loader
+  const loader = document.createElement("div");
+  loader.className = "loader";
+  loader.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+  content.appendChild(loader);
+
+  return content;
+}
+
+function activateTab(tab) {
+  // Desativar todas as abas e conteúdos
+  document
+    .querySelectorAll(".tab")
+    .forEach((t) => t.classList.remove("active"));
+  document
+    .querySelectorAll(".tool-content")
+    .forEach((c) => c.classList.remove("active"));
+
+  // Ativar a aba selecionada e seu conteúdo
+  tab.classList.add("active");
+  const tool = tab.dataset.tool;
+  const content = document.querySelector(`.tool-content[data-tool="${tool}"]`);
+  if (content) {
+    content.classList.add("active");
+  }
+
+  // Atualizar botões da barra lateral
+  document.querySelectorAll(".tool-button").forEach((button) => {
+    button.classList.remove("active");
+    if (button.dataset.tool === tool) {
+      button.classList.add("active");
+    }
+  });
+}
+
+function closeTab(tab) {
+  const tool = tab.dataset.tool;
+  const content = document.querySelector(`.tool-content[data-tool="${tool}"]`);
+
+  // Se esta é a aba ativa, ativar outra aba
+  if (tab.classList.contains("active")) {
+    const nextTab = tab.nextElementSibling || tab.previousElementSibling;
+    if (nextTab) {
+      activateTab(nextTab);
+    } else {
+      // Se não houver mais abas, mostrar a tela de boas-vindas
+      document.getElementById("welcomeScreen").style.display = "flex";
+      document.querySelectorAll(".tool-button").forEach((button) => {
+        button.classList.remove("active");
+      });
+    }
+  }
+
+  // Remover a aba e seu conteúdo
+  tab.remove();
+  if (content) {
+    content.remove();
+  }
+}
+
+function initializeTabSystem() {
+  const tabList = document.getElementById("tabList");
+  let isDragging = false;
+  let dragTab = null;
+  let dragStartX = 0;
+  let mouseOffsetX = 0;
+  let hasMovedEnough = false;
+
+  // Habilitar drag and drop para as abas
+  tabList.addEventListener("mousedown", (e) => {
+    if (
+      e.target.classList.contains("tab") &&
+      !e.target.classList.contains("close-tab")
+    ) {
+      const tab = e.target;
+
+      // Calcular o offset do mouse em relação à aba
+      const rect = tab.getBoundingClientRect();
+      mouseOffsetX = e.clientX - rect.left;
+      dragStartX = e.clientX;
+
+      // Iniciar o processo de drag após um pequeno movimento
+      const onMouseMove = (moveEvent) => {
+        if (!isDragging && Math.abs(moveEvent.clientX - dragStartX) > 5) {
+          isDragging = true;
+          dragTab = tab;
+          hasMovedEnough = true;
+
+          // Configurar a aba para arrastar
+          dragTab.classList.add("dragging");
+          dragTab.style.position = "absolute";
+          dragTab.style.zIndex = "1000";
+
+          // Atualizar posição inicial
+          updateTabPosition(moveEvent);
+        }
+
+        if (isDragging) {
+          moveEvent.preventDefault();
+          updateTabPosition(moveEvent);
+        }
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+
+        if (isDragging && dragTab) {
+          isDragging = false;
+          hasMovedEnough = false;
+          dragTab.classList.remove("dragging");
+          dragTab.style.position = "";
+          dragTab.style.left = "";
+          dragTab.style.top = "";
+          dragTab.style.zIndex = "";
+          dragTab = null;
+        }
+      };
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    }
+  });
+
+  function updateTabPosition(e) {
+    if (!dragTab || !isDragging) return;
+
+    const tabListRect = tabList.getBoundingClientRect();
+    const tabRect = dragTab.getBoundingClientRect();
+    const dragTabWidth = tabRect.width;
+
+    // Calcular nova posição mantendo a aba dentro dos limites do tabList
+    let newX = e.clientX - tabListRect.left - mouseOffsetX;
+    newX = Math.max(0, Math.min(newX, tabListRect.width - dragTabWidth));
+
+    dragTab.style.left = `${newX}px`;
+    dragTab.style.top = "0";
+
+    // Encontrar a posição mais próxima para soltar
+    const tabs = [...tabList.querySelectorAll(".tab:not(.dragging)")];
+
+    let closestTab = null;
+    let closestDistance = Infinity;
+    let shouldInsertBefore = true;
+
+    tabs.forEach((tab) => {
+      const rect = tab.getBoundingClientRect();
+      const center = rect.left + rect.width / 2;
+      const distance = Math.abs(e.clientX - center);
+
+      // Só considerar tabs que estão próximas o suficiente
+      if (distance < dragTabWidth && distance < closestDistance) {
+        closestDistance = distance;
+        closestTab = tab;
+        shouldInsertBefore = e.clientX < center;
+      }
+    });
+
+    // Reposicionar apenas se estivermos próximos o suficiente de outra aba
+    if (closestTab && hasMovedEnough && closestDistance < dragTabWidth / 2) {
+      const currentIndex = Array.from(tabList.children).indexOf(dragTab);
+      const targetIndex = Array.from(tabList.children).indexOf(closestTab);
+
+      // Evitar reposicionamento desnecessário
+      if (
+        currentIndex !== targetIndex &&
+        currentIndex !== targetIndex + (shouldInsertBefore ? 0 : 1)
+      ) {
+        if (shouldInsertBefore) {
+          tabList.insertBefore(dragTab, closestTab);
+        } else {
+          tabList.insertBefore(dragTab, closestTab.nextSibling);
+        }
+      }
+    }
+  }
+}
+
+async function loadToolContent(tool, contentElement) {
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    contentElement.querySelector(".loader").remove();
+
+    switch (tool) {
+      case "fretes":
+        contentElement.innerHTML = `
+          <div class="tool-header">
+            <h2>Fretes</h2>
+            <p>Esta ferramenta está em desenvolvimento.</p>
+          </div>
+        `;
+        break;
+      case "rastreamento":
+        contentElement.innerHTML = `
+          <div class="tool-header">
+            <h2>Rastreamento</h2>
+            <p>Sistema de rastreamento de cargas.</p>
+          </div>
+        `;
+        break;
+      case "contratos":
+        contentElement.innerHTML = `
+          <div class="tool-header">
+            <h2>Copasign</h2>
+            <p>Esta ferramenta está em desenvolvimento.</p>
+          </div>
+        `;
+        break;
+      default:
+        contentElement.innerHTML = `
+          <div class="tool-header">
+            <h2>Ferramenta não encontrada</h2>
+            <p>A ferramenta solicitada não está disponível.</p>
+          </div>
+        `;
+    }
+  } catch (error) {
+    console.error("Erro ao carregar conteúdo da ferramenta:", error);
+    contentElement.innerHTML = `
+      <div class="tool-header error">
+        <h2>Erro ao carregar</h2>
+        <p>Não foi possível carregar o conteúdo da ferramenta.</p>
+      </div>
+    `;
+  }
 }
 
 async function validateTokenExpiration() {
@@ -71,8 +406,71 @@ async function validateTokenExpiration() {
   }
 }
 
+function initializeUserDropdown() {
+  const userProfileButton = document.getElementById("userProfileButton");
+  const template = document.getElementById("userDropdownTemplate");
+
+  // Inicializar o Tippy
+  const tippyInstance = tippy(userProfileButton, {
+    content: template.content.cloneNode(true),
+    placement: "top-end",
+    trigger: "click",
+    interactive: true,
+    theme: "user-dropdown",
+    arrow: false,
+    offset: [0, 8],
+    animation: "fade",
+    appendTo: () => document.body,
+    onShow(instance) {
+      // Atualizar os dados do usuário no dropdown
+      const content = instance.popper.querySelector(".user-dropdown");
+      const userNamePreview = content.querySelector("#userNamePreview");
+      const userStatusDot = content.querySelector("#userStatusDot");
+      const userStatusText = content.querySelector("#userStatusText");
+      const userPhotoPreview = content.querySelector("#userPhotoPreview");
+
+      // Copiar dados do perfil principal para o dropdown
+      const userName = document.getElementById("userName").textContent;
+      const userStatus = document
+        .getElementById("userStatus")
+        .classList.contains("active");
+      const userAvatar = document.getElementById("userAvatar").innerHTML;
+
+      if (userNamePreview) userNamePreview.textContent = userName;
+      if (userStatusDot) userStatusDot.classList.toggle("active", userStatus);
+      if (userStatusText)
+        userStatusText.textContent = userStatus ? "Ativo" : "Inativo";
+      if (userPhotoPreview) userPhotoPreview.innerHTML = userAvatar;
+    },
+    onMount(instance) {
+      // Atualizar os IDs dos elementos clonados
+      const content = instance.popper.querySelector(".user-dropdown");
+      const updatePhotoBtn = content.querySelector("[id='updatePhotoButton']");
+      const logoutBtn = content.querySelector("[id='logoutButton']");
+
+      // Adicionar eventos aos botões
+      if (updatePhotoBtn) {
+        updatePhotoBtn.addEventListener("click", () => {
+          const photoModal = document.getElementById("photoModal");
+          if (photoModal) {
+            photoModal.classList.add("active");
+            instance.hide(); // Fechar o dropdown
+          }
+        });
+      }
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+          document.cookie =
+            "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          window.location.replace("/");
+        });
+      }
+    },
+  });
+}
+
 function initializePhotoModal() {
-  const updatePhotoButton = document.getElementById("updatePhotoButton");
   const photoModal = document.getElementById("photoModal");
   const closeModal = document.getElementById("closeModal");
   const cancelButton = document.getElementById("cancelPhotoUpdate");
@@ -81,17 +479,21 @@ function initializePhotoModal() {
   const removePhotoButton = document.getElementById("removePhoto");
   const avatarPreview = document.getElementById("avatarPreview");
 
+  if (
+    !photoModal ||
+    !closeModal ||
+    !cancelButton ||
+    !saveButton ||
+    !photoUpload ||
+    !removePhotoButton ||
+    !avatarPreview
+  ) {
+    console.warn("Alguns elementos do modal de foto não foram encontrados");
+    return;
+  }
+
   // Variável para armazenar a foto selecionada
   let selectedPhoto = null;
-
-  // Abrir o modal
-  updatePhotoButton.addEventListener("click", () => {
-    photoModal.classList.add("active");
-
-    // Copiar a foto atual para o preview
-    const currentAvatar = document.getElementById("userAvatar");
-    avatarPreview.innerHTML = currentAvatar.innerHTML;
-  });
 
   // Fechar o modal
   function closePhotoModal() {
@@ -178,10 +580,6 @@ function initializePhotoModal() {
           userPhotoPreview.innerHTML = photoContent;
         }
 
-        // Armazenar temporariamente no localStorage para caso o usuário recarregue a página
-        // antes que os dados sejam atualizados do servidor
-        localStorage.setItem("userAvatar", selectedPhoto);
-
         // Mostrar mensagem de sucesso
         showNotification("Foto de perfil atualizada com sucesso!", "success");
 
@@ -225,7 +623,6 @@ function initializePhotoModal() {
         if (userPhotoPreview) {
           userPhotoPreview.innerHTML = initialsContent;
         }
-        localStorage.removeItem("userAvatar");
 
         // Mostrar mensagem de sucesso
         showNotification("Foto de perfil removida com sucesso!", "success");
@@ -411,21 +808,10 @@ function updateUserProfile(userData) {
     updatePhotoDisplay(
       `<img src="${userData.picture}" alt="${userData.name}" />`
     );
-
-    // Atualizar também o localStorage para manter consistência
-    localStorage.setItem("userAvatar", userData.picture);
   } else {
-    // Verificar se há uma foto salva no localStorage (caso tenha sido atualizada recentemente)
-    const savedAvatar = localStorage.getItem("userAvatar");
-
-    if (savedAvatar) {
-      // Se houver uma foto salva, usá-la
-      updatePhotoDisplay(`<img src="${savedAvatar}" alt="${userData.name}" />`);
-    } else {
-      // Caso contrário, gerar avatar com as iniciais do nome do usuário
-      const initials = getInitials(userData.name);
-      updatePhotoDisplay(initials);
-    }
+    // Caso não haja foto, gerar avatar com as iniciais do nome do usuário
+    const initials = getInitials(userData.name);
+    updatePhotoDisplay(initials);
   }
 }
 
@@ -511,4 +897,71 @@ function showNotification(message, type = "info") {
   setTimeout(() => {
     notification.classList.add("notification-visible");
   }, 10);
+}
+
+async function getUserAvatar() {
+  try {
+    const userData = await validateTokenExpiration();
+    const userEmail = userData.email;
+
+    const response = await fetch(
+      `http://localhost:4010/user/get-picture/${userEmail}`
+    );
+    const userAvatar = await response.json();
+
+    const userAvatarElement = document.getElementById("userAvatar");
+    const userPhotoPreviewElement = document.getElementById("userPhotoPreview");
+
+    // Função para atualizar a foto em ambos os lugares
+    const updatePhotoDisplay = (content) => {
+      if (userAvatarElement) {
+        userAvatarElement.innerHTML = content;
+      }
+
+      if (userPhotoPreviewElement) {
+        userPhotoPreviewElement.innerHTML = content;
+      }
+    };
+
+    if (userAvatar.image) {
+      // Criar elemento de imagem com o base64 retornado
+      const photoContent = `<img src="${userAvatar.image}" alt="Avatar" />`;
+      updatePhotoDisplay(photoContent);
+    } else {
+      const initials = getInitials(userData.name);
+      updatePhotoDisplay(initials);
+    }
+  } catch (error) {
+    console.error("Erro ao carregar avatar do usuário:", error);
+    showNotification("Erro ao carregar foto de perfil", "error");
+  }
+}
+
+function initializeSidebarToggle() {
+  const toggleButton = document.getElementById("toggleSidebar");
+  const sidebar = document.querySelector(".sidebar");
+  const mainContent = document.querySelector(".main-content");
+  const body = document.body;
+
+  // Forçar a sidebar a ficar aberta no início
+  forceOpenSidebar();
+
+  toggleButton.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
+    mainContent.classList.toggle("expanded");
+    body.classList.toggle(
+      "sidebar-collapsed",
+      sidebar.classList.contains("collapsed")
+    );
+
+    // Atualizar ícone do botão
+    const isCollapsed = sidebar.classList.contains("collapsed");
+    if (isCollapsed) {
+      toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
+      toggleButton.setAttribute("title", "Mostrar menu lateral");
+    } else {
+      toggleButton.innerHTML = '<i class="fas fa-times"></i>';
+      toggleButton.setAttribute("title", "Ocultar menu lateral");
+    }
+  });
 }
