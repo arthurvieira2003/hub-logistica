@@ -1,0 +1,1079 @@
+/* Estilos para o Dashboard de Logística */
+:root {
+  --chart-primary: #247675;
+  --chart-secondary: #8cb441;
+  --chart-tertiary: #f59e0b;
+  --chart-quaternary: #3b82f6;
+  --chart-danger: #ef4444;
+  --chart-success: #22c55e;
+  --chart-warning: #f59e0b;
+  --chart-info: #3b82f6;
+  --chart-purple: #8b5cf6;
+  --chart-pink: #ec4899;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  max-width: 100%;
+  animation: fadeIn 0.5s ease-out;
+  flex: 1;
+  min-height: auto;
+  overflow-y: auto;
+  margin-top: 0;
+}
+
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dashboard-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.dashboard-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dashboard-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.dashboard-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.dashboard-filters {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.period-selector {
+  display: flex;
+  background-color: var(--background-color);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.period-btn {
+  padding: 0.6rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.period-btn:hover {
+  background-color: rgba(36, 118, 117, 0.05);
+}
+
+.period-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dashboard-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  background-color: var(--surface-color);
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dashboard-date:hover {
+  border-color: var(--primary-color);
+}
+
+.dashboard-date i {
+  color: var(--primary-color);
+}
+
+.dashboard-refresh {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.dashboard-refresh:hover {
+  background-color: var(--background-color);
+  border-color: var(--primary-color);
+}
+
+.dashboard-refresh i {
+  color: var(--primary-color);
+}
+
+.dashboard-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.dashboard-view-toggle:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-view-toggle i {
+  font-size: 1rem;
+}
+
+/* Grid de cards */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Responsividade do grid */
+@media (max-width: 1400px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cards do Dashboard */
+.dashboard-card {
+  background-color: var(--surface-color);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.dashboard-card.animate-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dashboard-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-5px);
+}
+
+/* Tamanhos dos cards */
+.card-col-2 {
+  grid-column: span 2;
+}
+
+.card-col-3 {
+  grid-column: span 3;
+}
+
+.card-col-4 {
+  grid-column: span 4;
+}
+
+.card-col-6 {
+  grid-column: span 6;
+}
+
+.card-col-8 {
+  grid-column: span 8;
+}
+
+.card-col-12 {
+  grid-column: span 12;
+}
+
+@media (max-width: 1400px) {
+  .card-col-2 {
+    grid-column: span 3;
+  }
+
+  .card-col-3 {
+    grid-column: span 3;
+  }
+
+  .card-col-4 {
+    grid-column: span 3;
+  }
+
+  .card-col-6 {
+    grid-column: span 6;
+  }
+
+  .card-col-8 {
+    grid-column: span 6;
+  }
+
+  .card-col-12 {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 768px) {
+  .card-col-2,
+  .card-col-3,
+  .card-col-4,
+  .card-col-6,
+  .card-col-8,
+  .card-col-12 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-col-2,
+  .card-col-3,
+  .card-col-4,
+  .card-col-6,
+  .card-col-8,
+  .card-col-12 {
+    grid-column: span 1;
+  }
+}
+
+/* Cabeçalho do card */
+.dashboard-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-card-title i {
+  color: var(--primary-color);
+  font-size: 1.1rem;
+}
+
+.dashboard-card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.card-action-button {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.card-action-button:hover {
+  background-color: var(--background-color);
+  color: var(--primary-color);
+}
+
+/* Conteúdo do card */
+.dashboard-card-content {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cards de estatísticas */
+.stat-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.stat-change {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.stat-change.positive {
+  color: var(--success-color);
+}
+
+.stat-change.negative {
+  color: var(--danger-color);
+}
+
+.stat-change i {
+  font-size: 0.9rem;
+}
+
+.stat-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.2;
+}
+
+.stat-icon i {
+  font-size: 1.75rem;
+  color: var(--primary-color);
+}
+
+/* Cards com gráficos */
+.chart-container {
+  width: 100%;
+  height: 250px;
+  position: relative;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.legend-color {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+}
+
+/* Tabela de resumo */
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.summary-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.summary-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.summary-table tr:last-child td {
+  border-bottom: none;
+}
+
+.summary-table tr:hover {
+  background-color: var(--background-color);
+}
+
+.summary-status {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.status-entregue {
+  background-color: var(--success-color);
+}
+
+.status-transito {
+  background-color: var(--chart-info);
+}
+
+.status-aguardando {
+  background-color: var(--chart-warning);
+}
+
+.status-atrasado {
+  background-color: var(--danger-color);
+}
+
+/* Mapa de entregas */
+.delivery-map {
+  width: 100%;
+  height: 300px;
+  background-color: #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.map-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.map-placeholder i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Animações para os cards */
+.dashboard-card {
+  animation-duration: 0.5s;
+  animation-fill-mode: both;
+}
+
+.dashboard-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.dashboard-card:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dashboard-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.dashboard-card:nth-child(4) {
+  animation-delay: 0.25s;
+}
+
+.dashboard-card:nth-child(5) {
+  animation-delay: 0.3s;
+}
+
+.dashboard-card:nth-child(6) {
+  animation-delay: 0.35s;
+}
+
+.dashboard-card:nth-child(7) {
+  animation-delay: 0.4s;
+}
+
+.dashboard-card:nth-child(8) {
+  animation-delay: 0.45s;
+}
+
+.dashboard-card:nth-child(9) {
+  animation-delay: 0.5s;
+}
+
+/* Animação de pulsação para indicadores */
+@keyframes pulse-indicator {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pulse-animation {
+  animation: pulse-indicator 2s infinite;
+}
+
+/* Animação de carregamento */
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(36, 118, 117, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spin 1s linear infinite;
+  margin: 2rem auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Botão para acessar rastreamento completo */
+.view-tracking-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.view-tracking-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.view-tracking-button i {
+  font-size: 1rem;
+}
+
+/* Indicadores de status */
+.status-indicator-container {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.status-indicator-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--background-color);
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+.status-indicator-item:hover {
+  background-color: rgba(36, 118, 117, 0.1);
+}
+
+.status-indicator-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.status-indicator-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.status-entregue .status-indicator-value {
+  color: var(--success-color);
+}
+
+.status-transito .status-indicator-value {
+  color: var(--chart-info);
+}
+
+.status-aguardando .status-indicator-value {
+  color: var(--chart-warning);
+}
+
+.status-atrasado .status-indicator-value {
+  color: var(--danger-color);
+}
+
+/* Progresso circular */
+.circular-progress {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto;
+}
+
+.circular-progress-circle {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.circular-progress-background {
+  stroke: var(--background-color);
+}
+
+.circular-progress-value {
+  stroke: var(--primary-color);
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.circular-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Animação de entrada para os elementos do dashboard */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Animação para os cards */
+.dashboard-card {
+  opacity: 0;
+}
+
+.dashboard-card.animate-in {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Estilos para as abas de navegação do dashboard */
+.dashboard-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.dashboard-tab {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: var(--text-secondary);
+  position: relative;
+}
+
+.dashboard-tab:hover {
+  color: var(--primary-color);
+}
+
+.dashboard-tab.active {
+  color: var(--primary-color);
+}
+
+.dashboard-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--primary-color);
+  border-radius: 3px 3px 0 0;
+}
+
+.dashboard-tab-content {
+  display: none;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.dashboard-tab-content.active {
+  display: block;
+}
+
+/* Estilos para o botão de alternar entre dashboard e rastreamento */
+.toggle-view-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 100;
+}
+
+.toggle-view-button {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+}
+
+.toggle-view-button:hover {
+  background-color: var(--primary-hover);
+  transform: scale(1.1);
+}
+
+.toggle-view-button i {
+  font-size: 1.5rem;
+}
+
+/* Tooltip para o botão de alternar visualização */
+.toggle-view-tooltip {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background-color: var(--surface-color);
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.toggle-view-container:hover .toggle-view-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.toggle-view-tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  right: 20px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--surface-color);
+  transform: rotate(45deg);
+}
+
+/* Estilos para barras de progresso */
+.progress-bar-container {
+  width: 100%;
+  height: 1.25rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Estilos para o botão de acesso ao rastreamento */
+.rastreamento-access-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background-color: rgba(36, 118, 117, 0.05);
+  border-radius: 1rem;
+  border: 1px dashed var(--primary-color);
+  text-align: center;
+}
+
+/* Estilo simplificado para o botão de rastreamento */
+.rastreamento-access-simple {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+
+.rastreamento-access-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(36, 118, 117, 0.2);
+}
+
+.rastreamento-access-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(36, 118, 117, 0.3);
+}
+
+.rastreamento-access-button i {
+  font-size: 1.25rem;
+}
+
+.rastreamento-access-description {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  max-width: 80%;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--chart-primary);
+  border-radius: 0.5rem;
+  transition: width 0.5s ease;
+}
+
+.progress-bar-success {
+  background-color: var(--chart-success);
+}
+
+.progress-bar-warning {
+  background-color: var(--chart-warning);
+}
+
+.progress-bar-danger {
+  background-color: var(--chart-danger);
+}
+
+.progress-bar-container span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.7);
+}
+
+/* Estilos para tabelas */
+.table-container {
+  margin-top: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+/* Estilos para classes de status */
+.stat-change.neutral {
+  color: var(--text-secondary);
+}
+
+.stat-change.neutral i {
+  color: var(--text-secondary);
+}
+
+/* Estilos para o botão de voltar ao dashboard */
+.voltar-dashboard-button {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 0;
+  box-shadow: 0 2px 4px rgba(36, 118, 117, 0.2);
+  visibility: visible !important;
+  z-index: 100;
+}
+
+.voltar-dashboard-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(36, 118, 117, 0.3);
+}
+
+.voltar-dashboard-button i {
+  font-size: 1rem;
+}
+
+.rastreamento-actions-top {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background-color: rgba(36, 118, 117, 0.05);
+  border-radius: 1rem;
+  border: 1px dashed var(--primary-color);
+  text-align: center;
+}
+
+/* Estilo simplificado para o botão de voltar ao dashboard */
+.dashboard-access-simple {
+  display: flex !important;
+  justify-content: flex-end;
+  margin: 0;
+  visibility: visible !important;
+  z-index: 100;
+}
+
+/* Aplicar os mesmos estilos do dashboard ao rastreamento */
+.tracking-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  max-width: 100%;
+  animation: fadeIn 0.5s ease-out;
+  flex: 1;
+  min-height: auto;
+  overflow-y: auto;
+  margin-top: 0;
+}
+
+.rastreamento-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rastreamento-header .dashboard-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.rastreamento-header .dashboard-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dashboard-access-simple {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0;
+}
+
+/* Estilo simplificado para o botão de rastreamento */
+.rastreamento-access-simple {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+
+/* Garantir que o botão "Voltar ao Dashboard" seja exibido */
+#trackingView .dashboard-title-row .dashboard-access-simple,
+#trackingView .dashboard-title-row .voltar-dashboard-button {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Estilo específico para o botão com ID voltarDashboardButton */
+#voltarDashboardButton {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 0;
+  box-shadow: 0 2px 4px rgba(36, 118, 117, 0.2);
+  z-index: 1000;
+}

@@ -1,0 +1,608 @@
+<%- include('partials/header') %>
+
+<link rel="stylesheet" href="/styles/rastreamento.css" />
+<link rel="stylesheet" href="/styles/dashboard.css" />
+
+<div class="tool-content active" id="rastreamentoContent">
+  <!-- Dashboard View -->
+  <div id="dashboardView" class="dashboard-container active">
+    <div class="dashboard-header">
+      <h2 class="dashboard-title">Dashboard de Logística</h2>
+      <p class="dashboard-subtitle">
+        Visão geral das operações de entrega e rastreamento
+      </p>
+
+      <div class="dashboard-actions">
+        <div class="dashboard-filters">
+          <div class="period-selector">
+            <button class="period-btn active" data-period="week">Semana</button>
+            <button class="period-btn" data-period="month">Mês</button>
+            <button class="period-btn" data-period="year">Ano</button>
+          </div>
+
+          <div class="dashboard-date">
+            <i class="fas fa-calendar-alt"></i>
+            <span>01/06/2023 - 30/06/2023</span>
+          </div>
+        </div>
+
+        <div class="dashboard-controls">
+          <button class="dashboard-refresh">
+            <i class="fas fa-sync-alt"></i>
+            <span>Atualizar</span>
+          </button>
+
+          <button class="dashboard-view-toggle" onclick="showTracking()">
+            <i class="fas fa-truck"></i>
+            <span>Ver Rastreamento</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid de cards do dashboard -->
+    <div class="dashboard-grid">
+      <!-- Card de total de entregas -->
+      <div class="dashboard-card card-col-3" id="totalEntregas">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-box"></i>
+            Total de Entregas
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <div class="stat-card-content">
+            <div class="stat-value">247</div>
+            <div class="stat-label">Entregas no período</div>
+            <div class="stat-change positive">
+              <i class="fas fa-arrow-up"></i>
+              12% em relação ao período anterior
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card de entregas no prazo -->
+      <div class="dashboard-card card-col-3" id="entregasNoPrazo">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-check-circle"></i>
+            Entregas no Prazo
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <div class="stat-card-content">
+            <div class="stat-value">218</div>
+            <div class="stat-label">Entregas realizadas no prazo</div>
+            <div class="stat-change positive">
+              <i class="fas fa-arrow-up"></i>
+              8% em relação ao período anterior
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card de entregas atrasadas -->
+      <div class="dashboard-card card-col-3" id="entregasAtrasadas">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            Entregas Atrasadas
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <div class="stat-card-content">
+            <div class="stat-value">29</div>
+            <div class="stat-label">Entregas com atraso</div>
+            <div class="stat-change negative">
+              <i class="fas fa-arrow-up"></i>
+              5% em relação ao período anterior
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card de taxa de entrega -->
+      <div class="dashboard-card card-col-3" id="taxaEntrega">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-percentage"></i>
+            Taxa de Entrega
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <div class="circular-progress">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle
+                class="circular-progress-background"
+                cx="50"
+                cy="50"
+                r="40"
+              />
+              <circle class="circular-progress-value" cx="50" cy="50" r="40" />
+            </svg>
+            <div class="circular-progress-text">88%</div>
+          </div>
+          <div class="stat-label" style="text-align: center; margin-top: 1rem">
+            Taxa de entregas no prazo
+          </div>
+        </div>
+      </div>
+
+      <!-- Card de status das entregas -->
+      <div class="dashboard-card card-col-6">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-chart-pie"></i>
+            Status das Entregas
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #22c55e"></div>
+              <span>Entregue</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #ef4444"></div>
+              <span>Atrasado</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #3b82f6"></div>
+              <span>Em Trânsito</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #f59e0b"></div>
+              <span>Aguardando Coleta</span>
+            </div>
+          </div>
+
+          <div class="status-indicator-container">
+            <div class="status-indicator-item status-entregue">
+              <div class="status-indicator-value">218</div>
+              <div class="status-indicator-label">Entregue</div>
+            </div>
+            <div class="status-indicator-item status-atrasado">
+              <div class="status-indicator-value">29</div>
+              <div class="status-indicator-label">Atrasado</div>
+            </div>
+            <div class="status-indicator-item status-transito">
+              <div class="status-indicator-value">124</div>
+              <div class="status-indicator-label">Em Trânsito</div>
+            </div>
+            <div class="status-indicator-item status-aguardando">
+              <div class="status-indicator-value">76</div>
+              <div class="status-indicator-label">Aguardando</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card de entregas por transportadora -->
+      <div class="dashboard-card card-col-6">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-truck"></i>
+            Entregas por Transportadora
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <div class="chart-container">
+            <canvas id="transportadorasChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card de entregas diárias -->
+      <div class="dashboard-card card-col-8">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-chart-line"></i>
+            Entregas Diárias
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <div class="chart-container">
+            <canvas id="dailyDeliveriesChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card de crescimento -->
+      <div class="dashboard-card card-col-4" id="crescimento">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-chart-bar"></i>
+            Crescimento
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <div class="stat-card-content">
+            <div class="stat-value">+12%</div>
+            <div class="stat-label">Crescimento em entregas</div>
+            <div class="stat-change positive">
+              <i class="fas fa-arrow-up"></i>
+              3% acima da meta
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card de últimas entregas -->
+      <div class="dashboard-card card-col-6">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-list"></i>
+            Últimas Entregas
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Nota</th>
+                <th>Transportadora</th>
+                <th>Status</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>NF-123456</td>
+                <td>Transportadora A</td>
+                <td>
+                  <span class="summary-status status-entregue"></span>Entregue
+                </td>
+                <td>Hoje, 14:30</td>
+              </tr>
+              <tr>
+                <td>NF-123455</td>
+                <td>Transportadora B</td>
+                <td>
+                  <span class="summary-status status-entregue"></span>Entregue
+                </td>
+                <td>Hoje, 13:15</td>
+              </tr>
+              <tr>
+                <td>NF-123454</td>
+                <td>Transportadora A</td>
+                <td>
+                  <span class="summary-status status-transito"></span>Em
+                  Trânsito
+                </td>
+                <td>Hoje, 11:45</td>
+              </tr>
+              <tr>
+                <td>NF-123453</td>
+                <td>Transportadora C</td>
+                <td>
+                  <span class="summary-status status-atrasado"></span>Atrasado
+                </td>
+                <td>Ontem, 16:20</td>
+              </tr>
+              <tr>
+                <td>NF-123452</td>
+                <td>Transportadora D</td>
+                <td>
+                  <span class="summary-status status-entregue"></span>Entregue
+                </td>
+                <td>Ontem, 15:10</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <button class="view-tracking-button" onclick="showTracking()">
+            <i class="fas fa-search"></i>
+            Ver Rastreamento Completo
+          </button>
+        </div>
+      </div>
+
+      <!-- Card de mapa de entregas -->
+      <div class="dashboard-card card-col-6">
+        <div class="dashboard-card-header">
+          <h3 class="dashboard-card-title">
+            <i class="fas fa-map-marked-alt"></i>
+            Mapa de Entregas
+          </h3>
+          <div class="dashboard-card-actions">
+            <button class="card-action-button">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card-content">
+          <div class="delivery-map">
+            <div class="map-placeholder">
+              <i class="fas fa-map-marker-alt"></i>
+              <div>Mapa de entregas em tempo real</div>
+            </div>
+          </div>
+
+          <button class="view-tracking-button" onclick="showTracking()">
+            <i class="fas fa-route"></i>
+            Ver Rotas Detalhadas
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tracking View -->
+  <div id="trackingView" class="rastreamento-container">
+    <!-- Botão de voltar ao dashboard em posição destacada -->
+    <div
+      class="dashboard-access-simple"
+      style="
+        display: flex !important;
+        visibility: visible !important;
+        margin-bottom: 1rem;
+        justify-content: flex-end;
+      "
+    >
+      <button
+        id="voltarDashboardButton"
+        class="voltar-dashboard-button"
+        style="display: flex !important; visibility: visible !important"
+      >
+        <i class="fas fa-tachometer-alt"></i>
+        <span>Voltar ao Dashboard</span>
+      </button>
+    </div>
+
+    <!-- Conteúdo original do rastreamento -->
+    <div class="rastreamento-header">
+      <div class="dashboard-title-row">
+        <h2>Rastreamento de Notas</h2>
+      </div>
+
+      <div class="rastreamento-search">
+        <div class="search-input-container">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Buscar por número da nota, transportadora, origem ou destino..."
+          />
+        </div>
+
+        <div class="filter-container">
+          <button class="filter-button">
+            <i class="fas fa-filter"></i>
+            Filtros
+          </button>
+
+          <div class="filter-dropdown">
+            <div class="filter-group">
+              <h4>Status</h4>
+              <div class="filter-options">
+                <label>
+                  <input type="checkbox" value="aguardando-coleta" /> Aguardando
+                  Coleta
+                </label>
+                <label>
+                  <input type="checkbox" value="em-trânsito" /> Em Trânsito
+                </label>
+                <label>
+                  <input type="checkbox" value="entregue" /> Entregue
+                </label>
+                <label>
+                  <input type="checkbox" value="atrasado" /> Atrasado
+                </label>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <h4>Transportadora</h4>
+              <div class="filter-options" id="transportadoraFilters">
+                <!-- Preenchido dinamicamente -->
+              </div>
+            </div>
+
+            <div class="filter-actions">
+              <button class="clear-filters">Limpar</button>
+              <button class="apply-filters">Aplicar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="resumoAtrasos" class="resumo-atrasos" style="display: none">
+      <div class="resumo-atrasos-info">
+        <div class="resumo-atrasos-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="resumo-atrasos-texto">
+          <h4>Notas Atrasadas</h4>
+          <p>
+            Existem <span id="totalAtrasadas">0</span> notas com entregas
+            atrasadas.
+          </p>
+        </div>
+      </div>
+      <div class="resumo-atrasos-acao">
+        <button class="btn-filtrar-atrasados">Filtrar Atrasados</button>
+        <button class="btn-limpar-filtros">Limpar Filtros</button>
+      </div>
+    </div>
+
+    <div class="rastreamento-actions">
+      <div class="view-toggle">
+        <button class="view-toggle-btn" data-view="table">
+          <i class="fas fa-table"></i>
+          Tabela
+        </button>
+        <button class="view-toggle-btn" data-view="cards">
+          <i class="fas fa-th-large"></i>
+          Cards
+        </button>
+      </div>
+    </div>
+
+    <div class="view-container">
+      <div id="tableView" class="view-content">
+        <div class="tabela-container">
+          <table class="tabela-rastreamento">
+            <thead>
+              <tr>
+                <th>Transportadora</th>
+                <th>Nota</th>
+                <th>Origem</th>
+                <th>Destino</th>
+                <th>Status</th>
+                <th>Data Prevista</th>
+                <th>Última Atualização</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaNotas">
+              <!-- Preenchido dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="cardsView" class="view-content">
+        <!-- Preenchido dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Botão flutuante para alternar entre dashboard e rastreamento -->
+  <div class="toggle-view-container">
+    <button class="toggle-view-button" onclick="toggleView()">
+      <i class="fas fa-truck"></i>
+    </button>
+    <div class="toggle-view-tooltip">Ver Rastreamento</div>
+  </div>
+</div>
+
+<!-- Modal de detalhes -->
+<div class="modal" id="detalhesModal">
+  <div class="modal-content detalhes-modal-content">
+    <div class="modal-header">
+      <h3>Detalhes da Nota</h3>
+      <button class="close-button" id="closeDetalhesModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detalhes-container" id="detalhesContainer">
+        <!-- Preenchido dinamicamente -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/javascripts/rastreamento.js"></script>
+<script src="/javascripts/dashboard.js"></script>
+
+<script>
+  // Script para garantir que o botão "Voltar ao Dashboard" seja exibido
+  document.addEventListener("DOMContentLoaded", function () {
+    // Garantir que o botão "Voltar ao Dashboard" esteja visível
+    const voltarButton = document.getElementById("voltarDashboardButton");
+    const voltarButtonContainer = document.querySelector(
+      ".dashboard-access-simple"
+    );
+
+    if (voltarButton) {
+      voltarButton.style.display = "flex";
+      voltarButton.style.visibility = "visible";
+      console.log(
+        "Botão 'Voltar ao Dashboard' configurado para ser visível na inicialização"
+      );
+
+      // Adicionar evento de clique diretamente
+      voltarButton.onclick = function () {
+        console.log("Botão 'Voltar ao Dashboard' clicado");
+        const dashboardView = document.getElementById("dashboardView");
+        const trackingView = document.getElementById("trackingView");
+
+        if (dashboardView && trackingView) {
+          dashboardView.classList.add("active");
+          dashboardView.style.display = "block";
+          trackingView.classList.remove("active");
+          trackingView.style.display = "none";
+
+          // Atualizar o botão flutuante
+          const tooltip = document.querySelector(".toggle-view-tooltip");
+          const icon = document.querySelector(".toggle-view-button i");
+
+          if (tooltip) {
+            tooltip.textContent = "Ver Rastreamento";
+          }
+
+          if (icon) {
+            icon.className = "fas fa-truck";
+          }
+
+          console.log(
+            "Dashboard ativado com sucesso pelo botão 'Voltar ao Dashboard'"
+          );
+        }
+
+        return false; // Prevenir comportamento padrão
+      };
+    } else {
+      console.error(
+        "Botão 'Voltar ao Dashboard' não encontrado na inicialização"
+      );
+    }
+
+    if (voltarButtonContainer) {
+      voltarButtonContainer.style.display = "flex";
+      voltarButtonContainer.style.visibility = "visible";
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

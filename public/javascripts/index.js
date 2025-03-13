@@ -336,12 +336,580 @@ async function loadToolContent(tool, contentElement) {
         `;
         break;
       case "rastreamento":
+        // Carregar o script de rastreamento se ainda não estiver carregado
+        if (!window.initRastreamento) {
+          await loadScript("../javascripts/rastreamento.js");
+        }
+
+        // Carregar o script do dashboard se ainda não estiver carregado
+        if (!window.initDashboard) {
+          await loadScript("../javascripts/dashboard.js");
+        }
+
+        // Carregar o CSS de rastreamento se ainda não estiver carregado
+        if (
+          !document.querySelector('link[href="../styles/rastreamento.css"]')
+        ) {
+          loadCSS("../styles/rastreamento.css");
+        }
+
+        // Carregar o CSS do dashboard se ainda não estiver carregado
+        if (!document.querySelector('link[href="../styles/dashboard.css"]')) {
+          loadCSS("../styles/dashboard.css");
+        }
+
+        // Criar a estrutura HTML para o rastreamento com dashboard
         contentElement.innerHTML = `
-          <div class="tool-header">
-            <h2>Rastreamento</h2>
-            <p>Sistema de rastreamento de cargas.</p>
+          <div class="tool-content active" id="rastreamentoContent">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="dashboard-container active">
+              <div class="dashboard-header">
+                <div class="dashboard-title-row">
+                  <h2 class="dashboard-title">Dashboard de Logística</h2>
+                  <div class="rastreamento-access-simple">
+                    <button class="rastreamento-access-button" id="rastreamentoButton">
+                      <i class="fas fa-truck"></i>
+                      <span>Acessar Rastreamento</span>
+                    </button>
+                  </div>
+                </div>
+                <p class="dashboard-subtitle">
+                  Visão geral das operações de entrega e rastreamento
+                </p>
+
+                <div class="dashboard-actions">
+                  <div class="dashboard-filters">
+                    <div class="period-selector">
+                      <button class="period-btn active" data-period="week">Semana</button>
+                      <button class="period-btn" data-period="month">Mês</button>
+                      <button class="period-btn" data-period="year">Ano</button>
+                    </div>
+
+                    <div class="dashboard-date">
+                      <i class="fas fa-calendar-alt"></i>
+                      <span>01/06/2023 - 30/06/2023</span>
+                    </div>
+                  </div>
+
+                  <div class="dashboard-controls">
+                    <button class="dashboard-refresh">
+                      <i class="fas fa-sync-alt"></i>
+                      <span>Atualizar</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Grid de cards do dashboard -->
+              <div class="dashboard-grid">
+                <!-- Card de total de entregas -->
+                <div class="dashboard-card card-col-2" id="totalEntregas">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-box"></i>
+                      Total de Entregas
+                    </h3>
+                    <div class="dashboard-card-actions">
+                      <button class="card-action-button">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="stat-card-content">
+                      <div class="stat-value">247</div>
+                      <div class="stat-label">Entregas no período</div>
+                      <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        12% em relação ao período anterior
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card de entregas no prazo -->
+                <div class="dashboard-card card-col-2" id="entregasNoPrazo">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-check-circle"></i>
+                      Entregas no Prazo
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="stat-card-content">
+                      <div class="stat-value">218</div>
+                      <div class="stat-label">Entregas realizadas no prazo</div>
+                      <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        8% em relação ao período anterior
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card de entregas atrasadas -->
+                <div class="dashboard-card card-col-2" id="entregasAtrasadas">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-exclamation-triangle"></i>
+                      Entregas Atrasadas
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="stat-card-content">
+                      <div class="stat-value">29</div>
+                      <div class="stat-label">Entregas com atraso</div>
+                      <div class="stat-change negative">
+                        <i class="fas fa-arrow-up"></i>
+                        5% em relação ao período anterior
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card de taxa de entrega -->
+                <div class="dashboard-card card-col-2" id="taxaEntrega">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-percentage"></i>
+                      Taxa de Entrega
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="circular-progress">
+                      <svg width="100" height="100" viewBox="0 0 100 100">
+                        <circle
+                          class="circular-progress-background"
+                          cx="50"
+                          cy="50"
+                          r="40"
+                        />
+                        <circle class="circular-progress-value" cx="50" cy="50" r="40" />
+                      </svg>
+                      <div class="circular-progress-text">88%</div>
+                    </div>
+                    <div class="stat-label" style="text-align: center; margin-top: 1rem">
+                      Taxa de entregas no prazo
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Card de custo total -->
+                <div class="dashboard-card card-col-2" id="custoTotal">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-dollar-sign"></i>
+                      Custo Total
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="stat-card-content">
+                      <div class="stat-value">R$ 28.450,75</div>
+                      <div class="stat-label">Custo total de fretes</div>
+                      <div class="stat-change neutral">
+                        <i class="fas fa-equals"></i>
+                        2% em relação ao período anterior
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Card de custo médio -->
+                <div class="dashboard-card card-col-2" id="custoMedio">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-tags"></i>
+                      Custo Médio
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="stat-card-content">
+                      <div class="stat-value">R$ 115,18</div>
+                      <div class="stat-label">Custo médio por entrega</div>
+                      <div class="stat-change positive">
+                        <i class="fas fa-arrow-down"></i>
+                        3% em relação ao período anterior
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card de status das entregas -->
+                <div class="dashboard-card card-col-4">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-chart-pie"></i>
+                      Status das Entregas
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="chart-container">
+                      <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                      <div class="legend-item">
+                        <div class="legend-color" style="background-color: #22c55e"></div>
+                        <span>Entregue</span>
+                      </div>
+                      <div class="legend-item">
+                        <div class="legend-color" style="background-color: #ef4444"></div>
+                        <span>Atrasado</span>
+                      </div>
+                      <div class="legend-item">
+                        <div class="legend-color" style="background-color: #3b82f6"></div>
+                        <span>Em Trânsito</span>
+                      </div>
+                      <div class="legend-item">
+                        <div class="legend-color" style="background-color: #f59e0b"></div>
+                        <span>Aguardando Coleta</span>
+                      </div>
+                    </div>
+
+                    <div class="status-indicator-container">
+                      <div class="status-indicator-item status-entregue">
+                        <div class="status-indicator-value">218</div>
+                        <div class="status-indicator-label">Entregue</div>
+                      </div>
+                      <div class="status-indicator-item status-atrasado">
+                        <div class="status-indicator-value">29</div>
+                        <div class="status-indicator-label">Atrasado</div>
+                      </div>
+                      <div class="status-indicator-item status-transito">
+                        <div class="status-indicator-value">124</div>
+                        <div class="status-indicator-label">Em Trânsito</div>
+                      </div>
+                      <div class="status-indicator-item status-aguardando">
+                        <div class="status-indicator-value">76</div>
+                        <div class="status-indicator-label">Aguardando</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card de entregas por transportadora -->
+                <div class="dashboard-card card-col-4">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-truck"></i>
+                      Entregas por Transportadora
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="chart-container">
+                      <canvas id="transportadorasChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Card de distribuição regional -->
+                <div class="dashboard-card card-col-4">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-map-marked-alt"></i>
+                      Distribuição Regional
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="chart-container">
+                      <canvas id="regioesChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card de tempo médio de entrega -->
+                <div class="dashboard-card card-col-3" id="tempoMedio">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-clock"></i>
+                      Tempo Médio
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="stat-card-content">
+                      <div class="stat-value">3.2 dias</div>
+                      <div class="stat-label">Tempo médio de entrega</div>
+                      <div class="stat-change positive">
+                        <i class="fas fa-arrow-down"></i>
+                        0.3 dias em relação ao período anterior
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Card de volume total -->
+                <div class="dashboard-card card-col-3" id="volumeTotal">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-cube"></i>
+                      Volume Total
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="stat-card-content">
+                      <div class="stat-value">1.850 m³</div>
+                      <div class="stat-label">Volume total transportado</div>
+                      <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        8% em relação ao período anterior
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Card de peso total -->
+                <div class="dashboard-card card-col-3" id="pesoTotal">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-weight-hanging"></i>
+                      Peso Total
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="stat-card-content">
+                      <div class="stat-value">4.320 kg</div>
+                      <div class="stat-label">Peso total transportado</div>
+                      <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        10% em relação ao período anterior
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Card de crescimento -->
+                <div class="dashboard-card card-col-3" id="crescimento">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-chart-line"></i>
+                      Crescimento
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="stat-card-content">
+                      <div class="stat-value">+12%</div>
+                      <div class="stat-label">Crescimento em entregas</div>
+                      <div class="stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        3% acima da meta
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card de entregas diárias -->
+                <div class="dashboard-card card-col-6">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-chart-line"></i>
+                      Entregas Diárias
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="chart-container">
+                      <canvas id="dailyDeliveriesChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Card de desempenho de transportadoras -->
+                <div class="dashboard-card card-col-6">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-star"></i>
+                      Desempenho de Transportadoras
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="chart-container">
+                      <canvas id="desempenhoChart"></canvas>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Card de ocorrências -->
+                <div class="dashboard-card card-col-6">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-exclamation-circle"></i>
+                      Ocorrências
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="chart-container">
+                      <canvas id="ocorrenciasChart"></canvas>
+                    </div>
+                    <div class="table-container">
+                      <table class="summary-table" id="ocorrenciasTable">
+                        <thead>
+                          <tr>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>Atraso</td>
+                            <td>29</td>
+                          </tr>
+                          <tr>
+                            <td>Avaria</td>
+                            <td>11</td>
+                          </tr>
+                          <tr>
+                            <td>Extravio</td>
+                            <td>5</td>
+                          </tr>
+                          <tr>
+                            <td>Endereço incorreto</td>
+                            <td>8</td>
+                          </tr>
+                          <tr>
+                            <td>Destinatário ausente</td>
+                            <td>14</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Card de SLA das transportadoras -->
+                <div class="dashboard-card card-col-6">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">
+                      <i class="fas fa-handshake"></i>
+                      SLA das Transportadoras
+                    </h3>
+                  </div>
+                  <div class="dashboard-card-content">
+                    <div class="table-container">
+                      <table class="summary-table" id="slaTable">
+                        <thead>
+                          <tr>
+                            <th>Transportadora</th>
+                            <th>Cumprimento do SLA</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>Jadlog</td>
+                            <td>
+                              <div class="progress-bar-container">
+                                <div class="progress-bar progress-bar-success" style="width: 92%"></div>
+                                <span>92%</span>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Correios</td>
+                            <td>
+                              <div class="progress-bar-container">
+                                <div class="progress-bar progress-bar-warning" style="width: 85%"></div>
+                                <span>85%</span>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Braspress</td>
+                            <td>
+                              <div class="progress-bar-container">
+                                <div class="progress-bar progress-bar-success" style="width: 90%"></div>
+                                <span>90%</span>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Jamef</td>
+                            <td>
+                              <div class="progress-bar-container">
+                                <div class="progress-bar progress-bar-warning" style="width: 88%"></div>
+                                <span>88%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tracking View -->
+            <div id="trackingView" class="tracking-container" style="display: none;">
+              <div class="rastreamento-header">
+                <div class="dashboard-title-row">
+                  <h2 class="dashboard-title">Rastreamento de Notas</h2>
+                  <div class="dashboard-access-simple">
+                    <button class="voltar-dashboard-button">
+                      <i class="fas fa-chart-line"></i>
+                      <span>Voltar ao Dashboard</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div id="rastreamentoContainer"></div>
+            </div>
           </div>
         `;
+
+        // Inicializar o dashboard
+        if (window.initDashboard) {
+          window.initDashboard();
+        }
+
+        // Adicionar evento de clique ao botão de rastreamento
+        const rastreamentoButton =
+          document.getElementById("rastreamentoButton");
+        if (rastreamentoButton) {
+          console.log(
+            "Botão de rastreamento encontrado, adicionando evento de clique"
+          );
+          rastreamentoButton.addEventListener("click", () => {
+            if (window.showTracking) {
+              window.showTracking();
+            }
+          });
+        } else {
+          console.error("Botão de rastreamento não encontrado");
+        }
+
+        // Adicionar evento de clique ao botão de voltar ao dashboard
+        const voltarButton = document.querySelector(".voltar-dashboard-button");
+        if (voltarButton) {
+          console.log(
+            "Botão de voltar ao dashboard encontrado, adicionando evento de clique"
+          );
+          voltarButton.addEventListener("click", () => {
+            if (window.showDashboard) {
+              window.showDashboard();
+            }
+          });
+        }
+
+        // Inicializar o rastreamento
+        if (window.initRastreamento) {
+          window.initRastreamento();
+        }
+
+        // Garantir que o dashboard seja exibido por padrão
+        setTimeout(() => {
+          // Mostrar o dashboard explicitamente
+          if (window.showDashboard) {
+            window.showDashboard();
+          } else {
+            // Fallback se a função showDashboard não estiver disponível
+            const dashboardView = document.getElementById("dashboardView");
+            const trackingView = document.getElementById("trackingView");
+
+            if (dashboardView && trackingView) {
+              dashboardView.style.display = "block";
+              dashboardView.classList.add("active");
+              trackingView.style.display = "none";
+              trackingView.classList.remove("active");
+            }
+          }
+        }, 100); // Pequeno atraso para garantir que os elementos estejam carregados
         break;
       case "contratos":
         contentElement.innerHTML = `
@@ -368,6 +936,25 @@ async function loadToolContent(tool, contentElement) {
       </div>
     `;
   }
+}
+
+// Função para carregar scripts dinamicamente
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+// Função para carregar CSS dinamicamente
+function loadCSS(href) {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
 }
 
 async function validateTokenExpiration() {

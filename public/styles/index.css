@@ -27,7 +27,7 @@ body {
   color: var(--text-primary);
   display: flex;
   min-height: 100vh;
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* Sidebar */
@@ -217,11 +217,13 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
   transition: var(--transition);
   margin-left: 280px;
   width: calc(100% - 280px);
   position: relative;
+  height: 100vh;
+  max-height: 100vh;
 }
 
 .main-content.expanded {
@@ -295,21 +297,27 @@ body {
   padding: 1rem;
   overflow-y: auto;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 50px);
+  max-height: calc(100vh - 50px);
 }
 
 .tool-content {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  position: relative;
+  width: calc(100% - 2rem);
+  min-height: auto;
+  height: auto;
   background-color: var(--surface-color);
   border-radius: 0.5rem;
-  margin: 1rem;
+  margin: 0;
   box-shadow: var(--shadow-md);
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(0);
   transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
 }
 
 .tool-content.active {
