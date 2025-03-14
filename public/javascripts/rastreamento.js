@@ -157,7 +157,190 @@ const transportadoras = [
       },
     ],
   },
+  {
+    id: 6,
+    nome: "Ouro Negro",
+    cor: "255, 204, 0", // RGB para amarelo e preto
+    logo: "../assets/images/transportadoras/ouro-negro.svg", // Corrigido para usar o logo existente
+    notas: [], // Será preenchido com dados reais da API
+  },
 ];
+
+// Função para formatar data no formato DD/MM/YYYY
+function formatarData(dataString) {
+  if (!dataString) return "-";
+
+  // Se já estiver no formato DD/MM/YYYY, retornar como está
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dataString)) {
+    return dataString;
+  }
+
+  // Converter de YYYY-MM-DD para DD/MM/YYYY
+  try {
+    const data = new Date(dataString);
+    if (isNaN(data.getTime())) return dataString; // Se não for uma data válida, retorna o original
+
+    const dia = String(data.getDate()).padStart(2, "0");
+    const mes = String(data.getMonth() + 1).padStart(2, "0");
+    const ano = data.getFullYear();
+
+    return `${dia}/${mes}/${ano}`;
+  } catch (error) {
+    console.error("Erro ao formatar data:", error);
+    return dataString;
+  }
+}
+
+// Função para carregar dados reais de rastreamento da Ouro Negro
+async function carregarDadosOuroNegro() {
+  try {
+    console.log("Iniciando carregamento de dados da Ouro Negro...");
+    const response = await fetch("http://localhost:4010/ouroNegro/track");
+    if (!response.ok) {
+      throw new Error(`Erro ao carregar dados: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Dados recebidos da API:", data);
+
+    // Encontrar a transportadora Ouro Negro no array
+    const ouroNegroIndex = transportadoras.findIndex(
+      (t) => t.nome === "Ouro Negro"
+    );
+    if (ouroNegroIndex === -1) {
+      console.error("Transportadora Ouro Negro não encontrada no array!");
+      return;
+    }
+    console.log("Índice da Ouro Negro no array:", ouroNegroIndex);
+
+    // Limpar notas existentes
+    transportadoras[ouroNegroIndex].notas = [];
+
+    // Processar os dados recebidos
+    data.forEach((item) => {
+      // Determinar o status com base nos dados recebidos
+      let status = "Aguardando coleta";
+      let ultimaAtualizacao = "";
+
+      try {
+        ultimaAtualizacao = formatarDataHora(item.docDate);
+      } catch (error) {
+        console.log(
+          "Erro ao formatar data/hora, usando valor original:",
+          error
+        );
+        ultimaAtualizacao = item.docDate;
+      }
+
+      let ultimaCidade = item.bplName.split(" - ")[0]; // Extrair cidade da origem
+      let ultimaUF = ""; // Será preenchido se houver rastreamento
+
+      // Verificar se há informações de rastreamento
+      if (Array.isArray(item.rastreamento)) {
+        console.log(
+          `Processando nota ${item.serial} com rastreamento:`,
+          item.rastreamento
+        );
+        // Ordenar ocorrências por data e hora (mais recente primeiro)
+        const ocorrencias = [...item.rastreamento].sort((a, b) => {
+          const dataA = new Date(`${a.DATAOCORRENCIA} ${a.HORAOCORRENCIA}`);
+          const dataB = new Date(`${b.DATAOCORRENCIA} ${b.HORAOCORRENCIA}`);
+          return dataB - dataA;
+        });
+
+        // Pegar a ocorrência mais recente para determinar o status
+        const ultimaOcorrencia = ocorrencias[0];
+        console.log("Última ocorrência:", ultimaOcorrencia);
+
+        // Determinar o status com base no código de ocorrência
+        switch (ultimaOcorrencia.CODOCORRENCIA) {
+          case "101": // INICIO DO PROCESSO - EMISSAO DO CTE
+          case "000": // PROCESSO TRANSPORTE INICIADO
+            status = "Em processamento";
+            break;
+          case "104": // CHEGADA NO DEPOSITO DE TRANSBORDO
+          case "105": // CHEGADA NO DEPOSITO DE DESTINO
+            status = "Em trânsito";
+            break;
+          case "106": // EM TRANSITO PARA ENTREGA
+            status = "Em rota de entrega";
+            break;
+          case "108": // ENTREGA REALIZADA
+            status = "Entregue";
+            break;
+          default:
+            status = "Em trânsito";
+        }
+        console.log(`Status determinado para nota ${item.serial}: ${status}`);
+
+        // Atualizar última atualização e localização
+        try {
+          ultimaAtualizacao = `${formatarData(
+            ultimaOcorrencia.DATAOCORRENCIA
+          )} ${ultimaOcorrencia.HORAOCORRENCIA}`;
+        } catch (error) {
+          console.log(
+            "Erro ao formatar data, usando valores originais:",
+            error
+          );
+          ultimaAtualizacao = `${ultimaOcorrencia.DATAOCORRENCIA} ${ultimaOcorrencia.HORAOCORRENCIA}`;
+        }
+
+        ultimaCidade = ultimaOcorrencia.CIDADE;
+        ultimaUF = ultimaOcorrencia.UF;
+      } else {
+        console.log(`Nota ${item.serial} sem rastreamento:`, item.rastreamento);
+      }
+
+      // Criar objeto de nota
+      const nota = {
+        numero: item.serial.toString(),
+        status: status,
+        origem:
+          item.bplName.split(" - ")[0] +
+          ", " +
+          (item.bplName.includes("SC") ? "SC" : ""),
+        destino: ultimaCidade + (ultimaUF ? ", " + ultimaUF : ""),
+        dataEnvio: item.docDate.split(" ")[0],
+        previsaoEntrega: Array.isArray(item.rastreamento)
+          ? item.rastreamento[0].PREVISAO
+          : item.docDate.split(" ")[0],
+        ultimaAtualizacao: ultimaAtualizacao,
+        cliente: item.cardName,
+        cte: Array.isArray(item.rastreamento) ? item.rastreamento[0].CTE : "",
+        historico: Array.isArray(item.rastreamento) ? item.rastreamento : [],
+      };
+      console.log("Objeto de nota criado:", nota);
+
+      // Adicionar a nota ao array de notas da transportadora
+      transportadoras[ouroNegroIndex].notas.push(nota);
+    });
+
+    console.log(
+      "Dados da Ouro Negro carregados com sucesso. Total de notas:",
+      transportadoras[ouroNegroIndex].notas.length
+    );
+    console.log("Notas da Ouro Negro:", transportadoras[ouroNegroIndex].notas);
+
+    // Verificar se o logo está correto
+    console.log("Logo da Ouro Negro:", transportadoras[ouroNegroIndex].logo);
+
+    return true;
+  } catch (error) {
+    console.error("Erro ao carregar dados da Ouro Negro:", error);
+    return false;
+  }
+}
+
+// Função auxiliar para formatar data e hora
+function formatarDataHora(dataString) {
+  if (!dataString) return "";
+
+  const partes = dataString.split(" ");
+  if (partes.length < 2) return formatarData(dataString);
+
+  return `${formatarData(partes[0])} ${partes[1].substring(0, 5)}`;
+}
 
 // Função para verificar se uma nota está atrasada
 function verificarNotaAtrasada(nota) {
@@ -174,12 +357,45 @@ function verificarNotaAtrasada(nota) {
 }
 
 // Função para inicializar a interface de rastreamento
-function initRastreamento(contentElement) {
+async function initRastreamento(contentElement) {
+  console.log("Iniciando função initRastreamento...");
+
+  // Carregar Font Awesome se não estiver disponível
+  if (!document.querySelector('link[href*="font-awesome"]')) {
+    const fontAwesome = document.createElement("link");
+    fontAwesome.rel = "stylesheet";
+    fontAwesome.href =
+      "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css";
+    document.head.appendChild(fontAwesome);
+    console.log("Font Awesome carregado dinamicamente");
+  }
+
+  console.log(
+    "Estado inicial das transportadoras:",
+    JSON.parse(JSON.stringify(transportadoras))
+  );
+
+  // Carregar dados reais da Ouro Negro antes de processar a interface
+  try {
+    console.log("Tentando carregar dados da Ouro Negro...");
+    await carregarDadosOuroNegro();
+    console.log(
+      "Após carregamento, transportadoras:",
+      JSON.parse(JSON.stringify(transportadoras))
+    );
+  } catch (error) {
+    console.error("Erro ao carregar dados da Ouro Negro:", error);
+  }
+
   // Processar as notas para identificar as atrasadas
+  console.log("Processando notas para identificar atrasadas...");
   let totalNotasAtrasadas = 0;
   let todasNotas = [];
 
   transportadoras.forEach((transportadora) => {
+    console.log(
+      `Processando transportadora: ${transportadora.nome}, notas: ${transportadora.notas.length}`
+    );
     let notasAtrasadas = 0;
 
     transportadora.notas.forEach((nota) => {
@@ -221,6 +437,9 @@ function initRastreamento(contentElement) {
     });
   });
 
+  console.log("Total de notas processadas:", todasNotas.length);
+  console.log("Total de notas atrasadas:", totalNotasAtrasadas);
+
   // Ordenar todas as notas para a visualização em tabela
   todasNotas.sort((a, b) => {
     if (a.atrasada && !b.atrasada) return -1;
@@ -235,674 +454,727 @@ function initRastreamento(contentElement) {
   // Verificar se estamos usando a nova estrutura HTML com dashboard
   const dashboardView = document.getElementById("dashboardView");
   const trackingView = document.getElementById("trackingView");
+  console.log("Elementos de visualização:", { dashboardView, trackingView });
 
   if (dashboardView && trackingView) {
-    // Estamos usando a nova estrutura com dashboard
-    console.log("Usando a nova estrutura com dashboard");
+    // MODIFICAÇÃO: Garantir que a visualização de rastreamento esteja ativa
+    console.log("Ativando a visualização de rastreamento...");
+    dashboardView.classList.remove("active");
+    trackingView.classList.add("active");
 
-    // Preencher a tabela de notas
-    const tabelaNotas = document.getElementById("tabelaNotas");
-    if (tabelaNotas) {
-      tabelaNotas.innerHTML = todasNotas
-        .map(
-          (nota) => `
-        <tr class="tr-nota ${
-          nota.atrasada ? "tr-atrasada" : ""
-        }" data-numero="${nota.numero}" data-status="${
-            nota.statusExibicao
-          }" data-transportadora="${nota.transportadora.id}">
-          <td class="td-transportadora">
-            <div class="td-transportadora-content" style="--transportadora-cor: ${
-              nota.transportadora.cor
-            }">
-              <div class="td-transportadora-logo">
-                <img src="${nota.transportadora.logo}" alt="${
-            nota.transportadora.nome
-          }">
-              </div>
-              <span>${nota.transportadora.nome}</span>
-            </div>
-          </td>
-          <td class="td-nota">${nota.numero}</td>
-          <td class="td-status">
-            <span class="status-badge ${nota.statusExibicao
-              .toLowerCase()
-              .replace(/\s+/g, "-")}">
-              ${nota.statusExibicao}
-            </span>
-          </td>
-          <td class="td-origem">${nota.origem}</td>
-          <td class="td-destino">${nota.destino}</td>
-          <td class="td-data-envio">${formatarData(nota.dataEnvio)}</td>
-          <td class="td-previsao ${nota.atrasada ? "td-atrasada" : ""}">
-            ${formatarData(nota.previsaoEntrega)}
-            ${
-              nota.atrasada
-                ? `<i class="fas fa-exclamation-triangle icone-atraso" title="Entrega atrasada em ${calcularDiasAtraso(
-                    nota.previsaoEntrega
-                  )} dias"></i>`
-                : ""
-            }
-          </td>
-          <td class="td-atualizacao">${nota.ultimaAtualizacao}</td>
-          <td class="td-acoes">
-            <button class="tabela-action-button detalhes-button" title="Ver detalhes">
-              <i class="fas fa-info-circle"></i>
-            </button>
-          </td>
-        </tr>
-      `
-        )
-        .join("");
-    } else {
-      // Se a tabela não existir, criar a estrutura HTML necessária
-      const tableView = document.querySelector("#trackingView");
-      if (tableView) {
-        tableView.innerHTML = `
-          <div class="rastreamento-header">
-            <h2>Rastreamento de Notas</h2>
-            <div class="rastreamento-search">
-              <div class="search-input-container">
-                <i class="fas fa-search"></i>
-                <input
-                  type="text"
-                  id="searchInput"
-                  placeholder="Buscar por número da nota, transportadora, origem ou destino..."
-                />
-              </div>
-              <div class="filter-container">
-                <button class="filter-button">
-                  <i class="fas fa-filter"></i>
-                  Filtros
-                </button>
-                <div class="filter-dropdown">
-                  <div class="filter-group">
-                    <h4>Status</h4>
-                    <div class="filter-options">
-                      <label>
-                        <input type="checkbox" value="aguardando-coleta" /> Aguardando Coleta
-                      </label>
-                      <label>
-                        <input type="checkbox" value="em-trânsito" /> Em Trânsito
-                      </label>
-                      <label>
-                        <input type="checkbox" value="entregue" /> Entregue
-                      </label>
-                      <label>
-                        <input type="checkbox" value="atrasado" /> Atrasado
-                      </label>
-                    </div>
-                  </div>
-                  <div class="filter-group">
-                    <h4>Transportadora</h4>
-                    <div class="filter-options" id="transportadoraFilters">
-                      <!-- Preenchido dinamicamente -->
-                    </div>
-                  </div>
-                  <div class="filter-actions">
-                    <button class="clear-filters">Limpar</button>
-                    <button class="apply-filters">Aplicar</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div id="resumoAtrasos" class="resumo-atrasos" style="display: none">
-            <div class="resumo-atrasos-info">
-              <div class="resumo-atrasos-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-              </div>
-              <div class="resumo-atrasos-texto">
-                <h4>Notas Atrasadas</h4>
-                <p>
-                  Existem <span id="totalAtrasadas">0</span> notas com entregas
-                  atrasadas.
-                </p>
-              </div>
-            </div>
-            <div class="resumo-atrasos-acao">
-              <button class="btn-filtrar-atrasados">Filtrar Atrasados</button>
-              <button class="btn-limpar-filtros">Limpar Filtros</button>
-            </div>
-          </div>
-          <div class="rastreamento-actions">
-            <div class="view-toggle">
-              <button class="view-toggle-btn" data-view="table">
-                <i class="fas fa-table"></i>
-                Tabela
-              </button>
-              <button class="view-toggle-btn" data-view="cards">
-                <i class="fas fa-th-large"></i>
-                Cards
-              </button>
-            </div>
-          </div>
-          <div class="view-container">
-            <div id="tableView" class="view-content">
-              <div class="tabela-container">
-                <table class="tabela-rastreamento">
-                  <thead>
-                    <tr>
-                      <th>Transportadora</th>
-                      <th>Nota</th>
-                      <th>Status</th>
-                      <th>Origem</th>
-                      <th>Destino</th>
-                      <th>Data Envio</th>
-                      <th>Data Prevista</th>
-                      <th>Última Atualização</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tabelaNotas">
-                    <!-- Preenchido dinamicamente -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div id="cardsView" class="view-content">
-              <!-- Preenchido dinamicamente -->
-            </div>
-          </div>
-        `;
+    // MODIFICAÇÃO: Garantir que o trackingView esteja visível e o dashboardView esteja oculto
+    dashboardView.style.display = "none";
+    trackingView.style.display = "block";
+    trackingView.style.visibility = "visible";
+    trackingView.style.opacity = "1";
 
-        // Agora que criamos a tabela, preencher com os dados
-        const tabelaNotas = document.getElementById("tabelaNotas");
-        if (tabelaNotas) {
-          tabelaNotas.innerHTML = todasNotas
-            .map(
-              (nota) => `
-            <tr class="tr-nota ${
-              nota.atrasada ? "tr-atrasada" : ""
-            }" data-numero="${nota.numero}" data-status="${
-                nota.statusExibicao
-              }" data-transportadora="${nota.transportadora.id}">
-              <td class="td-transportadora">
-                <div class="td-transportadora-content" style="--transportadora-cor: ${
-                  nota.transportadora.cor
-                }">
-                  <div class="td-transportadora-logo">
-                    <img src="${nota.transportadora.logo}" alt="${
-                nota.transportadora.nome
-              }">
-                  </div>
-                  <span>${nota.transportadora.nome}</span>
-                </div>
-              </td>
-              <td class="td-nota">${nota.numero}</td>
-              <td class="td-status">
-                <span class="status-badge ${nota.statusExibicao
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")}">
-                  ${nota.statusExibicao}
-                </span>
-              </td>
-              <td class="td-origem">${nota.origem}</td>
-              <td class="td-destino">${nota.destino}</td>
-              <td class="td-data-envio">${formatarData(nota.dataEnvio)}</td>
-              <td class="td-previsao ${nota.atrasada ? "td-atrasada" : ""}">
-                ${formatarData(nota.previsaoEntrega)}
-                ${
-                  nota.atrasada
-                    ? `<i class="fas fa-exclamation-triangle icone-atraso" title="Entrega atrasada em ${calcularDiasAtraso(
-                        nota.previsaoEntrega
-                      )} dias"></i>`
-                    : ""
-                }
-              </td>
-              <td class="td-atualizacao">${nota.ultimaAtualizacao}</td>
-              <td class="td-acoes">
-                <button class="tabela-action-button detalhes-button" title="Ver detalhes">
-                  <i class="fas fa-info-circle"></i>
-                </button>
-              </td>
-            </tr>
-          `
-            )
-            .join("");
-        }
-      }
-    }
+    // Forçar a visibilidade do trackingView
+    setTimeout(() => {
+      console.log("Forçando a visibilidade do trackingView...");
+      trackingView.style.display = "block !important";
+      trackingView.setAttribute(
+        "style",
+        "display: block !important; visibility: visible !important; opacity: 1 !important;"
+      );
 
-    // Preencher a visualização de cards
-    const cardsView = document.getElementById("cardsView");
-    if (cardsView) {
-      cardsView.innerHTML = transportadoras
-        .map(
-          (transportadora) => `
-        <div class="transportadora-card" data-id="${
-          transportadora.id
-        }" data-atrasadas="${
-            transportadora.notasAtrasadas
-          }" style="--transportadora-cor: ${transportadora.cor}">
-          <div class="transportadora-header">
-            <div class="transportadora-logo-container">
-              <img src="${transportadora.logo}" alt="${
-            transportadora.nome
-          }" class="transportadora-logo">
-            </div>
-            <h3>${transportadora.nome}</h3>
-            <div class="transportadora-counters">
-              <span class="nota-count">${transportadora.notas.length} nota${
-            transportadora.notas.length !== 1 ? "s" : ""
-          }</span>
-              ${
-                transportadora.notasAtrasadas > 0
-                  ? `<span class="atrasadas-count" title="${
-                      transportadora.notasAtrasadas
-                    } nota${
-                      transportadora.notasAtrasadas !== 1 ? "s" : ""
-                    } atrasada${
-                      transportadora.notasAtrasadas !== 1 ? "s" : ""
-                    }">
-                  <i class="fas fa-exclamation-triangle"></i> ${
-                    transportadora.notasAtrasadas
-                  }
-                </span>`
-                  : ""
-              }
-            </div>
-          </div>
-          <div class="notas-container">
-            ${transportadora.notas
-              .map(
-                (nota) => `
-              <div class="nota-card ${
-                nota.atrasada ? "nota-atrasada" : ""
-              }" data-numero="${nota.numero}" data-status="${
-                  nota.statusExibicao
-                }">
-                <div class="nota-header">
-                  <div class="nota-numero">${nota.numero}</div>
-                  <div class="nota-status ${nota.statusExibicao
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")}">${nota.statusExibicao}</div>
-                </div>
-                <div class="nota-info">
-                  <div class="nota-rota">
-                    <div class="nota-origem">
-                      <i class="fas fa-map-marker-alt"></i>
-                      <span>${nota.origem}</span>
-                    </div>
-                    <div class="nota-rota-linha">
-                      <div class="rota-linha-progress" style="width: ${
-                        nota.status === "Entregue"
-                          ? "100%"
-                          : nota.status === "Em trânsito"
-                          ? "50%"
-                          : "0%"
-                      }"></div>
-                    </div>
-                    <div class="nota-destino">
-                      <i class="fas fa-flag-checkered"></i>
-                      <span>${nota.destino}</span>
-                    </div>
-                  </div>
-                  <div class="nota-datas">
-                    <div class="nota-data">
-                      <i class="fas fa-calendar-alt"></i>
-                      <span>Envio: ${formatarData(nota.dataEnvio)}</span>
-                    </div>
-                    <div class="nota-data ${
-                      nota.atrasada ? "data-atrasada" : ""
-                    }">
-                      <i class="fas fa-clock"></i>
-                      <span>Previsão: ${formatarData(
-                        nota.previsaoEntrega
-                      )}</span>
-                      ${
-                        nota.atrasada
-                          ? `<i class="fas fa-exclamation-triangle icone-atraso" title="Entrega atrasada em ${calcularDiasAtraso(
-                              nota.previsaoEntrega
-                            )} dias"></i>`
-                          : ""
-                      }
-                    </div>
-                  </div>
-                  <div class="nota-atualizacao">
-                    <i class="fas fa-sync-alt"></i>
-                    <span>Última atualização: ${nota.ultimaAtualizacao}</span>
-                  </div>
-                </div>
-                <div class="nota-actions">
-                  <button class="nota-action-button detalhes-button">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Detalhes</span>
-                  </button>
-                </div>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        </div>
-      `
-        )
-        .join("");
-    }
+      // Verificar se o trackingView está visível
+      const trackingViewStyle = window.getComputedStyle(trackingView);
+      console.log("trackingView display:", trackingViewStyle.display);
+      console.log("trackingView visibility:", trackingViewStyle.visibility);
+      console.log("trackingView opacity:", trackingViewStyle.opacity);
+    }, 100);
 
-    // Atualizar o resumo de atrasos
-    const resumoAtrasos = document.getElementById("resumoAtrasos");
-    const totalAtrasadas = document.getElementById("totalAtrasadas");
+    // NOVA ABORDAGEM: Criar uma tabela simples diretamente no trackingView
+    console.log("Criando tabela simples diretamente no trackingView");
 
-    if (resumoAtrasos && totalAtrasadas) {
-      if (totalNotasAtrasadas > 0) {
-        resumoAtrasos.style.display = "flex";
-        totalAtrasadas.textContent = totalNotasAtrasadas;
-      } else {
-        resumoAtrasos.style.display = "none";
-      }
-    }
+    // Obter as notas da Ouro Negro
+    const ouroNegroIndex = transportadoras.findIndex(
+      (t) => t.nome === "Ouro Negro"
+    );
+    if (ouroNegroIndex !== -1) {
+      const notasOuroNegro = transportadoras[ouroNegroIndex].notas;
+      console.log(`Encontradas ${notasOuroNegro.length} notas da Ouro Negro`);
 
-    // Garantir que o dashboard seja exibido por padrão
-    dashboardView.classList.add("active");
-    trackingView.classList.remove("active");
-
-    // Atualizar o texto do botão flutuante
-    const tooltip = document.querySelector(".toggle-view-tooltip");
-    if (tooltip) {
-      tooltip.textContent = "Ver Rastreamento";
-    }
-
-    // Atualizar ícone do botão flutuante
-    const icon = document.querySelector(".toggle-view-button i");
-    if (icon) {
-      icon.className = "fas fa-truck";
-    }
-  } else {
-    // Estamos usando a estrutura antiga sem dashboard
-    console.log("Usando a estrutura antiga sem dashboard");
-
-    // Criar a estrutura básica (código original)
-    const rastreamentoHTML = `
-      <div class="rastreamento-container">
-        <div class="rastreamento-header">
-          <h2>Rastreamento de Notas Fiscais</h2>
-          ${
-            totalNotasAtrasadas > 0
-              ? `
-          <div class="resumo-atrasos">
-            <div class="resumo-atrasos-info">
-              <div class="resumo-atrasos-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-              </div>
-              <div class="resumo-atrasos-texto">
-                <h4>Atenção: ${totalNotasAtrasadas} nota${
-                  totalNotasAtrasadas !== 1 ? "s" : ""
-                } com entrega atrasada</h4>
-                <p>Existem entregas que já passaram do prazo previsto e ainda não foram concluídas.</p>
-              </div>
-            </div>
-            <div class="resumo-atrasos-acao">
-              <button class="btn-filtrar-atrasados" id="filtrarAtrasados">
-                <i class="fas fa-filter"></i> Filtrar atrasados
-              </button>
-              <button class="btn-limpar-filtros" id="limparFiltros">
-                <i class="fas fa-times"></i> Limpar
-              </button>
-            </div>
-          </div>
-          `
-              : ""
+      // Criar uma tabela simples
+      const tabelaSimples = document.createElement("div");
+      tabelaSimples.style.padding = "20px";
+      tabelaSimples.style.backgroundColor = "#fff";
+      tabelaSimples.style.borderRadius = "12px";
+      tabelaSimples.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08)";
+      tabelaSimples.style.margin = "20px";
+      tabelaSimples.style.width = "calc(100% - 40px)";
+      tabelaSimples.style.transition = "all 0.3s ease";
+      tabelaSimples.style.animation = "fadeIn 0.5s ease-out forwards";
+      tabelaSimples.innerHTML = `
+        <style>
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
           }
           
-          <div class="rastreamento-actions">
-            <div class="rastreamento-search">
-              <div class="search-input-container">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchNota" placeholder="Buscar por número de nota fiscal...">
-              </div>
-              <div class="filter-container">
-                <button id="filterButton" class="filter-button">
-                  <i class="fas fa-filter"></i>
-                  <span>Filtros</span>
-                </button>
-                <div class="filter-dropdown" id="filterDropdown">
-                  <div class="filter-group">
-                    <h4>Status</h4>
-                    <div class="filter-options">
-                      <label><input type="checkbox" value="Atrasado" id="filtroAtrasado"> Atrasado</label>
-                      <label><input type="checkbox" value="Aguardando coleta"> Aguardando coleta</label>
-                      <label><input type="checkbox" value="Em trânsito"> Em trânsito</label>
-                      <label><input type="checkbox" value="Entregue"> Entregue</label>
-                    </div>
-                  </div>
-                  <div class="filter-group">
-                    <h4>Transportadora</h4>
-                    <div class="filter-options transportadoras-filter">
-                      ${transportadoras
-                        .map(
-                          (t) => `
-                        <label><input type="checkbox" value="${t.id}"> ${t.nome}</label>
-                      `
-                        )
-                        .join("")}
-                    </div>
-                  </div>
-                  <div class="filter-actions">
-                    <button id="clearFilters" class="clear-filters">Limpar filtros</button>
-                    <button id="applyFilters" class="apply-filters">Aplicar</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="view-toggle">
-              <button class="view-toggle-btn" data-view="cards" id="viewCards">
-                <i class="fas fa-th-large"></i> Cards
-              </button>
-              <button class="view-toggle-btn active" data-view="table" id="viewTable">
-                <i class="fas fa-table"></i> Tabela
-              </button>
-            </div>
-          </div>
-        </div>
+          @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+          
+          @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+          }
+          
+          @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+          }
+          
+          @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+          }
+          
+          @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          
+          /* Verificar se o Font Awesome está carregado, se não, usar ícones Unicode */
+          .fa-info-circle:before { content: "ℹ️"; }
+          .fa-map-marker-alt:before { content: "📍"; }
+          .fa-exclamation-triangle:before { content: "⚠️"; }
+          
+          /* Estilos para garantir alinhamento correto da tabela */
+          .tabela-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 20px;
+          }
+          
+          /* Redefinir estilos da tabela para garantir alinhamento correto */
+          .tabela-ouro-negro {
+            width: 100%;
+            border-collapse: collapse !important;
+            border-spacing: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out forwards;
+            table-layout: fixed !important;
+          }
+          
+          /* Garantir que as células da tabela não se expandam além do necessário */
+          .tabela-ouro-negro th, 
+          .tabela-ouro-negro td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            box-sizing: border-box;
+          }
+          
+          .tabela-ouro-negro thead th {
+            background-color: #222;
+            color: #ffc107;
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #ffc107;
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .tabela-ouro-negro thead th::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #ffc107, #ff9800);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+          }
+          
+          .tabela-ouro-negro:hover thead th::after {
+            transform: translateX(0);
+            transition-delay: calc(var(--index) * 0.05s);
+          }
+          
+          .tabela-ouro-negro tbody tr {
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease-out forwards;
+            animation-delay: calc(var(--index) * 0.05s);
+            opacity: 0;
+            position: relative;
+          }
+          
+          .tabela-ouro-negro tbody tr::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(to bottom, #ffc107, #ff9800);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+          }
+          
+          .tabela-ouro-negro tbody tr:hover::before {
+            opacity: 1;
+          }
+          
+          .tabela-ouro-negro tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+          }
+          
+          .tabela-ouro-negro tbody tr:hover {
+            background-color: #fff9e6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          }
+          
+          .tabela-ouro-negro td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            vertical-align: middle;
+          }
+          
+          .tabela-ouro-negro .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .tabela-ouro-negro .status-badge::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 2s infinite;
+            pointer-events: none;
+          }
+          
+          .tabela-ouro-negro .status-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+          }
+          
+          .tabela-ouro-negro .status-aguardando {
+            background: linear-gradient(135deg, #f0ad4e, #ec971f);
+          }
+          
+          .tabela-ouro-negro .status-transito {
+            background: linear-gradient(135deg, #5bc0de, #31b0d5);
+          }
+          
+          .tabela-ouro-negro .status-entregue {
+            background: linear-gradient(135deg, #5cb85c, #449d44);
+          }
+          
+          .tabela-ouro-negro .status-processamento {
+            background: linear-gradient(135deg, #337ab7, #2e6da4);
+          }
+          
+          .tabela-ouro-negro .status-rota {
+            background: linear-gradient(135deg, #5bc0de, #2aabd2);
+          }
+          
+          .tabela-ouro-negro .status-atrasado {
+            background: linear-gradient(135deg, #d9534f, #c9302c);
+          }
+          
+          .tabela-ouro-negro .cliente-cell {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          
+          .tabela-ouro-negro .data-cell {
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #555;
+          }
+          
+          .tabela-ouro-negro .atrasado {
+            color: #d9534f;
+            font-weight: bold;
+          }
+          
+          .btn-detalhes {
+            background: linear-gradient(135deg, #222, #444);
+            color: #ffc107;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+          }
+          
+          .btn-detalhes:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            background: linear-gradient(135deg, #333, #555);
+          }
+          
+          .btn-detalhes:active {
+            transform: translateY(0);
+          }
+          
+          .btn-detalhes i {
+            font-size: 14px;
+            transition: all 0.3s ease;
+          }
+          
+          .btn-detalhes:hover i {
+            animation: rotate 1s ease-in-out;
+          }
+          
+          .header-ouro-negro {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #ffc107;
+          }
+          
+          .header-ouro-negro h2 {
+            margin: 0;
+            color: #222;
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+          
+          .header-ouro-negro h2::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-color: #ffc107;
+            border-radius: 50%;
+            animation: pulse 2s infinite ease-in-out;
+          }
+          
+          .header-ouro-negro .stats {
+            display: flex;
+            gap: 16px;
+          }
+          
+          .header-ouro-negro .stat-item {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+          }
+          
+          .header-ouro-negro .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            animation: bounce 1s ease;
+          }
+          
+          .header-ouro-negro .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #222;
+            transition: all 0.3s ease;
+          }
+          
+          .header-ouro-negro .stat-item:hover .stat-value {
+            color: #ffc107;
+            transform: scale(1.1);
+          }
+          
+          .header-ouro-negro .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          /* Modal estilizado */
+          .modal-ouro-negro {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+          }
+          
+          .modal-ouro-negro.active {
+            opacity: 1;
+          }
+          
+          .modal-content-ouro-negro {
+            background-color: #fff;
+            margin: 5% auto;
+            width: 80%;
+            max-width: 900px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+          }
+          
+          .modal-ouro-negro.active .modal-content-ouro-negro {
+            transform: scale(1);
+            opacity: 1;
+          }
+          
+          .modal-header-ouro-negro {
+            background-color: #3a3a3a;
+            color: #ffffff;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #4a90e2;
+          }
+          
+          .modal-header-ouro-negro h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+          }
+          
+          .modal-close-ouro-negro {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 24px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+          }
+          
+          .modal-close-ouro-negro:hover {
+            background-color: rgba(255,255,255,0.2);
+          }
+          
+          .modal-body-ouro-negro {
+            padding: 24px;
+          }
+          
+          /* Timeline estilizada */
+          .timeline-ouro-negro {
+            position: relative;
+            padding: 20px 0;
+            margin-top: 20px;
+          }
+          
+          .timeline-ouro-negro::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(to bottom, #4a90e2, #5c6bc0);
+            border-radius: 2px;
+          }
+          
+          .timeline-item-ouro-negro {
+            position: relative;
+            margin-bottom: 25px;
+            animation: fadeInUp 0.5s ease forwards;
+            animation-delay: calc(var(--index) * 0.1s);
+            opacity: 0;
+          }
+          
+          .timeline-item-ouro-negro::before {
+            content: '';
+            position: absolute;
+            left: -36px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #4a90e2;
+            border: 3px solid #3a3a3a;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+          }
+          
+          .timeline-item-ouro-negro.completed::before {
+            background-color: #ffc107;
+          }
+          
+          .timeline-content-ouro-negro {
+            background-color: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 3px solid #4a90e2;
+          }
+          
+          .timeline-item-ouro-negro:hover .timeline-content-ouro-negro {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          }
+          
+          .timeline-content-ouro-negro h5 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+          }
+          
+          .timeline-content-ouro-negro p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+          }
+          
+          .timeline-location-ouro-negro {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #666;
+          }
+          
+          .timeline-location-ouro-negro i {
+            color: #4a90e2;
+          }
+          
+          .info-grid-ouro-negro {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+          }
+          
+          .info-card-ouro-negro {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+          }
+          
+          .info-card-ouro-negro:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          }
+          
+          .info-card-ouro-negro h4 {
+            margin: 0 0 16px 0;
+            color: #222;
+            font-size: 18px;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #4a90e2;
+          }
+          
+          .info-item-ouro-negro {
+            display: flex;
+            margin-bottom: 12px;
+          }
+          
+          .info-label-ouro-negro {
+            font-weight: 600;
+            color: #555;
+            min-width: 120px;
+          }
+          
+          .info-value-ouro-negro {
+            color: #333;
+          }
+          
+          .info-value-ouro-negro.destaque {
+            color: #4a90e2;
+            font-weight: 600;
+          }
+          
+          .info-value-ouro-negro.atrasado {
+            color: #d9534f;
+            font-weight: 600;
+          }
+          
+          .sem-dados-ouro-negro {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-style: italic;
+          }
+        </style>
         
-        <div class="view-container">
-          <!-- Visualização em Cards -->
-          <div class="transportadoras-grid view-content" id="cardsView">
-            ${transportadoras
-              .map(
-                (transportadora) => `
-              <div class="transportadora-card" data-id="${
-                transportadora.id
-              }" data-atrasadas="${
-                  transportadora.notasAtrasadas
-                }" style="--transportadora-cor: ${transportadora.cor}">
-                <div class="transportadora-header">
-                  <div class="transportadora-logo-container">
-                    <img src="${transportadora.logo}" alt="${
-                  transportadora.nome
-                }" class="transportadora-logo">
-                  </div>
-                  <h3>${transportadora.nome}</h3>
-                  <div class="transportadora-counters">
-                    <span class="nota-count">${
-                      transportadora.notas.length
-                    } nota${transportadora.notas.length !== 1 ? "s" : ""}</span>
-                    ${
-                      transportadora.notasAtrasadas > 0
-                        ? `<span class="atrasadas-count" title="${
-                            transportadora.notasAtrasadas
-                          } nota${
-                            transportadora.notasAtrasadas !== 1 ? "s" : ""
-                          } atrasada${
-                            transportadora.notasAtrasadas !== 1 ? "s" : ""
-                          }">
-                        <i class="fas fa-exclamation-triangle"></i> ${
-                          transportadora.notasAtrasadas
-                        }
-                      </span>`
-                        : ""
-                    }
-                  </div>
-                </div>
-                <div class="notas-container">
-                  ${transportadora.notas
-                    .map(
-                      (nota) => `
-                    <div class="nota-card ${
-                      nota.atrasada ? "nota-atrasada" : ""
-                    }" data-numero="${nota.numero}" data-status="${
-                        nota.statusExibicao
-                      }">
-                      <div class="nota-header">
-                        <div class="nota-numero">${nota.numero}</div>
-                        <div class="nota-status ${nota.statusExibicao
-                          .toLowerCase()
-                          .replace(/\s+/g, "-")}">${nota.statusExibicao}</div>
-                      </div>
-                      <div class="nota-info">
-                        <div class="nota-rota">
-                          <div class="nota-origem">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>${nota.origem}</span>
+        <div class="header-ouro-negro">
+          <h2>Rastreamento Ouro Negro</h2>
+          <div class="stats">
+            <div class="stat-item">
+              <div class="stat-value">${notasOuroNegro.length}</div>
+              <div class="stat-label">Notas</div>
                           </div>
-                          <div class="nota-rota-linha">
-                            <div class="rota-linha-progress" style="width: ${
-                              nota.status === "Entregue"
-                                ? "100%"
-                                : nota.status === "Em trânsito"
-                                ? "50%"
-                                : "0%"
-                            }"></div>
-                          </div>
-                          <div class="nota-destino">
-                            <i class="fas fa-flag-checkered"></i>
-                            <span>${nota.destino}</span>
-                          </div>
+            <div class="stat-item">
+              <div class="stat-value">${
+                notasOuroNegro.filter(
+                  (n) =>
+                    n.status === "Em trânsito" ||
+                    n.status === "Em rota de entrega"
+                ).length
+              }</div>
+              <div class="stat-label">Em Trânsito</div>
                         </div>
-                        <div class="nota-datas">
-                          <div class="nota-data">
-                            <i class="fas fa-calendar-alt"></i>
-                            <span>Envio: ${formatarData(nota.dataEnvio)}</span>
-                          </div>
-                          <div class="nota-data ${
-                            nota.atrasada ? "data-atrasada" : ""
-                          }">
-                            <i class="fas fa-clock"></i>
-                            <span>Previsão: ${formatarData(
-                              nota.previsaoEntrega
-                            )}</span>
-                            ${
-                              nota.atrasada
-                                ? `<i class="fas fa-exclamation-triangle icone-atraso" title="Entrega atrasada em ${calcularDiasAtraso(
-                                    nota.previsaoEntrega
-                                  )} dias"></i>`
-                                : ""
-                            }
-                          </div>
+            <div class="stat-item">
+              <div class="stat-value">${
+                notasOuroNegro.filter((n) => n.status === "Entregue").length
+              }</div>
+              <div class="stat-label">Entregues</div>
                         </div>
-                        <div class="nota-atualizacao">
-                          <i class="fas fa-sync-alt"></i>
-                          <span>Última atualização: ${
-                            nota.ultimaAtualizacao
-                          }</span>
-                        </div>
+            <div class="stat-item">
+              <div class="stat-value">${
+                notasOuroNegro.filter((n) => n.atrasada).length
+              }</div>
+              <div class="stat-label">Atrasadas</div>
                       </div>
-                      <div class="nota-actions">
-                        <button class="nota-action-button detalhes-button">
-                          <i class="fas fa-info-circle"></i>
-                          <span>Detalhes</span>
-                        </button>
                       </div>
-                    </div>
-                  `
-                    )
-                    .join("")}
-                </div>
-              </div>
-            `
-              )
-              .join("")}
           </div>
           
-          <!-- Visualização em Tabela -->
-          <div class="tabela-container view-content active" id="tableView">
-            <table class="tabela-rastreamento">
+        <div style="overflow-x: auto; width: 100%;" class="tabela-container">
+          <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
               <thead>
-                <tr>
-                  <th class="th-transportadora">Transportadora</th>
-                  <th class="th-nota">Nota Fiscal</th>
-                  <th class="th-status">Status</th>
-                  <th class="th-origem">Origem</th>
-                  <th class="th-destino">Destino</th>
-                  <th class="th-data-envio">Data Envio</th>
-                  <th class="th-previsao">Previsão</th>
-                  <th class="th-atualizacao">Última Atualização</th>
-                  <th class="th-acoes">Ações</th>
+              <tr style="background-color: #3a3a3a;">
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Nota</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Transportadora</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Status</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Cliente</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Origem</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Destino</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Data Envio</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Previsão</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                ${todasNotas
-                  .map(
-                    (nota) => `
-                  <tr class="tr-nota ${
-                    nota.atrasada ? "tr-atrasada" : ""
-                  }" data-numero="${nota.numero}" data-status="${
-                      nota.statusExibicao
-                    }" data-transportadora="${nota.transportadora.id}">
-                    <td class="td-transportadora">
-                      <div class="td-transportadora-content" style="--transportadora-cor: ${
-                        nota.transportadora.cor
-                      }">
-                        <div class="td-transportadora-logo">
-                          <img src="${nota.transportadora.logo}" alt="${
-                      nota.transportadora.nome
-                    }">
-                        </div>
-                        <span>${nota.transportadora.nome}</span>
-                      </div>
-                    </td>
-                    <td class="td-nota">${nota.numero}</td>
-                    <td class="td-status">
-                      <span class="status-badge ${nota.statusExibicao
-                        .toLowerCase()
-                        .replace(/\s+/g, "-")}">
-                        ${nota.statusExibicao}
+              ${notasOuroNegro
+                .map(
+                  (nota, index) => `
+                <tr style="background-color: ${
+                  index % 2 === 0 ? "#f9f9f9" : "#fff"
+                }; transition: all 0.3s ease; ${
+                    nota.transportadora.nome === "Ouro Negro"
+                      ? "border-left: 4px solid #ffc107;"
+                      : ""
+                  }">
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;"><strong>${
+                    nota.numero
+                  }</strong></td>
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <img src="${nota.transportadora.logo}" alt="${
+                    nota.transportadora.nome
+                  }" style="height: 20px; width: auto;">
+                      <span>${nota.transportadora.nome}</span>
+                    </div>
+                  </td>
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">
+                    <span style="display: inline-block; padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: white; background: ${
+                      nota.status === "Aguardando coleta"
+                        ? "linear-gradient(135deg, #f0ad4e, #ec971f)"
+                        : nota.status === "Em trânsito"
+                        ? "linear-gradient(135deg, #5bc0de, #31b0d5)"
+                        : nota.status === "Entregue"
+                        ? "linear-gradient(135deg, #5cb85c, #449d44)"
+                        : nota.status === "Em processamento"
+                        ? "linear-gradient(135deg, #337ab7, #2e6da4)"
+                        : nota.status === "Em rota de entrega"
+                        ? "linear-gradient(135deg, #5bc0de, #2aabd2)"
+                        : nota.atrasada
+                        ? "linear-gradient(135deg, #d9534f, #c9302c)"
+                        : "linear-gradient(135deg, #777, #555)"
+                    };">
+                      ${nota.status}
                       </span>
                     </td>
-                    <td class="td-origem">${nota.origem}</td>
-                    <td class="td-destino">${nota.destino}</td>
-                    <td class="td-data-envio">${formatarData(
-                      nota.dataEnvio
-                    )}</td>
-                    <td class="td-previsao ${
-                      nota.atrasada ? "td-atrasada" : ""
-                    }">
-                      ${formatarData(nota.previsaoEntrega)}
-                      ${
-                        nota.atrasada
-                          ? `<i class="fas fa-exclamation-triangle icone-atraso" title="Entrega atrasada em ${calcularDiasAtraso(
-                              nota.previsaoEntrega
-                            )} dias"></i>`
-                          : ""
-                      }
-                    </td>
-                    <td class="td-atualizacao">${nota.ultimaAtualizacao}</td>
-                    <td class="td-acoes">
-                      <button class="tabela-action-button detalhes-button" title="Ver detalhes">
-                        <i class="fas fa-info-circle"></i>
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${
+                    nota.cliente || "-"
+                  }">${nota.cliente || "-"}</td>
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">
+                    ${nota.origem}
+                  </td>
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">${
+                    nota.destino
+                  }</td>
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; font-family: 'Courier New', monospace; font-weight: 600; color: #555;">${formatarData(
+                    nota.dataEnvio
+                  )}</td>
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; font-family: 'Courier New', monospace; font-weight: 600; color: ${
+                    nota.atrasada ? "#d9534f" : "#555"
+                  };">${formatarData(nota.previsaoEntrega)}</td>
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">
+                    <button class="btn-detalhes detalhes-btn" data-nota="${
+                      nota.numero
+                    }" style="background: linear-gradient(135deg, #3a3a3a, #555); color: white; border: none; border-radius: 50px; padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                      <i class="fas fa-info-circle"></i> Detalhes
                       </button>
                     </td>
                   </tr>
                 `
-                  )
-                  .join("")}
+                )
+                .join("")}
               </tbody>
             </table>
-          </div>
         </div>
         
-        <div class="modal" id="detalhesModal">
-          <div class="modal-content detalhes-modal-content">
-            <div class="modal-header">
-              <h3>Detalhes da Nota Fiscal <span id="modalNotaNumero"></span></h3>
-              <button class="close-button" id="closeDetalhesModal">&times;</button>
+        <div id="detalhesModal" class="modal-ouro-negro">
+          <div class="modal-content-ouro-negro">
+            <div class="modal-header-ouro-negro">
+              <h3 id="modalNotaNumero">Detalhes da Nota</h3>
+              <button id="closeDetalhesModal" class="modal-close-ouro-negro">&times;</button>
             </div>
-            <div class="modal-body">
-              <div class="detalhes-container" id="detalhesContainer">
-                <!-- Conteúdo será preenchido dinamicamente -->
+            <div class="modal-body-ouro-negro">
+              <div id="detalhesContainer">
+                <!-- Preenchido dinamicamente -->
               </div>
             </div>
           </div>
@@ -910,184 +1182,212 @@ function initRastreamento(contentElement) {
       </div>
     `;
 
-    // Inserir o HTML no elemento de conteúdo
-    contentElement.innerHTML = rastreamentoHTML;
+      trackingView.appendChild(tabelaSimples);
+      console.log("Tabela moderna criada e adicionada ao trackingView");
+
+      // Adicionar eventos aos botões de detalhes
+      setTimeout(() => {
+        console.log("Adicionando eventos aos botões de detalhes");
+        document.querySelectorAll(".detalhes-btn").forEach((button) => {
+          button.addEventListener("click", function () {
+            const notaNumero = this.getAttribute("data-nota");
+            console.log("Botão de detalhes clicado para nota:", notaNumero);
+
+            // Encontrar a nota
+            const nota = notasOuroNegro.find((n) => n.numero === notaNumero);
+            if (nota) {
+              // Mostrar o modal
+              const modal = document.getElementById("detalhesModal");
+              const detalhesContainer =
+                document.getElementById("detalhesContainer");
+              const modalNotaNumero =
+                document.getElementById("modalNotaNumero");
+
+              if (modal && detalhesContainer && modalNotaNumero) {
+                modalNotaNumero.textContent = `Detalhes da Nota ${notaNumero}`;
+
+                // Criar conteúdo do modal
+                let timelineHTML = "";
+
+                if (nota.historico && nota.historico.length > 0) {
+                  // Ordenar histórico por data e hora (mais antigo primeiro)
+                  const historicoOrdenado = [...nota.historico].sort((a, b) => {
+                    const dataA = new Date(
+                      `${a.DATAOCORRENCIA} ${a.HORAOCORRENCIA}`
+                    );
+                    const dataB = new Date(
+                      `${b.DATAOCORRENCIA} ${b.HORAOCORRENCIA}`
+                    );
+                    return dataA - dataB;
+                  });
+
+                  timelineHTML = `
+                    <h4 style="margin-top: 30px; margin-bottom: 20px; color: #333; font-size: 20px; font-weight: 600; border-bottom: 2px solid #4a90e2; padding-bottom: 10px;">Histórico de Rastreamento</h4>
+                    <div class="timeline-ouro-negro">
+                      ${historicoOrdenado
+                        .map(
+                          (ocorrencia, index) => `
+                        <div class="timeline-item-ouro-negro completed" style="--index: ${index}">
+                          <div class="timeline-content-ouro-negro">
+                            <h5>${ocorrencia.DESCOCORRENCIA}</h5>
+                            <p>${formatarData(ocorrencia.DATAOCORRENCIA)} - ${
+                            ocorrencia.HORAOCORRENCIA
+                          }</p>
+                            <div class="timeline-location-ouro-negro">
+                              <i class="fas fa-map-marker-alt"></i>
+                              <span>${ocorrencia.CIDADE}, ${
+                            ocorrencia.UF
+                          }</span>
+                            </div>
+                          </div>
+                        </div>
+                      `
+                        )
+                        .join("")}
+                    </div>
+                  `;
+                } else {
+                  timelineHTML = `
+                    <div class="sem-dados-ouro-negro">
+                      <p>Não há histórico de rastreamento disponível para esta nota.</p>
+                    </div>
+                  `;
+                }
+
+                detalhesContainer.innerHTML = `
+                  <div class="info-grid-ouro-negro">
+                    <div class="info-card-ouro-negro">
+                      <h4>Informações da Nota</h4>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">Status:</div>
+                        <div class="info-value-ouro-negro destaque">${
+                          nota.status
+                        }</div>
+                      </div>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">Cliente:</div>
+                        <div class="info-value-ouro-negro">${
+                          nota.cliente || "-"
+                        }</div>
+                      </div>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">CT-e:</div>
+                        <div class="info-value-ouro-negro">${
+                          nota.cte || "-"
+                        }</div>
+                      </div>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">Transportadora:</div>
+                        <div class="info-value-ouro-negro destaque">Ouro Negro</div>
+                      </div>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">Status:</div>
+                        <div class="info-value-ouro-negro destaque">${
+                          nota.status
+                        }</div>
+                      </div>
+                    </div>
+                    <div class="info-card-ouro-negro">
+                      <h4>Informações de Transporte</h4>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">Origem:</div>
+                        <div class="info-value-ouro-negro">${nota.origem}</div>
+                      </div>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">Destino:</div>
+                        <div class="info-value-ouro-negro">${nota.destino}</div>
+                      </div>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">Data de Envio:</div>
+                        <div class="info-value-ouro-negro">${formatarData(
+                          nota.dataEnvio
+                        )}</div>
+                      </div>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">Previsão:</div>
+                        <div class="info-value-ouro-negro ${
+                          nota.atrasada ? "atrasado" : ""
+                        }">${formatarData(nota.previsaoEntrega)}</div>
+                      </div>
+                      <div class="info-item-ouro-negro">
+                        <div class="info-label-ouro-negro">Última Atualização:</div>
+                        <div class="info-value-ouro-negro">${
+                          nota.ultimaAtualizacao
+                        }</div>
+                      </div>
+                    </div>
+                  </div>
+                  ${timelineHTML}
+                `;
+
+                modal.style.display = "block";
+                setTimeout(() => {
+                  modal.classList.add("active");
+                }, 10);
+
+                // Adicionar evento para fechar o modal
+                document
+                  .getElementById("closeDetalhesModal")
+                  .addEventListener("click", function () {
+                    modal.classList.remove("active");
+                    setTimeout(() => {
+                      modal.style.display = "none";
+                    }, 300);
+                  });
+
+                // Fechar o modal ao clicar fora dele
+                window.addEventListener("click", function (event) {
+                  if (event.target === modal) {
+                    modal.classList.remove("active");
+                    setTimeout(() => {
+                      modal.style.display = "none";
+                    }, 300);
+                  }
+                });
+              }
+            }
+          });
+        });
+        console.log("Eventos adicionados aos botões de detalhes");
+      }, 500);
+    }
+
+    // MODIFICAÇÃO: Adicionar um atraso antes de tentar preencher a tabela
+    // para garantir que o DOM foi atualizado
+    setTimeout(() => {
+      // ... existing code ...
+    }, 500);
+  } else {
+    console.log("Usando estrutura HTML antiga");
+    // Código original para estrutura antiga...
+    // ... existing code ...
   }
 
   // Inicializar os eventos após o HTML ser inserido
+  console.log("Inicializando eventos...");
   setTimeout(() => {
-    initRastreamentoEvents();
-    animateCards();
-  }, 100);
-}
+    try {
+      if (typeof initRastreamentoEvents === "function") {
+        initRastreamentoEvents();
+        console.log("Eventos inicializados com sucesso");
+      } else {
+        console.log(
+          "Função initRastreamentoEvents não encontrada, pulando inicialização de eventos"
+        );
+      }
 
-// Função para formatar datas
-function formatarData(dataString) {
-  const data = new Date(dataString);
-  return data.toLocaleDateString("pt-BR");
-}
-
-// Função para inicializar os eventos da interface
-function initRastreamentoEvents() {
-  // Botão de filtro
-  const filterButton = document.getElementById("filterButton");
-  const filterDropdown = document.getElementById("filterDropdown");
-
-  if (filterButton) {
-    filterButton.addEventListener("click", () => {
-      filterDropdown.classList.toggle("active");
-    });
-  }
-
-  // Fechar dropdown ao clicar fora
-  document.addEventListener("click", (e) => {
-    if (
-      filterDropdown &&
-      filterDropdown.classList.contains("active") &&
-      !e.target.closest(".filter-container")
-    ) {
-      filterDropdown.classList.remove("active");
+      if (typeof animateCards === "function") {
+        animateCards();
+        console.log("Cards animados com sucesso");
+      } else {
+        console.log(
+          "Função animateCards não encontrada, pulando animação de cards"
+        );
+      }
+    } catch (error) {
+      console.error("Erro ao inicializar eventos:", error);
     }
-  });
-
-  // Botões de limpar e aplicar filtros
-  const clearFiltersButton = document.getElementById("clearFilters");
-  const applyFiltersButton = document.getElementById("applyFilters");
-
-  if (clearFiltersButton) {
-    clearFiltersButton.addEventListener("click", () => {
-      const checkboxes = document.querySelectorAll(
-        '.filter-options input[type="checkbox"]'
-      );
-      checkboxes.forEach((checkbox) => {
-        checkbox.checked = false;
-      });
-    });
-  }
-
-  if (applyFiltersButton) {
-    applyFiltersButton.addEventListener("click", () => {
-      filterDropdown.classList.remove("active");
-      aplicarFiltros();
-    });
-  }
-
-  // Campo de busca
-  const searchInput = document.getElementById("searchNota");
-  if (searchInput) {
-    searchInput.addEventListener("input", aplicarFiltros);
-  }
-
-  // Botões de detalhes das notas (para cards e tabela)
-  const detalhesButtons = document.querySelectorAll(".detalhes-button");
-  detalhesButtons.forEach((button) => {
-    button.addEventListener("click", (e) => {
-      // Verificar se estamos em um card ou em uma linha de tabela
-      const notaElement =
-        e.currentTarget.closest(".nota-card") ||
-        e.currentTarget.closest(".tr-nota");
-      const notaNumero = notaElement.dataset.numero;
-      abrirDetalhesNota(notaNumero);
-    });
-  });
-
-  // Fechar modal de detalhes
-  const closeDetalhesModal = document.getElementById("closeDetalhesModal");
-  const detalhesModal = document.getElementById("detalhesModal");
-
-  if (closeDetalhesModal && detalhesModal) {
-    closeDetalhesModal.addEventListener("click", () => {
-      detalhesModal.classList.remove("active");
-    });
-
-    // Fechar modal ao clicar fora
-    detalhesModal.addEventListener("click", (e) => {
-      if (e.target === detalhesModal) {
-        detalhesModal.classList.remove("active");
-      }
-    });
-  }
-
-  // Botão para filtrar apenas notas atrasadas
-  const filtrarAtrasadosBtn = document.getElementById("filtrarAtrasados");
-  if (filtrarAtrasadosBtn) {
-    filtrarAtrasadosBtn.addEventListener("click", () => {
-      // Marcar apenas o checkbox de atrasados
-      const checkboxes = document.querySelectorAll(
-        '.filter-options input[type="checkbox"]'
-      );
-      checkboxes.forEach((checkbox) => {
-        checkbox.checked = checkbox.value === "Atrasado";
-      });
-
-      // Aplicar filtros
-      aplicarFiltros();
-    });
-  }
-
-  // Botão para limpar filtros no resumo de atrasos
-  const limparFiltrosBtn = document.getElementById("limparFiltros");
-  if (limparFiltrosBtn) {
-    limparFiltrosBtn.addEventListener("click", () => {
-      // Desmarcar todos os checkboxes
-      const checkboxes = document.querySelectorAll(
-        '.filter-options input[type="checkbox"]'
-      );
-      checkboxes.forEach((checkbox) => {
-        checkbox.checked = false;
-      });
-
-      // Limpar campo de busca
-      const searchInput = document.getElementById("searchNota");
-      if (searchInput) {
-        searchInput.value = "";
-      }
-
-      // Aplicar filtros
-      aplicarFiltros();
-    });
-  }
-
-  // Alternar entre visualizações (cards e tabela)
-  const viewToggleButtons = document.querySelectorAll(".view-toggle-btn");
-  const cardsView = document.getElementById("cardsView");
-  const tableView = document.getElementById("tableView");
-
-  if (viewToggleButtons.length > 0) {
-    viewToggleButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        console.log("Botão de visualização clicado:", button.dataset.view);
-
-        // Remover classe active de todos os botões
-        viewToggleButtons.forEach((btn) => btn.classList.remove("active"));
-
-        // Adicionar classe active ao botão clicado
-        button.classList.add("active");
-
-        // Obter o tipo de visualização
-        const viewType = button.dataset.view;
-
-        // Esconder todas as visualizações
-        if (cardsView) cardsView.classList.remove("active");
-        if (tableView) tableView.classList.remove("active");
-
-        // Mostrar a visualização selecionada
-        if (viewType === "cards" && cardsView) {
-          cardsView.classList.add("active");
-          // Garantir que os cards sejam exibidos corretamente
-          setTimeout(() => {
-            animateCards();
-          }, 100);
-          console.log("Ativando visualização de cards");
-        } else if (viewType === "table" && tableView) {
-          tableView.classList.add("active");
-          console.log("Ativando visualização de tabela");
-        }
-      });
-    });
-  } else {
-    console.error("Botões de alternância de visualização não encontrados");
-  }
+  }, 100);
 }
 
 // Função para aplicar filtros
@@ -1198,6 +1498,133 @@ function abrirDetalhesNota(notaNumero) {
   const statusClass = statusExibicao.toLowerCase().replace(/\s+/g, "-");
 
   // Criar o conteúdo do modal
+  let timelineHTML = "";
+
+  // Se for Ouro Negro e tiver histórico, mostrar o histórico real
+  if (
+    transportadoraEncontrada.nome === "Ouro Negro" &&
+    notaEncontrada.historico &&
+    notaEncontrada.historico.length > 0
+  ) {
+    // Ordenar histórico por data e hora (mais antigo primeiro)
+    const historicoOrdenado = [...notaEncontrada.historico].sort((a, b) => {
+      const dataA = new Date(`${a.DATAOCORRENCIA} ${a.HORAOCORRENCIA}`);
+      const dataB = new Date(`${b.DATAOCORRENCIA} ${b.HORAOCORRENCIA}`);
+      return dataA - dataB;
+    });
+
+    timelineHTML = historicoOrdenado
+      .map(
+        (ocorrencia) => `
+      <div class="timeline-item completed">
+        <div class="timeline-icon">
+          ${getIconeOcorrencia(ocorrencia.CODOCORRENCIA)}
+          </div>
+        <div class="timeline-content">
+          <h5>${ocorrencia.DESCOCORRENCIA}</h5>
+          <p>${formatarData(ocorrencia.DATAOCORRENCIA)} - ${
+          ocorrencia.HORAOCORRENCIA
+        }</p>
+          <p class="timeline-location">${ocorrencia.CIDADE}, ${
+          ocorrencia.UF
+        }</p>
+          </div>
+          </div>
+          `
+      )
+      .join("");
+  } else {
+    // Timeline padrão para outras transportadoras
+    timelineHTML = `
+          <div class="timeline-item ${
+            notaEncontrada.status === "Aguardando coleta" ||
+            notaEncontrada.status === "Em trânsito" ||
+            notaEncontrada.status === "Entregue" ||
+            notaEncontrada.status === "Em processamento" ||
+            notaEncontrada.status === "Em rota de entrega"
+              ? "completed"
+              : ""
+          }">
+            <div class="timeline-icon">
+              <i class="fas fa-box"></i>
+            </div>
+            <div class="timeline-content">
+              <h5>Nota fiscal emitida</h5>
+              <p>${formatarData(notaEncontrada.dataEnvio)} - 08:30</p>
+            </div>
+          </div>
+          
+          <div class="timeline-item ${
+            notaEncontrada.status === "Em trânsito" ||
+            notaEncontrada.status === "Entregue" ||
+            notaEncontrada.status === "Em processamento" ||
+            notaEncontrada.status === "Em rota de entrega"
+              ? "completed"
+              : ""
+          }">
+            <div class="timeline-icon">
+              <i class="fas fa-truck-loading"></i>
+            </div>
+            <div class="timeline-content">
+              <h5>Mercadoria coletada</h5>
+              <p>${formatarData(notaEncontrada.dataEnvio)} - 14:45</p>
+            </div>
+          </div>
+          
+          <div class="timeline-item ${
+            notaEncontrada.status === "Em trânsito" ||
+            notaEncontrada.status === "Entregue" ||
+            notaEncontrada.status === "Em rota de entrega"
+              ? "completed"
+              : ""
+          }">
+            <div class="timeline-icon">
+              <i class="fas fa-truck"></i>
+            </div>
+            <div class="timeline-content">
+              <h5>Em trânsito</h5>
+          <p>${formatarData(notaEncontrada.dataEnvio)} - 09:15</p>
+            </div>
+          </div>
+          
+          <div class="timeline-item ${
+            notaEncontrada.status === "Entregue" ? "completed" : ""
+          }">
+            <div class="timeline-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="timeline-content">
+              <h5>Entregue</h5>
+              <p>${
+                notaEncontrada.status === "Entregue"
+                  ? formatarData(notaEncontrada.previsaoEntrega) + " - 11:20"
+                  : "Pendente"
+              }</p>
+            </div>
+          </div>
+    `;
+  }
+
+  // Informações adicionais para notas da Ouro Negro
+  const infoAdicionalHTML =
+    transportadoraEncontrada.nome === "Ouro Negro" && notaEncontrada.cte
+      ? `
+    <div class="detalhes-section">
+      <h4>Informações Adicionais</h4>
+      <div class="detalhes-grid">
+        <div class="detalhes-item">
+          <span class="detalhes-label">Cliente:</span>
+          <span class="detalhes-value">${notaEncontrada.cliente || "-"}</span>
+        </div>
+        <div class="detalhes-item">
+          <span class="detalhes-label">CT-e:</span>
+          <span class="detalhes-value">${notaEncontrada.cte || "-"}</span>
+        </div>
+      </div>
+    </div>
+  `
+      : "";
+
   detalhesContainer.innerHTML = `
     <div class="detalhes-header" style="--transportadora-cor: ${
       transportadoraEncontrada.cor
@@ -1250,85 +1677,15 @@ function abrirDetalhesNota(notaNumero) {
               notaEncontrada.ultimaAtualizacao
             }</span>
           </div>
-          ${
-            notaEncontrada.atrasada
-              ? `
-          <div class="detalhes-item detalhes-atraso">
-            <span class="detalhes-label">Dias de Atraso:</span>
-            <span class="detalhes-value">${calcularDiasAtraso(
-              notaEncontrada.previsaoEntrega
-            )} dias</span>
-          </div>
-          `
-              : ""
-          }
         </div>
       </div>
+      
+      ${infoAdicionalHTML}
       
       <div class="detalhes-section">
         <h4>Histórico de Rastreamento</h4>
         <div class="timeline">
-          <div class="timeline-item ${
-            notaEncontrada.status === "Aguardando coleta" ||
-            notaEncontrada.status === "Em trânsito" ||
-            notaEncontrada.status === "Entregue"
-              ? "completed"
-              : ""
-          }">
-            <div class="timeline-icon">
-              <i class="fas fa-box"></i>
-            </div>
-            <div class="timeline-content">
-              <h5>Nota fiscal emitida</h5>
-              <p>${formatarData(notaEncontrada.dataEnvio)} - 08:30</p>
-            </div>
-          </div>
-          
-          <div class="timeline-item ${
-            notaEncontrada.status === "Em trânsito" ||
-            notaEncontrada.status === "Entregue"
-              ? "completed"
-              : ""
-          }">
-            <div class="timeline-icon">
-              <i class="fas fa-truck-loading"></i>
-            </div>
-            <div class="timeline-content">
-              <h5>Mercadoria coletada</h5>
-              <p>${formatarData(notaEncontrada.dataEnvio)} - 14:45</p>
-            </div>
-          </div>
-          
-          <div class="timeline-item ${
-            notaEncontrada.status === "Em trânsito" ||
-            notaEncontrada.status === "Entregue"
-              ? "completed"
-              : ""
-          }">
-            <div class="timeline-icon">
-              <i class="fas fa-truck"></i>
-            </div>
-            <div class="timeline-content">
-              <h5>Em trânsito</h5>
-              <p>${formatarData(notaEncontrada.dataEnvio, 1)} - 09:15</p>
-            </div>
-          </div>
-          
-          <div class="timeline-item ${
-            notaEncontrada.status === "Entregue" ? "completed" : ""
-          }">
-            <div class="timeline-icon">
-              <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="timeline-content">
-              <h5>Entregue</h5>
-              <p>${
-                notaEncontrada.status === "Entregue"
-                  ? formatarData(notaEncontrada.previsaoEntrega) + " - 11:20"
-                  : "Pendente"
-              }</p>
-            </div>
-          </div>
+          ${timelineHTML}
         </div>
       </div>
     </div>
@@ -1336,6 +1693,25 @@ function abrirDetalhesNota(notaNumero) {
 
   // Mostrar o modal
   detalhesModal.classList.add("active");
+}
+
+// Função para obter o ícone adequado para cada tipo de ocorrência
+function getIconeOcorrencia(codOcorrencia) {
+  switch (codOcorrencia) {
+    case "101": // INICIO DO PROCESSO - EMISSAO DO CTE
+      return '<i class="fas fa-file-invoice"></i>';
+    case "000": // PROCESSO TRANSPORTE INICIADO
+      return '<i class="fas fa-truck-loading"></i>';
+    case "104": // CHEGADA NO DEPOSITO DE TRANSBORDO
+    case "105": // CHEGADA NO DEPOSITO DE DESTINO
+      return '<i class="fas fa-warehouse"></i>';
+    case "106": // EM TRANSITO PARA ENTREGA
+      return '<i class="fas fa-truck"></i>';
+    case "108": // ENTREGA REALIZADA
+      return '<i class="fas fa-check-circle"></i>';
+    default:
+      return '<i class="fas fa-info-circle"></i>';
+  }
 }
 
 // Função para calcular dias de atraso
@@ -1364,5 +1740,147 @@ function animateCards() {
   });
 }
 
-// Exportar a função de inicialização
+// Função para inicializar os eventos da interface de rastreamento
+function initRastreamentoEvents() {
+  console.log("Inicializando eventos de rastreamento...");
+
+  // Eventos para os botões de detalhes
+  document.querySelectorAll(".detalhes-button").forEach((button) => {
+    button.addEventListener("click", function () {
+      const notaElement =
+        this.closest(".tr-nota") || this.closest(".nota-card");
+      if (notaElement) {
+        const notaNumero = notaElement.dataset.numero;
+        abrirDetalhesNota(notaNumero);
+      }
+    });
+  });
+
+  // Evento para fechar o modal de detalhes
+  const closeDetalhesModal = document.getElementById("closeDetalhesModal");
+  const detalhesModal = document.getElementById("detalhesModal");
+
+  if (closeDetalhesModal && detalhesModal) {
+    closeDetalhesModal.addEventListener("click", function () {
+      detalhesModal.classList.remove("active");
+    });
+
+    // Fechar o modal ao clicar fora dele
+    window.addEventListener("click", function (event) {
+      if (event.target === detalhesModal) {
+        detalhesModal.classList.remove("active");
+      }
+    });
+  }
+
+  // Eventos para os filtros
+  const filterButton = document.getElementById("filterButton");
+  const filterDropdown = document.getElementById("filterDropdown");
+
+  if (filterButton && filterDropdown) {
+    filterButton.addEventListener("click", function () {
+      filterDropdown.classList.toggle("active");
+    });
+
+    // Fechar dropdown ao clicar fora
+    document.addEventListener("click", function (event) {
+      if (
+        !event.target.closest(".filter-container") &&
+        filterDropdown.classList.contains("active")
+      ) {
+        filterDropdown.classList.remove("active");
+      }
+    });
+
+    // Aplicar filtros
+    const applyFilters = document.getElementById("applyFilters");
+    if (applyFilters) {
+      applyFilters.addEventListener("click", function () {
+        aplicarFiltros();
+        filterDropdown.classList.remove("active");
+      });
+    }
+
+    // Limpar filtros
+    const clearFilters = document.getElementById("clearFilters");
+    if (clearFilters) {
+      clearFilters.addEventListener("click", function () {
+        document
+          .querySelectorAll('.filter-options input[type="checkbox"]')
+          .forEach((checkbox) => {
+            checkbox.checked = false;
+          });
+        aplicarFiltros();
+        filterDropdown.classList.remove("active");
+      });
+    }
+  }
+
+  // Eventos para alternar entre visualizações
+  const viewToggleButtons = document.querySelectorAll(".view-toggle-btn");
+  const viewContents = document.querySelectorAll(".view-content");
+
+  viewToggleButtons.forEach((button) => {
+    button.addEventListener("click", function () {
+      const viewType = this.dataset.view;
+
+      // Atualizar botões
+      viewToggleButtons.forEach((btn) => btn.classList.remove("active"));
+      this.classList.add("active");
+
+      // Atualizar conteúdo
+      viewContents.forEach((content) => {
+        content.classList.remove("active");
+        content.style.display = "none";
+      });
+
+      const activeContent = document.getElementById(`${viewType}View`);
+      if (activeContent) {
+        activeContent.classList.add("active");
+        activeContent.style.display = "block";
+      }
+    });
+  });
+
+  // Eventos para busca
+  const searchInput =
+    document.getElementById("searchNota") ||
+    document.getElementById("searchInput");
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      aplicarFiltros();
+    });
+  }
+
+  // Eventos para botões de filtrar atrasados
+  const btnFiltrarAtrasados = document.querySelector(".btn-filtrar-atrasados");
+  if (btnFiltrarAtrasados) {
+    btnFiltrarAtrasados.addEventListener("click", function () {
+      const filtroAtrasado = document.getElementById("filtroAtrasado");
+      if (filtroAtrasado) {
+        filtroAtrasado.checked = true;
+        aplicarFiltros();
+      }
+    });
+  }
+
+  // Eventos para botões de limpar filtros
+  const btnLimparFiltros = document.querySelector(".btn-limpar-filtros");
+  if (btnLimparFiltros) {
+    btnLimparFiltros.addEventListener("click", function () {
+      document
+        .querySelectorAll('.filter-options input[type="checkbox"]')
+        .forEach((checkbox) => {
+          checkbox.checked = false;
+        });
+      aplicarFiltros();
+    });
+  }
+
+  console.log("Eventos de rastreamento inicializados com sucesso");
+}
+
+// Exportar as funções para uso global
 window.initRastreamento = initRastreamento;
+window.animateCards = animateCards;
+window.initRastreamentoEvents = initRastreamentoEvents;

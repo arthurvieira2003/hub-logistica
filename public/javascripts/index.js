@@ -341,6 +341,11 @@ async function loadToolContent(tool, contentElement) {
           await loadScript("../javascripts/rastreamento.js");
         }
 
+        // Carregar a biblioteca Chart.js se ainda não estiver carregada
+        if (typeof Chart === "undefined") {
+          await loadScript("https://cdn.jsdelivr.net/npm/chart.js");
+        }
+
         // Carregar o script do dashboard se ainda não estiver carregado
         if (!window.initDashboard) {
           await loadScript("../javascripts/dashboard.js");
@@ -837,11 +842,11 @@ async function loadToolContent(tool, contentElement) {
 
             <!-- Tracking View -->
             <div id="trackingView" class="tracking-container" style="display: none;">
-              <div class="rastreamento-header">
-                <div class="dashboard-title-row">
-                  <h2 class="dashboard-title">Rastreamento de Notas</h2>
-                  <div class="dashboard-access-simple">
-                    <button class="voltar-dashboard-button">
+              <div class="rastreamento-header" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="dashboard-title-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                  <h2 class="dashboard-title" style="font-size: 1.75rem; font-weight: 600; margin: 0;">Rastreamento de Notas</h2>
+                  <div id="voltarDashboardContainer" class="dashboard-access-simple" style="display: flex !important; visibility: visible !important; opacity: 1 !important; justify-content: flex-end; margin-left: auto;">
+                    <button class="voltar-dashboard-button" id="voltarDashboardButton" style="display: flex !important; visibility: visible !important; opacity: 1 !important; background-color: #247675; color: white; padding: 0.6rem 1.2rem; border: none; border-radius: 0.5rem; cursor: pointer; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; font-size: 0.95rem; z-index: 9999;" onclick="if(window.showDashboard) { window.showDashboard(); }">
                       <i class="fas fa-chart-line"></i>
                       <span>Voltar ao Dashboard</span>
                     </button>
@@ -875,17 +880,156 @@ async function loadToolContent(tool, contentElement) {
         }
 
         // Adicionar evento de clique ao botão de voltar ao dashboard
-        const voltarButton = document.querySelector(".voltar-dashboard-button");
-        if (voltarButton) {
-          console.log(
-            "Botão de voltar ao dashboard encontrado, adicionando evento de clique"
-          );
-          voltarButton.addEventListener("click", () => {
-            if (window.showDashboard) {
-              window.showDashboard();
+        setTimeout(() => {
+          // Tentar encontrar o botão pelo ID
+          const voltarButton = document.getElementById("voltarDashboardButton");
+
+          if (voltarButton) {
+            console.log("Botão de voltar ao dashboard encontrado pelo ID");
+
+            // Remover eventos de clique existentes para evitar duplicação
+            const newButton = voltarButton.cloneNode(true);
+            voltarButton.parentNode.replaceChild(newButton, voltarButton);
+
+            // Adicionar novo evento de clique
+            newButton.addEventListener("click", () => {
+              console.log("Clique no botão Voltar ao Dashboard");
+              if (window.showDashboard) {
+                window.showDashboard();
+              }
+            });
+
+            // Garantir que o botão esteja visível
+            newButton.style.display = "flex";
+            newButton.style.visibility = "visible";
+            newButton.style.opacity = "1";
+
+            console.log(
+              "Evento de clique adicionado ao botão Voltar ao Dashboard"
+            );
+          } else {
+            console.error(
+              "Botão de voltar ao dashboard não encontrado pelo ID"
+            );
+
+            // Tentar encontrar pelo seletor de classe como fallback
+            const voltarButtonByClass = document.querySelector(
+              ".voltar-dashboard-button"
+            );
+
+            if (voltarButtonByClass) {
+              console.log(
+                "Botão de voltar ao dashboard encontrado pela classe"
+              );
+
+              // Remover eventos de clique existentes para evitar duplicação
+              const newButton = voltarButtonByClass.cloneNode(true);
+              voltarButtonByClass.parentNode.replaceChild(
+                newButton,
+                voltarButtonByClass
+              );
+
+              // Adicionar novo evento de clique
+              newButton.addEventListener("click", () => {
+                console.log(
+                  "Clique no botão Voltar ao Dashboard (pela classe)"
+                );
+                if (window.showDashboard) {
+                  window.showDashboard();
+                }
+              });
+
+              // Garantir que o botão esteja visível
+              newButton.style.display = "flex";
+              newButton.style.visibility = "visible";
+              newButton.style.opacity = "1";
+
+              console.log(
+                "Evento de clique adicionado ao botão Voltar ao Dashboard (pela classe)"
+              );
+            } else {
+              console.error(
+                "Botão de voltar ao dashboard não encontrado de nenhuma forma"
+              );
+
+              // Criar o botão manualmente como último recurso
+              console.log("Tentando criar o botão manualmente");
+
+              const trackingView = document.getElementById("trackingView");
+              if (trackingView) {
+                const rastreamentoHeader = trackingView.querySelector(
+                  ".rastreamento-header"
+                );
+
+                if (rastreamentoHeader) {
+                  const titleRow = rastreamentoHeader.querySelector(
+                    ".dashboard-title-row"
+                  );
+
+                  if (titleRow) {
+                    // Criar container do botão
+                    const buttonContainer = document.createElement("div");
+                    buttonContainer.id = "voltarDashboardContainer";
+                    buttonContainer.className = "dashboard-access-simple";
+                    buttonContainer.style.display = "flex";
+                    buttonContainer.style.justifyContent = "flex-end";
+                    buttonContainer.style.visibility = "visible";
+                    buttonContainer.style.opacity = "1";
+                    buttonContainer.style.marginLeft = "auto"; // Garantir que fique à direita
+
+                    // Criar botão
+                    const newButton = document.createElement("button");
+                    newButton.id = "voltarDashboardButton";
+                    newButton.className = "voltar-dashboard-button";
+                    newButton.style.display = "flex";
+                    newButton.style.alignItems = "center";
+                    newButton.style.justifyContent = "center";
+                    newButton.style.gap = "0.5rem";
+                    newButton.style.padding = "0.6rem 1.2rem";
+                    newButton.style.backgroundColor = "#247675";
+                    newButton.style.color = "white";
+                    newButton.style.border = "none";
+                    newButton.style.borderRadius = "0.5rem";
+                    newButton.style.fontSize = "0.95rem";
+                    newButton.style.fontWeight = "600";
+                    newButton.style.cursor = "pointer";
+                    newButton.style.visibility = "visible";
+                    newButton.style.opacity = "1";
+                    newButton.style.zIndex = "9999";
+                    newButton.innerHTML = `
+                      <i class="fas fa-chart-line"></i>
+                      <span>Voltar ao Dashboard</span>
+                    `;
+
+                    // Adicionar evento de clique
+                    newButton.addEventListener("click", () => {
+                      console.log(
+                        "Clique no botão Voltar ao Dashboard (criado manualmente)"
+                      );
+                      if (window.showDashboard) {
+                        window.showDashboard();
+                      }
+                    });
+
+                    // Adicionar botão ao container
+                    buttonContainer.appendChild(newButton);
+
+                    // Adicionar container ao titleRow
+                    titleRow.appendChild(buttonContainer);
+
+                    console.log("Botão criado manualmente e adicionado ao DOM");
+                  } else {
+                    console.error("titleRow não encontrado");
+                  }
+                } else {
+                  console.error("rastreamentoHeader não encontrado");
+                }
+              } else {
+                console.error("trackingView não encontrado");
+              }
             }
-          });
-        }
+          }
+        }, 500);
 
         // Inicializar o rastreamento
         if (window.initRastreamento) {
