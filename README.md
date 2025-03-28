@@ -2,18 +2,6 @@
 
 Um sistema de gerenciamento logístico para controle e rastreamento de entregas.
 
-## 📋 Índice
-
-- [Sobre o Projeto](#sobre-o-projeto)
-- [Funcionalidades](#funcionalidades)
-- [Tecnologias Utilizadas](#tecnologias-utilizadas)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Como Instalar](#como-instalar)
-- [Como Executar](#como-executar)
-- [Acessando o Sistema](#acessando-o-sistema)
-- [Capturas de Tela](#capturas-de-tela)
-- [Desenvolvedores](#desenvolvedores)
-
 ## 📝 Sobre o Projeto
 
 O HUB Logística é uma aplicação web desenvolvida para gerenciar operações logísticas, permitindo o controle e rastreamento de entregas em tempo real. O sistema oferece uma interface intuitiva para que gestores e operadores possam monitorar todo o processo logístico.
