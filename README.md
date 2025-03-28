@@ -48,7 +48,7 @@ hub-logistica/
 1. Clone este repositório:
 
    ```bash
-   git clone https://github.com/seu-usuario/hub-logistica.git
+   git clone https://github.com/arthurvieira2003/hub-logistica.git
    cd hub-logistica
    ```
 
@@ -82,7 +82,7 @@ O servidor será iniciado e estará disponível na porta 3060.
 
 3. Após autenticação, você será redirecionado para o Dashboard do sistema.
 
-## 👨‍💻 Desenvolvedores
+## 👨‍💻 Desenvolvedor
 
 - [Arthur Henrique Tscha Vieira](https://github.com/arthurvieira2003)
 
