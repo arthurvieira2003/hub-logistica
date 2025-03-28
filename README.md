@@ -84,6 +84,6 @@ O servidor será iniciado e estará disponível na porta 3060.
 
 ## 👨‍💻 Desenvolvedores
 
-- [Seu Nome](https://github.com/arthurvieira2003)
+- [Arthur Henrique Tscha Vieira](https://github.com/arthurvieira2003)
 
 ---
