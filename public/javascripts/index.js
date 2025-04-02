@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   forceOpenSidebar();
 });
 
+// Importar função de administração
+import { addAdminPanelOption } from "./admin.js";
+
 // Função para forçar a sidebar a ficar aberta
 function forceOpenSidebar() {
   const sidebar = document.querySelector(".sidebar");
@@ -325,6 +328,12 @@ async function loadToolContent(tool, contentElement) {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     contentElement.querySelector(".loader").remove();
+
+    // Caso especial para o painel administrativo
+    if (tool === "admin") {
+      window.location.href = "/administration";
+      return;
+    }
 
     switch (tool) {
       case "fretes":
@@ -1534,15 +1543,21 @@ function updateUserProfile(userData) {
   };
 
   // Verificar se há uma foto no banco de dados
-  if (userData.picture && userData.picture.trim() !== "") {
+  if (userData.profile_picture && userData.profile_picture !== null) {
     // Se houver uma foto no banco de dados, usá-la
     updatePhotoDisplay(
-      `<img src="${userData.picture}" alt="${userData.name}" />`
+      `<img src="${userData.profile_picture}" alt="${userData.name}" />`
     );
   } else {
     // Caso não haja foto, gerar avatar com as iniciais do nome do usuário
     const initials = getInitials(userData.name);
     updatePhotoDisplay(initials);
+  }
+
+  // Verificar se o usuário é administrador
+  if (userData.isAdmin) {
+    // Adicionar opção de painel administrativo
+    addAdminPanelOption();
   }
 }
 

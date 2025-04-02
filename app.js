@@ -13,6 +13,10 @@ app.get("/home", (req, res) => {
   res.sendFile(__dirname + "/public/html/index.html");
 });
 
+app.get("/administration", (req, res) => {
+  res.sendFile(__dirname + "/public/html/administration.html");
+});
+
 app.listen(3060, () => {
   console.log("Servidor rodando na porta 3060");
 });

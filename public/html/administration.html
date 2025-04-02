@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel Administrativo - HUB Logística</title>
+    <script src="../javascripts/auth-check.js"></script>
+    <script src="../javascripts/admin-check.js"></script>
+    <link rel="stylesheet" href="../styles/index.css" />
+    <link rel="stylesheet" href="../styles/admin.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Header com navegação -->
+    <header class="admin-header">
+      <div class="admin-header-container">
+        <div class="admin-logo">
+          <a href="/home">
+            <i class="fas fa-truck-fast"></i>
+            <h1>HUB Logística</h1>
+          </a>
+        </div>
+        <div class="admin-nav">
+          <a href="/home" class="admin-nav-item">
+            <i class="fas fa-home"></i>
+            <span>Voltar ao Hub</span>
+          </a>
+          <div class="admin-user-profile" id="adminUserProfile">
+            <div class="avatar-circle" id="adminUserAvatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <span id="adminUserName">Carregando...</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="admin-main">
+      <div class="admin-panel">
+        <h2><i class="fas fa-user-shield"></i> Painel Administrativo</h2>
+
+        <div class="admin-tabs">
+          <div class="admin-tab active" data-tab="users">Usuários</div>
+          <div class="admin-tab" data-tab="sessions">Sessões Ativas</div>
+        </div>
+
+        <div class="admin-content">
+          <div class="admin-content-tab active" id="usersTab">
+            <div class="admin-toolbar">
+              <button id="createUserBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Novo Usuário
+              </button>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="userSearchInput"
+                  placeholder="Buscar usuários..."
+                />
+                <i class="fas fa-search"></i>
+              </div>
+            </div>
+
+            <div class="admin-table-container">
+              <table class="admin-table" id="usersTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Admin</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="6" class="loading-data">
+                      <i class="fas fa-spinner fa-spin"></i> Carregando
+                      usuários...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="admin-content-tab" id="sessionsTab">
+            <div class="admin-toolbar">
+              <button id="refreshSessionsBtn" class="btn btn-secondary">
+                <i class="fas fa-sync-alt"></i> Atualizar
+              </button>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="sessionSearchInput"
+                  placeholder="Buscar sessões..."
+                />
+                <i class="fas fa-search"></i>
+              </div>
+            </div>
+
+            <div class="admin-table-container">
+              <table class="admin-table" id="sessionsTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Usuário</th>
+                    <th>Email</th>
+                    <th>Início</th>
+                    <th>Expira</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="6" class="loading-data">
+                      <i class="fas fa-spinner fa-spin"></i> Carregando
+                      sessões...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="../javascripts/administration.js"></script>
+  </body>
+</html>
