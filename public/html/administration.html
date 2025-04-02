@@ -18,41 +18,33 @@
     />
   </head>
   <body>
-    <!-- Header com navegação -->
+    <!-- Header com logo e botão de voltar ao hub -->
     <header class="admin-header">
       <div class="admin-header-container">
         <div class="admin-logo">
-          <a href="/home">
-            <i class="fas fa-truck-fast"></i>
-            <h1>HUB Logística</h1>
-          </a>
+          <h1><i class="fas fa-user-shield"></i> Painel Administrativo</h1>
         </div>
-        <div class="admin-nav">
-          <a href="/home" class="admin-nav-item">
-            <i class="fas fa-home"></i>
-            <span>Voltar ao Hub</span>
-          </a>
-          <div class="admin-user-profile" id="adminUserProfile">
-            <div class="avatar-circle" id="adminUserAvatar">
-              <i class="fas fa-user"></i>
-            </div>
-            <span id="adminUserName">Carregando...</span>
-          </div>
-        </div>
+        <a href="/home" class="home-button">
+          <i class="fas fa-home"></i>
+          <span>Voltar ao Hub</span>
+        </a>
       </div>
     </header>
 
     <!-- Conteúdo Principal -->
     <main class="admin-main">
       <div class="admin-panel">
-        <h2><i class="fas fa-user-shield"></i> Painel Administrativo</h2>
-
-        <div class="admin-tabs">
-          <div class="admin-tab active" data-tab="users">Usuários</div>
-          <div class="admin-tab" data-tab="sessions">Sessões Ativas</div>
-        </div>
+        <nav class="admin-tabs">
+          <div class="admin-tab active" data-tab="users">
+            <i class="fas fa-users"></i> Usuários
+          </div>
+          <div class="admin-tab" data-tab="sessions">
+            <i class="fas fa-clock"></i> Sessões Ativas
+          </div>
+        </nav>
 
         <div class="admin-content">
+          <!-- Aba de Usuários -->
           <div class="admin-content-tab active" id="usersTab">
             <div class="admin-toolbar">
               <button id="createUserBtn" class="btn btn-primary">
@@ -92,6 +84,7 @@
             </div>
           </div>
 
+          <!-- Aba de Sessões Ativas -->
           <div class="admin-content-tab" id="sessionsTab">
             <div class="admin-toolbar">
               <button id="refreshSessionsBtn" class="btn btn-secondary">
@@ -114,14 +107,15 @@
                     <th>ID</th>
                     <th>Usuário</th>
                     <th>Email</th>
-                    <th>Início</th>
-                    <th>Expira</th>
+                    <th>Criada em</th>
+                    <th>Expira em</th>
+                    <th>Dispositivo</th>
                     <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td colspan="6" class="loading-data">
+                    <td colspan="7" class="loading-data">
                       <i class="fas fa-spinner fa-spin"></i> Carregando
                       sessões...
                     </td>
@@ -133,6 +127,66 @@
         </div>
       </div>
     </main>
+
+    <!-- Modal para criação/edição de usuário -->
+    <div id="userModal" class="admin-modal">
+      <div class="admin-modal-content">
+        <div class="admin-modal-header">
+          <h3 id="userModalTitle">Novo Usuário</h3>
+          <button class="admin-modal-close" id="closeUserModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="userForm">
+            <input type="hidden" id="userId" value="" />
+            <div class="form-group">
+              <label for="userName">Nome</label>
+              <input type="text" id="userName" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label for="userEmail">Email</label>
+              <input
+                type="email"
+                id="userEmail"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="userPassword">Senha</label>
+              <input type="password" id="userPassword" class="form-control" />
+              <small id="passwordHelpText" class="help-text"
+                >Deixe em branco para manter a senha atual.</small
+              >
+            </div>
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="userIsAdmin" />
+                <label for="userIsAdmin">Administrador</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="checkbox-group">
+                <input type="checkbox" id="userIsActive" checked />
+                <label for="userIsActive">Ativo</label>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="admin-modal-footer">
+          <button id="cancelUserBtn" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button id="saveUserBtn" class="btn btn-primary">
+            <i class="fas fa-save"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sistema de notificações -->
+    <div id="notificationContainer"></div>
 
     <!-- Scripts -->
     <script src="../javascripts/administration.js"></script>

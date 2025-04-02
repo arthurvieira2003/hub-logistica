@@ -1,4 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Verificar se existe um overlay de carregamento e removê-lo
+  const authLoadingOverlay = document.getElementById("auth-loading-overlay");
+  if (authLoadingOverlay) {
+    authLoadingOverlay.remove();
+  }
+
   initializeAdminPanel();
   checkAuthError();
 });
@@ -79,11 +85,39 @@ function initializeAdminPanel() {
       filterSessions(searchTerm);
     });
   }
+
+  // Inicializar botões do modal de usuário
+  const closeUserModalBtn = document.getElementById("closeUserModal");
+  const cancelUserBtn = document.getElementById("cancelUserBtn");
+
+  if (closeUserModalBtn) {
+    closeUserModalBtn.addEventListener("click", () => {
+      closeUserModal();
+    });
+  }
+
+  if (cancelUserBtn) {
+    cancelUserBtn.addEventListener("click", () => {
+      closeUserModal();
+    });
+  }
 }
 
 // Função para carregar a lista de usuários
 async function loadUsersList() {
   try {
+    const usersTable = document.querySelector("#usersTable tbody");
+    if (!usersTable) return;
+
+    // Mostrar indicador de carregamento
+    usersTable.innerHTML = `
+      <tr>
+        <td colspan="6" class="loading-data">
+          <i class="fas fa-spinner fa-spin"></i> Carregando usuários...
+        </td>
+      </tr>
+    `;
+
     const token = document.cookie
       .split("; ")
       .find((row) => row.startsWith("token="))
@@ -91,7 +125,7 @@ async function loadUsersList() {
 
     if (!token) throw new Error("Token não encontrado");
 
-    const response = await fetch("http://localhost:4010/admin/users", {
+    const response = await fetch("http://localhost:4010/user/users", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -100,14 +134,12 @@ async function loadUsersList() {
     });
 
     if (!response.ok) {
-      throw new Error("Falha ao carregar usuários");
+      throw new Error(
+        `Falha ao carregar usuários: ${response.status} ${response.statusText}`
+      );
     }
 
     const users = await response.json();
-
-    // Atualizar tabela de usuários
-    const usersTable = document.querySelector("#usersTable tbody");
-    if (!usersTable) return;
 
     if (users.length === 0) {
       usersTable.innerHTML = `
@@ -166,13 +198,41 @@ async function loadUsersList() {
     attachUserActionEvents();
   } catch (error) {
     console.error("Erro ao carregar usuários:", error);
-    showNotification("Erro ao carregar lista de usuários", "error");
+
+    // Mostrar mensagem de erro na tabela
+    const usersTable = document.querySelector("#usersTable tbody");
+    if (usersTable) {
+      usersTable.innerHTML = `
+        <tr>
+          <td colspan="6" class="no-data">
+            <i class="fas fa-exclamation-circle"></i> Erro ao carregar usuários: ${error.message}
+          </td>
+        </tr>
+      `;
+    }
+
+    showNotification(
+      "Erro ao carregar lista de usuários: " + error.message,
+      "error"
+    );
   }
 }
 
 // Função para carregar a lista de sessões ativas
 async function loadSessionsList() {
   try {
+    const sessionsTable = document.querySelector("#sessionsTable tbody");
+    if (!sessionsTable) return;
+
+    // Mostrar indicador de carregamento
+    sessionsTable.innerHTML = `
+      <tr>
+        <td colspan="7" class="loading-data">
+          <i class="fas fa-spinner fa-spin"></i> Carregando sessões...
+        </td>
+      </tr>
+    `;
+
     const token = document.cookie
       .split("; ")
       .find((row) => row.startsWith("token="))
@@ -180,7 +240,7 @@ async function loadSessionsList() {
 
     if (!token) throw new Error("Token não encontrado");
 
-    const response = await fetch("http://localhost:4010/admin/sessions", {
+    const response = await fetch("http://localhost:4010/session/active", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -189,19 +249,17 @@ async function loadSessionsList() {
     });
 
     if (!response.ok) {
-      throw new Error("Falha ao carregar sessões");
+      throw new Error(
+        `Falha ao carregar sessões: ${response.status} ${response.statusText}`
+      );
     }
 
     const sessions = await response.json();
 
-    // Atualizar tabela de sessões
-    const sessionsTable = document.querySelector("#sessionsTable tbody");
-    if (!sessionsTable) return;
-
     if (sessions.length === 0) {
       sessionsTable.innerHTML = `
         <tr>
-          <td colspan="6" class="no-data">Nenhuma sessão ativa encontrada</td>
+          <td colspan="7" class="no-data">Nenhuma sessão ativa encontrada</td>
         </tr>
       `;
       return;
@@ -209,18 +267,32 @@ async function loadSessionsList() {
 
     sessionsTable.innerHTML = sessions
       .map((session) => {
-        const createdAt = new Date(session.created_at * 1000).toLocaleString();
-        const expiresAt = new Date(session.exp * 1000).toLocaleString();
+        // Converter as datas de string para objetos Date
+        const createdAt = new Date(session.createdAt).toLocaleString();
+        const expiresAt = new Date(session.expiresAt).toLocaleString();
+
+        // Extrair informações do navegador/dispositivo
+        const userAgentInfo = formatUserAgent(session.userAgent);
 
         return `
         <tr data-session-id="${session.id}">
           <td>${session.id}</td>
-          <td>${session.user_name}</td>
-          <td>${session.user_email}</td>
+          <td>${session.User ? session.User.name : "N/A"}</td>
+          <td>${session.User ? session.User.email : "N/A"}</td>
           <td>${createdAt}</td>
           <td>${expiresAt}</td>
+          <td class="user-agent-cell" title="${
+            session.userAgent || "Desconhecido"
+          }">
+            <span class="device-info">
+              <i class="${getUserAgentIcon(session.userAgent)}"></i>
+              ${userAgentInfo}
+            </span>
+          </td>
           <td class="actions-cell">
-            <button class="action-btn terminate-session-btn" title="Encerrar Sessão">
+            <button class="action-btn terminate-session-btn" title="Encerrar Sessão" data-user-id="${
+              session.userId
+            }">
               <i class="fas fa-times-circle"></i>
             </button>
           </td>
@@ -233,8 +305,91 @@ async function loadSessionsList() {
     attachSessionActionEvents();
   } catch (error) {
     console.error("Erro ao carregar sessões:", error);
-    showNotification("Erro ao carregar lista de sessões", "error");
+
+    // Mostrar mensagem de erro na tabela
+    const sessionsTable = document.querySelector("#sessionsTable tbody");
+    if (sessionsTable) {
+      sessionsTable.innerHTML = `
+        <tr>
+          <td colspan="7" class="no-data">
+            <i class="fas fa-exclamation-circle"></i> Erro ao carregar sessões: ${error.message}
+          </td>
+        </tr>
+      `;
+    }
+
+    showNotification(
+      "Erro ao carregar lista de sessões: " + error.message,
+      "error"
+    );
   }
+}
+
+// Função para formatar informações do userAgent
+function formatUserAgent(userAgent) {
+  if (!userAgent) return "Desconhecido";
+
+  // Extrair informações básicas do navegador
+  let browser = "Navegador";
+  let os = "Sistema";
+
+  // Detectar navegador
+  if (userAgent.includes("Chrome") && !userAgent.includes("Edg")) {
+    browser = "Chrome";
+  } else if (userAgent.includes("Firefox")) {
+    browser = "Firefox";
+  } else if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) {
+    browser = "Safari";
+  } else if (userAgent.includes("Edg")) {
+    browser = "Edge";
+  } else if (userAgent.includes("MSIE") || userAgent.includes("Trident/")) {
+    browser = "IE";
+  }
+
+  // Detectar sistema operacional
+  if (userAgent.includes("Windows")) {
+    os = "Windows";
+  } else if (userAgent.includes("Mac")) {
+    os = "macOS";
+  } else if (userAgent.includes("Linux")) {
+    os = "Linux";
+  } else if (userAgent.includes("Android")) {
+    os = "Android";
+  } else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) {
+    os = "iOS";
+  }
+
+  return `${browser} / ${os}`;
+}
+
+// Função para determinar o ícone do userAgent
+function getUserAgentIcon(userAgent) {
+  if (!userAgent) return "fas fa-question-circle";
+
+  // Ícones para diferentes navegadores e dispositivos
+  if (userAgent.includes("Chrome") && !userAgent.includes("Edg")) {
+    return "fab fa-chrome";
+  } else if (userAgent.includes("Firefox")) {
+    return "fab fa-firefox";
+  } else if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) {
+    return "fab fa-safari";
+  } else if (userAgent.includes("Edg")) {
+    return "fab fa-edge";
+  } else if (userAgent.includes("MSIE") || userAgent.includes("Trident/")) {
+    return "fab fa-internet-explorer";
+  } else if (userAgent.includes("Android")) {
+    return "fab fa-android";
+  } else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) {
+    return "fab fa-apple";
+  } else if (userAgent.includes("Windows")) {
+    return "fab fa-windows";
+  } else if (userAgent.includes("Mac")) {
+    return "fab fa-apple";
+  } else if (userAgent.includes("Linux")) {
+    return "fab fa-linux";
+  }
+
+  return "fas fa-globe"; // Ícone padrão
 }
 
 // Função para anexar eventos aos botões de ação de usuários
@@ -276,13 +431,18 @@ function attachSessionActionEvents() {
   const terminateButtons = document.querySelectorAll(".terminate-session-btn");
   terminateButtons.forEach((button) => {
     button.addEventListener("click", (e) => {
-      const sessionId = e.target.closest("tr").dataset.sessionId;
-      terminateSession(sessionId);
+      const row = e.target.closest("tr");
+      if (!row) return;
+
+      const sessionId = row.dataset.sessionId;
+      if (sessionId) {
+        terminateSession(sessionId);
+      }
     });
   });
 }
 
-// Função para editar um usuário
+// Função para editar usuário existente
 async function editUser(userId) {
   try {
     const token = document.cookie
@@ -292,216 +452,138 @@ async function editUser(userId) {
 
     if (!token) throw new Error("Token não encontrado");
 
-    // Buscar dados do usuário
-    const response = await fetch(
-      `http://localhost:4010/admin/users/${userId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-      }
-    );
+    const response = await fetch(`http://localhost:4010/user/users/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+    });
 
     if (!response.ok) {
-      throw new Error("Falha ao carregar dados do usuário");
+      throw new Error(`Falha ao carregar dados do usuário: ${response.status}`);
     }
 
     const user = await response.json();
 
-    // Criar modal de edição
-    const modalHTML = `
-      <div class="admin-modal" id="userModal">
-        <div class="admin-modal-content">
-          <div class="admin-modal-header">
-            <h3>Editar Usuário</h3>
-            <button class="admin-modal-close">&times;</button>
-          </div>
-          <div class="admin-modal-body">
-            <form id="userForm">
-              <input type="hidden" id="userId" value="${user.id}">
-              
-              <div class="form-group">
-                <label for="userName">Nome</label>
-                <input type="text" class="form-control" id="userName" value="${
-                  user.name
-                }" required>
-              </div>
-              
-              <div class="form-group">
-                <label for="userEmail">Email</label>
-                <input type="email" class="form-control" id="userEmail" value="${
-                  user.email
-                }" required>
-              </div>
-              
-              <div class="form-group">
-                <label for="userStatus">Status</label>
-                <select class="form-control" id="userStatus">
-                  <option value="active" ${
-                    user.status === "active" ? "selected" : ""
-                  }>Ativo</option>
-                  <option value="inactive" ${
-                    user.status === "inactive" ? "selected" : ""
-                  }>Inativo</option>
-                </select>
-              </div>
-              
-              <div class="form-group">
-                <div class="checkbox-group">
-                  <input type="checkbox" id="userIsAdmin" ${
-                    user.isAdmin ? "checked" : ""
-                  }>
-                  <label for="userIsAdmin">Administrador</label>
-                </div>
-              </div>
-            </form>
-          </div>
-          <div class="admin-modal-footer">
-            <button class="btn btn-secondary cancel-user-btn">Cancelar</button>
-            <button class="btn btn-primary save-user-btn">Salvar</button>
-          </div>
-        </div>
-      </div>
-    `;
+    // Preencher o formulário com os dados do usuário
+    const userModal = document.getElementById("userModal");
+    const userForm = document.getElementById("userForm");
 
-    // Adicionar modal ao documento
-    const modalContainer = document.createElement("div");
-    modalContainer.innerHTML = modalHTML;
-    document.body.appendChild(modalContainer.firstChild);
+    if (!userModal || !userForm) {
+      throw new Error("Modal de usuário não encontrado no documento");
+    }
 
-    const modal = document.getElementById("userModal");
+    // Atualizar título do modal
+    document.getElementById("userModalTitle").textContent = "Editar Usuário";
+
+    // Preencher campos do formulário
+    document.getElementById("userId").value = user.id;
+    document.getElementById("userName").value = user.name;
+    document.getElementById("userEmail").value = user.email;
+    document.getElementById("userPassword").value = ""; // Limpar campo de senha
+    document.getElementById("userIsAdmin").checked = user.isAdmin;
+    document.getElementById("userIsActive").checked = user.status === "active";
+
+    // Mostrar o texto de ajuda da senha
+    const passwordHelpText = document.getElementById("passwordHelpText");
+    if (passwordHelpText) {
+      passwordHelpText.style.display = "block";
+    }
 
     // Exibir o modal
-    setTimeout(() => {
-      modal.classList.add("active");
-    }, 10);
+    userModal.classList.add("active");
 
-    // Configurar eventos do modal
-    const closeBtn = modal.querySelector(".admin-modal-close");
-    const cancelBtn = modal.querySelector(".cancel-user-btn");
-    const saveBtn = modal.querySelector(".save-user-btn");
+    // Configurar evento do botão de salvar
+    const saveUserBtn = document.getElementById("saveUserBtn");
+    if (saveUserBtn) {
+      // Remover event listeners antigos
+      const newSaveBtn = saveUserBtn.cloneNode(true);
+      saveUserBtn.parentNode.replaceChild(newSaveBtn, saveUserBtn);
 
-    closeBtn.addEventListener("click", () => closeUserModal());
-    cancelBtn.addEventListener("click", () => closeUserModal());
+      // Adicionar novo event listener
+      newSaveBtn.addEventListener("click", async () => {
+        const userData = {
+          id: document.getElementById("userId").value,
+          name: document.getElementById("userName").value,
+          email: document.getElementById("userEmail").value,
+          password: document.getElementById("userPassword").value,
+          status: document.getElementById("userIsActive").checked
+            ? "active"
+            : "inactive",
+          isAdmin: document.getElementById("userIsAdmin").checked,
+        };
 
-    saveBtn.addEventListener("click", async () => {
-      const userData = {
-        id: document.getElementById("userId").value,
-        name: document.getElementById("userName").value,
-        email: document.getElementById("userEmail").value,
-        status: document.getElementById("userStatus").value,
-        isAdmin: document.getElementById("userIsAdmin").checked,
-      };
-
-      await saveUserData(userData);
-      closeUserModal();
-      loadUsersList();
-    });
+        await saveUserData(userData);
+        closeUserModal();
+        loadUsersList();
+      });
+    }
   } catch (error) {
     console.error("Erro ao editar usuário:", error);
-    showNotification("Erro ao carregar dados do usuário", "error");
+    showNotification(`Erro ao editar usuário: ${error.message}`, "error");
   }
 }
 
-// Função para criar um novo usuário
+// Função para mostrar modal de novo usuário
 function showUserModal() {
-  // Criar modal de criação de usuário
-  const modalHTML = `
-    <div class="admin-modal" id="userModal">
-      <div class="admin-modal-content">
-        <div class="admin-modal-header">
-          <h3>Novo Usuário</h3>
-          <button class="admin-modal-close">&times;</button>
-        </div>
-        <div class="admin-modal-body">
-          <form id="userForm">
-            <div class="form-group">
-              <label for="userName">Nome</label>
-              <input type="text" class="form-control" id="userName" required>
-            </div>
-            
-            <div class="form-group">
-              <label for="userEmail">Email</label>
-              <input type="email" class="form-control" id="userEmail" required>
-            </div>
-            
-            <div class="form-group">
-              <label for="userPassword">Senha</label>
-              <input type="password" class="form-control" id="userPassword" required>
-            </div>
-            
-            <div class="form-group">
-              <label for="userStatus">Status</label>
-              <select class="form-control" id="userStatus">
-                <option value="active" selected>Ativo</option>
-                <option value="inactive">Inativo</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <div class="checkbox-group">
-                <input type="checkbox" id="userIsAdmin">
-                <label for="userIsAdmin">Administrador</label>
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="admin-modal-footer">
-          <button class="btn btn-secondary cancel-user-btn">Cancelar</button>
-          <button class="btn btn-primary create-user-btn">Criar</button>
-        </div>
-      </div>
-    </div>
-  `;
+  // Obter referência ao modal
+  const userModal = document.getElementById("userModal");
+  const userForm = document.getElementById("userForm");
 
-  // Adicionar modal ao documento
-  const modalContainer = document.createElement("div");
-  modalContainer.innerHTML = modalHTML;
-  document.body.appendChild(modalContainer.firstChild);
+  if (!userModal || !userForm) {
+    console.error("Modal de usuário não encontrado");
+    return;
+  }
 
-  const modal = document.getElementById("userModal");
+  // Atualizar título do modal
+  document.getElementById("userModalTitle").textContent = "Novo Usuário";
 
-  // Exibir o modal
-  setTimeout(() => {
-    modal.classList.add("active");
-  }, 10);
+  // Limpar formulário
+  userForm.reset();
+  document.getElementById("userId").value = "";
 
-  // Configurar eventos do modal
-  const closeBtn = modal.querySelector(".admin-modal-close");
-  const cancelBtn = modal.querySelector(".cancel-user-btn");
-  const createBtn = modal.querySelector(".create-user-btn");
+  // Ocultar texto de ajuda da senha
+  const passwordHelpText = document.getElementById("passwordHelpText");
+  if (passwordHelpText) {
+    passwordHelpText.style.display = "none";
+  }
 
-  closeBtn.addEventListener("click", () => closeUserModal());
-  cancelBtn.addEventListener("click", () => closeUserModal());
+  // Exibir modal
+  userModal.classList.add("active");
 
-  createBtn.addEventListener("click", async () => {
-    const userData = {
-      name: document.getElementById("userName").value,
-      email: document.getElementById("userEmail").value,
-      password: document.getElementById("userPassword").value,
-      status: document.getElementById("userStatus").value,
-      isAdmin: document.getElementById("userIsAdmin").checked,
-    };
+  // Configurar evento do botão de salvar
+  const saveUserBtn = document.getElementById("saveUserBtn");
+  if (saveUserBtn) {
+    // Remover event listeners antigos
+    const newSaveBtn = saveUserBtn.cloneNode(true);
+    saveUserBtn.parentNode.replaceChild(newSaveBtn, saveUserBtn);
 
-    await createNewUser(userData);
-    closeUserModal();
-    loadUsersList();
-  });
+    // Adicionar novo event listener
+    newSaveBtn.addEventListener("click", async () => {
+      const userData = {
+        name: document.getElementById("userName").value,
+        email: document.getElementById("userEmail").value,
+        password: document.getElementById("userPassword").value,
+        status: document.getElementById("userIsActive").checked
+          ? "active"
+          : "inactive",
+        isAdmin: document.getElementById("userIsAdmin").checked,
+      };
+
+      await createNewUser(userData);
+      closeUserModal();
+      loadUsersList();
+    });
+  }
 }
 
 // Função para fechar o modal de usuário
 function closeUserModal() {
-  const modal = document.getElementById("userModal");
-  if (!modal) return;
-
-  modal.classList.remove("active");
-
-  // Remover o modal após a animação
-  setTimeout(() => {
-    modal.remove();
-  }, 300);
+  const userModal = document.getElementById("userModal");
+  if (userModal) {
+    userModal.classList.remove("active");
+  }
 }
 
 // Função para salvar os dados do usuário
@@ -515,7 +597,7 @@ async function saveUserData(userData) {
     if (!token) throw new Error("Token não encontrado");
 
     const response = await fetch(
-      `http://localhost:4010/admin/users/${userData.id}`,
+      `http://localhost:4010/user/users/${userData.id}`,
       {
         method: "PUT",
         headers: {
@@ -547,7 +629,7 @@ async function createNewUser(userData) {
 
     if (!token) throw new Error("Token não encontrado");
 
-    const response = await fetch("http://localhost:4010/admin/users", {
+    const response = await fetch("http://localhost:4010/user/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -580,7 +662,7 @@ async function toggleUserStatus(userId, isDeactivate) {
     const action = isDeactivate ? "deactivate" : "activate";
 
     const response = await fetch(
-      `http://localhost:4010/admin/users/${userId}/${action}`,
+      `http://localhost:4010/user/users/${userId}/${action}`,
       {
         method: "PUT",
         headers: {
@@ -635,7 +717,7 @@ async function resetUserPassword(userId) {
     if (!token) throw new Error("Token não encontrado");
 
     const response = await fetch(
-      `http://localhost:4010/admin/users/${userId}/reset-password`,
+      `http://localhost:4010/user/users/${userId}/reset-password`,
       {
         method: "PUT",
         headers: {
@@ -676,14 +758,19 @@ async function terminateSession(sessionId) {
 
     if (!token) throw new Error("Token não encontrado");
 
+    const userId = document
+      .querySelector(`[data-session-id="${sessionId}"] .terminate-session-btn`)
+      .getAttribute("data-user-id");
+
     const response = await fetch(
-      `http://localhost:4010/admin/sessions/${sessionId}/terminate`,
+      `http://localhost:4010/session/${sessionId}/terminate`,
       {
-        method: "DELETE",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: token,
         },
+        body: JSON.stringify({ userId }),
       }
     );
 
@@ -732,12 +819,20 @@ function filterSessions(searchTerm) {
       return;
     }
 
-    const name = row.querySelector("td:nth-child(2)").textContent.toLowerCase();
-    const email = row
+    const userName = row
+      .querySelector("td:nth-child(2)")
+      .textContent.toLowerCase();
+    const userEmail = row
       .querySelector("td:nth-child(3)")
       .textContent.toLowerCase();
+    const deviceInfo =
+      row.querySelector(".user-agent-cell")?.textContent.toLowerCase() || "";
 
-    if (name.includes(searchTerm) || email.includes(searchTerm)) {
+    if (
+      userName.includes(searchTerm) ||
+      userEmail.includes(searchTerm) ||
+      deviceInfo.includes(searchTerm)
+    ) {
       row.style.display = "";
     } else {
       row.style.display = "none";

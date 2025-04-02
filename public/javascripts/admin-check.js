@@ -43,6 +43,9 @@
 
     document.head.appendChild(style);
     document.body.appendChild(overlay);
+
+    // Timeout de segurança para garantir que o overlay será removido depois de 10 segundos
+    setTimeout(hideLoading, 10000);
   }
 
   function hideLoading() {
@@ -58,6 +61,7 @@
   }
 
   function redirectToHome(message) {
+    hideLoading(); // Garantir que o overlay seja removido antes do redirecionamento
     localStorage.setItem("auth_error", message);
     window.location.replace("/home");
   }
@@ -65,20 +69,20 @@
   // Mostrar carregamento
   showLoading();
 
-  // Verifica se existe um token
-  const token = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("token="))
-    ?.split("=")[1];
-
-  if (!token) {
-    redirectToHome(
-      "Você precisa estar logado para acessar o painel administrativo."
-    );
-    return;
-  }
-
   try {
+    // Verifica se existe um token
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))
+      ?.split("=")[1];
+
+    if (!token) {
+      redirectToHome(
+        "Você precisa estar logado para acessar o painel administrativo."
+      );
+      return;
+    }
+
     // Verificar token e permissões de administrador
     const response = await fetch("http://localhost:4010/session/validate", {
       method: "GET",
@@ -113,48 +117,9 @@
 
     // Se chegou até aqui, o usuário está autenticado e é admin
     hideLoading();
-
-    // Quando o DOM estiver pronto, atualizar informações do usuário
-    document.addEventListener("DOMContentLoaded", () => {
-      updateAdminUserInfo(userData);
-    });
   } catch (error) {
     console.error("Erro ao validar acesso administrativo:", error);
+    hideLoading(); // Garantir que o overlay seja removido mesmo em caso de erro
     redirectToHome("Erro ao verificar suas permissões. Tente novamente.");
   }
 })();
-
-// Função para atualizar as informações do usuário na página de administração
-function updateAdminUserInfo(userData) {
-  const userNameElement = document.getElementById("adminUserName");
-  if (userNameElement) {
-    userNameElement.textContent = userData.name;
-  }
-
-  // Atualizar avatar do usuário
-  const userAvatarElement = document.getElementById("adminUserAvatar");
-  if (userAvatarElement) {
-    if (userData.profile_picture && userData.profile_picture !== null) {
-      userAvatarElement.innerHTML = `<img src="${userData.profile_picture}" alt="${userData.name}" />`;
-    } else {
-      // Gerar avatar com as iniciais do nome do usuário
-      userAvatarElement.innerHTML = getInitials(userData.name);
-    }
-  }
-}
-
-// Função para obter as iniciais do nome
-function getInitials(name) {
-  if (!name) return "";
-
-  const nameParts = name.split(" ");
-  if (nameParts.length === 1) {
-    return nameParts[0].charAt(0).toUpperCase();
-  }
-
-  // Pegar a primeira letra do primeiro e último nome
-  const firstInitial = nameParts[0].charAt(0);
-  const lastInitial = nameParts[nameParts.length - 1].charAt(0);
-
-  return (firstInitial + lastInitial).toUpperCase();
-}
