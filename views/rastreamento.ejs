@@ -538,13 +538,9 @@
     if (voltarButton) {
       voltarButton.style.display = "flex";
       voltarButton.style.visibility = "visible";
-      console.log(
-        "Botão 'Voltar ao Dashboard' configurado para ser visível na inicialização"
-      );
 
       // Adicionar evento de clique diretamente
       voltarButton.onclick = function () {
-        console.log("Botão 'Voltar ao Dashboard' clicado");
         const dashboardView = document.getElementById("dashboardView");
         const trackingView = document.getElementById("trackingView");
 
@@ -565,10 +561,6 @@
           if (icon) {
             icon.className = "fas fa-truck";
           }
-
-          console.log(
-            "Dashboard ativado com sucesso pelo botão 'Voltar ao Dashboard'"
-          );
         }
 
         return false; // Prevenir comportamento padrão

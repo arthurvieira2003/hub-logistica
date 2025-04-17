@@ -166,6 +166,9 @@ const transportadoras = [
   },
 ];
 
+// Configuração para o número de dias de rastreamento da Ouro Negro
+const diasRastreamento = 10;
+
 // Função para formatar data no formato DD/MM/YYYY
 function formatarData(dataString) {
   if (!dataString) return "-";
@@ -177,12 +180,11 @@ function formatarData(dataString) {
 
   // Converter de YYYY-MM-DD para DD/MM/YYYY
   try {
-    const data = new Date(dataString);
-    if (isNaN(data.getTime())) return dataString; // Se não for uma data válida, retorna o original
+    // Remover a parte da hora se existir
+    const dataParte = dataString.split(" ")[0];
+    const [ano, mes, dia] = dataParte.split("-");
 
-    const dia = String(data.getDate()).padStart(2, "0");
-    const mes = String(data.getMonth() + 1).padStart(2, "0");
-    const ano = data.getFullYear();
+    if (!ano || !mes || !dia) return dataString;
 
     return `${dia}/${mes}/${ano}`;
   } catch (error) {
@@ -195,7 +197,9 @@ function formatarData(dataString) {
 async function carregarDadosOuroNegro() {
   try {
     console.log("Iniciando carregamento de dados da Ouro Negro...");
-    const response = await fetch("http://localhost:4010/ouroNegro/track");
+    const response = await fetch(
+      `http://localhost:4010/ouroNegro/track?dias=${diasRastreamento}`
+    );
     if (!response.ok) {
       throw new Error(`Erro ao carregar dados: ${response.status}`);
     }
@@ -273,7 +277,7 @@ async function carregarDadosOuroNegro() {
         }
         console.log(`Status determinado para nota ${item.serial}: ${status}`);
 
-        // Atualizar última atualização e localização
+        // Atualizar última atualização
         try {
           ultimaAtualizacao = `${formatarData(
             ultimaOcorrencia.DATAOCORRENCIA
@@ -296,12 +300,12 @@ async function carregarDadosOuroNegro() {
       const nota = {
         numero: item.serial.toString(),
         status: status,
-        origem:
-          item.bplName.split(" - ")[0] +
-          ", " +
-          (item.bplName.includes("SC") ? "SC" : ""),
-        destino: ultimaCidade + (ultimaUF ? ", " + ultimaUF : ""),
-        dataEnvio: item.docDate.split(" ")[0],
+        origem: `${item.cidadeOrigem}, ${item.estadoOrigem}`,
+        destino: `${item.cidadeDestino}, ${item.estadoDestino}`,
+        docDate: item.docDate.split(" ")[0],
+        dataEnvio: Array.isArray(item.rastreamento)
+          ? item.rastreamento[0].EMISSAO
+          : item.docDate.split(" ")[0],
         previsaoEntrega: Array.isArray(item.rastreamento)
           ? item.rastreamento[0].PREVISAO
           : item.docDate.split(" ")[0],
@@ -494,6 +498,18 @@ async function initRastreamento(contentElement) {
     if (ouroNegroIndex !== -1) {
       const notasOuroNegro = transportadoras[ouroNegroIndex].notas;
       console.log(`Encontradas ${notasOuroNegro.length} notas da Ouro Negro`);
+
+      // Ordenar notas por data de faturamento (decrescente) e número da nota (decrescente)
+      notasOuroNegro.sort((a, b) => {
+        // Primeiro critério: data de faturamento (decrescente)
+        const dataA = new Date(a.docDate.split(" ")[0]);
+        const dataB = new Date(b.docDate.split(" ")[0]);
+        if (dataB - dataA !== 0) {
+          return dataB - dataA;
+        }
+        // Segundo critério: número da nota (decrescente)
+        return parseInt(b.numero) - parseInt(a.numero);
+      });
 
       // Criar uma tabela simples
       const tabelaSimples = document.createElement("div");
@@ -1048,68 +1064,83 @@ async function initRastreamento(contentElement) {
           }
         </style>
         
-        <div class="header-ouro-negro">
-          <h2>Rastreamento Ouro Negro</h2>
-          <div class="stats">
-            <div class="stat-item">
-              <div class="stat-value">${notasOuroNegro.length}</div>
-              <div class="stat-label">Notas</div>
-                          </div>
-            <div class="stat-item">
-              <div class="stat-value">${
+        <div class="header-rastreamento" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #247675;">
+          <h2 style="margin: 0; color: #333; font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 12px;">Sistema de Rastreamento</h2>
+          <div class="stats" style="display: flex; gap: 16px;">
+            <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">${
+                notasOuroNegro.length
+              }</div>
+              <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Notas</div>
+            </div>
+            <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">${
                 notasOuroNegro.filter(
                   (n) =>
                     n.status === "Em trânsito" ||
                     n.status === "Em rota de entrega"
                 ).length
               }</div>
-              <div class="stat-label">Em Trânsito</div>
-                        </div>
-            <div class="stat-item">
-              <div class="stat-value">${
+              <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Em Trânsito</div>
+            </div>
+            <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">${
                 notasOuroNegro.filter((n) => n.status === "Entregue").length
               }</div>
-              <div class="stat-label">Entregues</div>
-                        </div>
-            <div class="stat-item">
-              <div class="stat-value">${
+              <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Entregues</div>
+            </div>
+            <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">${
                 notasOuroNegro.filter((n) => n.atrasada).length
               }</div>
-              <div class="stat-label">Atrasadas</div>
-                      </div>
-                      </div>
+              <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Atrasadas</div>
+            </div>
           </div>
+        </div>
           
         <div style="overflow-x: auto; width: 100%;" class="tabela-container">
           <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
               <thead>
-              <tr style="background-color: #3a3a3a;">
-                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Nota</th>
-                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Transportadora</th>
-                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Status</th>
-                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Cliente</th>
-                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Origem</th>
-                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Destino</th>
-                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Data Envio</th>
-                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Previsão</th>
-                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid #4a90e2;">Ações</th>
+              <tr style="background-color: #247675;">
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Nota</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Transportadora</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Status</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Cliente</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Origem</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Destino</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Faturamento</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Data Envio</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Previsão</th>
+                <th style="padding: 15px; text-align: left; color: #ffffff; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.1);">Ações</th>
                 </tr>
               </thead>
               <tbody>
               ${notasOuroNegro
-                .map(
-                  (nota, index) => `
+                .map((nota, index) => {
+                  // Determinar a cor da borda lateral baseada na transportadora (versão mais sutil)
+                  let borderColor = "rgba(52, 152, 219, 0.3)"; // Cor padrão mais suave
+                  if (nota.transportadora.nome === "Ouro Negro") {
+                    borderColor = "rgba(255, 193, 7, 0.3)"; // Amarelo suave
+                  } else if (nota.transportadora.nome === "Jadlog") {
+                    borderColor = "rgba(255, 87, 34, 0.3)"; // Laranja suave
+                  } else if (nota.transportadora.nome === "Correios") {
+                    borderColor = "rgba(255, 193, 7, 0.3)"; // Amarelo suave
+                  } else if (nota.transportadora.nome === "Braspress") {
+                    borderColor = "rgba(76, 175, 80, 0.3)"; // Verde suave
+                  } else if (nota.transportadora.nome === "Azul Cargo") {
+                    borderColor = "rgba(33, 150, 243, 0.3)"; // Azul suave
+                  } else if (nota.transportadora.nome === "Jamef") {
+                    borderColor = "rgba(156, 39, 176, 0.3)"; // Roxo suave
+                  }
+
+                  return `
                 <tr style="background-color: ${
                   index % 2 === 0 ? "#f9f9f9" : "#fff"
-                }; transition: all 0.3s ease; ${
-                    nota.transportadora.nome === "Ouro Negro"
-                      ? "border-left: 4px solid #ffc107;"
-                      : ""
-                  }">
-                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;"><strong>${
+                }; transition: all 0.3s ease; border-left: 4px solid ${borderColor};">
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;"><strong>${
                     nota.numero
                   }</strong></td>
-                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
                     <div style="display: flex; align-items: center; gap: 8px;">
                       <img src="${nota.transportadora.logo}" alt="${
                     nota.transportadora.nome
@@ -1117,62 +1148,84 @@ async function initRastreamento(contentElement) {
                       <span>${nota.transportadora.nome}</span>
                     </div>
                   </td>
-                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
                     <span style="display: inline-block; padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: white; background: ${
                       nota.status === "Aguardando coleta"
-                        ? "linear-gradient(135deg, #f0ad4e, #ec971f)"
+                        ? "#ff9800" // Laranja para aguardando
                         : nota.status === "Em trânsito"
-                        ? "linear-gradient(135deg, #5bc0de, #31b0d5)"
+                        ? "#03a9f4" // Azul claro para em trânsito
                         : nota.status === "Entregue"
-                        ? "linear-gradient(135deg, #5cb85c, #449d44)"
+                        ? "#4caf50" // Verde para entregue
                         : nota.status === "Em processamento"
-                        ? "linear-gradient(135deg, #337ab7, #2e6da4)"
+                        ? "#9c27b0" // Roxo para processamento
                         : nota.status === "Em rota de entrega"
-                        ? "linear-gradient(135deg, #5bc0de, #2aabd2)"
+                        ? "#00bcd4" // Ciano para rota de entrega
                         : nota.atrasada
-                        ? "linear-gradient(135deg, #d9534f, #c9302c)"
-                        : "linear-gradient(135deg, #777, #555)"
-                    };">
+                        ? "#f44336" // Vermelho para atrasado
+                        : "#757575" // Cinza para outros status
+                    }; box-shadow: 0 2px 4px ${
+                    nota.status === "Aguardando coleta"
+                      ? "rgba(255, 152, 0, 0.3)"
+                      : nota.status === "Em trânsito"
+                      ? "rgba(3, 169, 244, 0.3)"
+                      : nota.status === "Entregue"
+                      ? "rgba(76, 175, 80, 0.3)"
+                      : nota.status === "Em processamento"
+                      ? "rgba(156, 39, 176, 0.3)"
+                      : nota.status === "Em rota de entrega"
+                      ? "rgba(0, 188, 212, 0.3)"
+                      : nota.atrasada
+                      ? "rgba(244, 67, 54, 0.3)"
+                      : "rgba(117, 117, 117, 0.3)"
+                  };">
                       ${nota.status}
+                      ${
+                        nota.atrasada
+                          ? '<i class="fas fa-exclamation-circle" style="margin-left: 5px;"></i>'
+                          : ""
+                      }
                       </span>
                     </td>
-                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${
                     nota.cliente || "-"
                   }">${nota.cliente || "-"}</td>
-                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
                     ${nota.origem}
                   </td>
-                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">${
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">${
                     nota.destino
                   }</td>
-                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; font-family: 'Courier New', monospace; font-weight: 600; color: #555;">${formatarData(
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: #555;">${formatarData(
+                    nota.docDate
+                  )}</td>
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: #555;">${formatarData(
                     nota.dataEnvio
                   )}</td>
-                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; font-family: 'Courier New', monospace; font-weight: 600; color: ${
-                    nota.atrasada ? "#d9534f" : "#555"
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: ${
+                    nota.atrasada ? "#dc3545" : "#555"
                   };">${formatarData(nota.previsaoEntrega)}</td>
-                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd;">
+                  <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
                     <button class="btn-detalhes detalhes-btn" data-nota="${
                       nota.numero
-                    }" style="background: linear-gradient(135deg, #3a3a3a, #555); color: white; border: none; border-radius: 50px; padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    }" style="background: #247675; color: white; border: none; border-radius: 50px; padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 6px;">
                       <i class="fas fa-info-circle"></i> Detalhes
                       </button>
                     </td>
                   </tr>
-                `
-                )
+                `;
+                })
                 .join("")}
               </tbody>
             </table>
         </div>
         
-        <div id="detalhesModal" class="modal-ouro-negro">
-          <div class="modal-content-ouro-negro">
-            <div class="modal-header-ouro-negro">
-              <h3 id="modalNotaNumero">Detalhes da Nota</h3>
-              <button id="closeDetalhesModal" class="modal-close-ouro-negro">&times;</button>
+        <div id="detalhesModal" class="modal-rastreamento" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.3s ease;">
+          <div class="modal-content-rastreamento" style="background-color: #fff; margin: 5% auto; width: 80%; max-width: 900px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; transform: scale(0.9); opacity: 0; transition: all 0.3s ease;">
+            <div class="modal-header-rastreamento" style="background-color: #247675; color: #ffffff; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(255,255,255,0.1);">
+              <h3 id="modalNotaNumero" style="margin: 0; font-size: 22px; font-weight: 600;">Detalhes da Nota</h3>
+              <button id="closeDetalhesModal" class="modal-close-rastreamento" style="background: transparent; border: none; color: #ffffff; font-size: 24px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease;">&times;</button>
             </div>
-            <div class="modal-body-ouro-negro">
+            <div class="modal-body-rastreamento" style="padding: 24px;">
               <div id="detalhesContainer">
                 <!-- Preenchido dinamicamente -->
               </div>
@@ -1222,96 +1275,129 @@ async function initRastreamento(contentElement) {
                   });
 
                   timelineHTML = `
-                    <h4 style="margin-top: 30px; margin-bottom: 20px; color: #333; font-size: 20px; font-weight: 600; border-bottom: 2px solid #4a90e2; padding-bottom: 10px;">Histórico de Rastreamento</h4>
-                    <div class="timeline-ouro-negro">
+                    <h4 style="margin-top: 30px; margin-bottom: 20px; color: #333; font-size: 20px; font-weight: 600; border-bottom: 2px solid #247675; padding-bottom: 10px;">Histórico de Rastreamento</h4>
+                    <div class="timeline-rastreamento" style="position: relative; padding: 20px 0; margin-top: 20px;">
                       ${historicoOrdenado
-                        .map(
-                          (ocorrencia, index) => `
-                        <div class="timeline-item-ouro-negro completed" style="--index: ${index}">
-                          <div class="timeline-content-ouro-negro">
-                            <h5>${ocorrencia.DESCOCORRENCIA}</h5>
-                            <p>${formatarData(ocorrencia.DATAOCORRENCIA)} - ${
-                            ocorrencia.HORAOCORRENCIA
-                          }</p>
-                            <div class="timeline-location-ouro-negro">
-                              <i class="fas fa-map-marker-alt"></i>
+                        .map((ocorrencia, index) => {
+                          // Determinar a cor baseada no código de ocorrência
+                          let statusColor = "#757575"; // Cor padrão cinza
+                          switch (ocorrencia.CODOCORRENCIA) {
+                            case "101": // INICIO DO PROCESSO - EMISSAO DO CTE
+                              statusColor = "#9c27b0"; // Roxo para processamento
+                              break;
+                            case "000": // PROCESSO TRANSPORTE INICIADO
+                              statusColor = "#ff9800"; // Laranja para aguardando
+                              break;
+                            case "104": // CHEGADA NO DEPOSITO DE TRANSBORDO
+                            case "105": // CHEGADA NO DEPOSITO DE DESTINO
+                              statusColor = "#03a9f4"; // Azul claro para em trânsito
+                              break;
+                            case "106": // EM TRANSITO PARA ENTREGA
+                              statusColor = "#00bcd4"; // Ciano para rota de entrega
+                              break;
+                            case "108": // ENTREGA REALIZADA
+                              statusColor = "#4caf50"; // Verde para entregue
+                              break;
+                          }
+
+                          return `
+                        <div class="timeline-item-rastreamento completed" style="position: relative; margin-bottom: 25px; animation: fadeInUp 0.5s ease forwards; animation-delay: calc(var(--index) * 0.1s); opacity: 0; --index: ${index};">
+                          <div class="timeline-content-rastreamento" style="background-color: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 3px solid ${statusColor};">
+                            <h5 style="margin: 0 0 8px 0; color: #333; font-size: 16px; font-weight: 600;">${
+                              ocorrencia.DESCOCORRENCIA
+                            }</h5>
+                            <p style="margin: 0; color: #666; font-size: 14px;">${formatarData(
+                              ocorrencia.DATAOCORRENCIA
+                            )} - ${ocorrencia.HORAOCORRENCIA}</p>
+                            <div class="timeline-location-rastreamento" style="display: flex; align-items: center; gap: 5px; margin-top: 8px; font-size: 14px; color: #666;">
+                              <i class="fas fa-map-marker-alt" style="color: ${statusColor};"></i>
                               <span>${ocorrencia.CIDADE}, ${
                             ocorrencia.UF
                           }</span>
                             </div>
                           </div>
                         </div>
-                      `
-                        )
+                      `;
+                        })
                         .join("")}
                     </div>
                   `;
                 } else {
                   timelineHTML = `
-                    <div class="sem-dados-ouro-negro">
+                    <div class="sem-dados-rastreamento" style="text-align: center; padding: 30px; color: #666; font-style: italic;">
                       <p>Não há histórico de rastreamento disponível para esta nota.</p>
                     </div>
                   `;
                 }
 
                 detalhesContainer.innerHTML = `
-                  <div class="info-grid-ouro-negro">
-                    <div class="info-card-ouro-negro">
-                      <h4>Informações da Nota</h4>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">Status:</div>
-                        <div class="info-value-ouro-negro destaque">${
+                  <div class="info-grid-rastreamento" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div class="info-card-rastreamento" style="background-color: #f8f9fa; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                      <h4 style="margin: 0 0 16px 0; color: #333; font-size: 18px; font-weight: 600; padding-bottom: 8px; border-bottom: 2px solid #247675;">Informações da Nota</h4>
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Status:</div>
+                        <div class="info-value-rastreamento destaque" style="color: #247675; font-weight: 600;">${
                           nota.status
                         }</div>
                       </div>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">Cliente:</div>
-                        <div class="info-value-ouro-negro">${
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Cliente:</div>
+                        <div class="info-value-rastreamento" style="color: #333;">${
                           nota.cliente || "-"
                         }</div>
                       </div>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">CT-e:</div>
-                        <div class="info-value-ouro-negro">${
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">CT-e:</div>
+                        <div class="info-value-rastreamento" style="color: #333;">${
                           nota.cte || "-"
                         }</div>
                       </div>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">Transportadora:</div>
-                        <div class="info-value-ouro-negro destaque">Ouro Negro</div>
-                      </div>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">Status:</div>
-                        <div class="info-value-ouro-negro destaque">${
-                          nota.status
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Transportadora:</div>
+                        <div class="info-value-rastreamento destaque" style="color: #247675; font-weight: 600;">${
+                          nota.transportadora.nome
                         }</div>
                       </div>
                     </div>
-                    <div class="info-card-ouro-negro">
-                      <h4>Informações de Transporte</h4>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">Origem:</div>
-                        <div class="info-value-ouro-negro">${nota.origem}</div>
+                    <div class="info-card-rastreamento" style="background-color: #f8f9fa; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                      <h4 style="margin: 0 0 16px 0; color: #333; font-size: 18px; font-weight: 600; padding-bottom: 8px; border-bottom: 2px solid #247675;">Informações de Transporte</h4>
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Origem:</div>
+                        <div class="info-value-rastreamento" style="color: #333;">${
+                          nota.origem
+                        }</div>
                       </div>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">Destino:</div>
-                        <div class="info-value-ouro-negro">${nota.destino}</div>
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Destino:</div>
+                        <div class="info-value-rastreamento" style="color: #333;">${
+                          nota.destino
+                        }</div>
                       </div>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">Data de Envio:</div>
-                        <div class="info-value-ouro-negro">${formatarData(
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Data de Faturamento:</div>
+                        <div class="info-value-rastreamento" style="color: #333;">${formatarData(
+                          nota.docDate
+                        )}</div>
+                      </div>
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Data de Envio:</div>
+                        <div class="info-value-rastreamento" style="color: #333;">${formatarData(
                           nota.dataEnvio
                         )}</div>
                       </div>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">Previsão:</div>
-                        <div class="info-value-ouro-negro ${
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Previsão:</div>
+                        <div class="info-value-rastreamento ${
                           nota.atrasada ? "atrasado" : ""
-                        }">${formatarData(nota.previsaoEntrega)}</div>
+                        }" style="color: ${
+                  nota.atrasada ? "#dc3545" : "#333"
+                }; ${nota.atrasada ? "font-weight: 600;" : ""}">${formatarData(
+                  nota.previsaoEntrega
+                )}</div>
                       </div>
-                      <div class="info-item-ouro-negro">
-                        <div class="info-label-ouro-negro">Última Atualização:</div>
-                        <div class="info-value-ouro-negro">${
+                      <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+                        <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Última Atualização:</div>
+                        <div class="info-value-rastreamento" style="color: #333;">${
                           nota.ultimaAtualizacao
                         }</div>
                       </div>
@@ -1320,16 +1406,29 @@ async function initRastreamento(contentElement) {
                   ${timelineHTML}
                 `;
 
+                // Mostrar o modal com animação
                 modal.style.display = "block";
                 setTimeout(() => {
-                  modal.classList.add("active");
+                  modal.style.opacity = "1";
+                  modal.querySelector(
+                    ".modal-content-rastreamento"
+                  ).style.opacity = "1";
+                  modal.querySelector(
+                    ".modal-content-rastreamento"
+                  ).style.transform = "scale(1)";
                 }, 10);
 
                 // Adicionar evento para fechar o modal
                 document
                   .getElementById("closeDetalhesModal")
                   .addEventListener("click", function () {
-                    modal.classList.remove("active");
+                    modal.style.opacity = "0";
+                    modal.querySelector(
+                      ".modal-content-rastreamento"
+                    ).style.opacity = "0";
+                    modal.querySelector(
+                      ".modal-content-rastreamento"
+                    ).style.transform = "scale(0.9)";
                     setTimeout(() => {
                       modal.style.display = "none";
                     }, 300);
@@ -1338,7 +1437,13 @@ async function initRastreamento(contentElement) {
                 // Fechar o modal ao clicar fora dele
                 window.addEventListener("click", function (event) {
                   if (event.target === modal) {
-                    modal.classList.remove("active");
+                    modal.style.opacity = "0";
+                    modal.querySelector(
+                      ".modal-content-rastreamento"
+                    ).style.opacity = "0";
+                    modal.querySelector(
+                      ".modal-content-rastreamento"
+                    ).style.transform = "scale(0.9)";
                     setTimeout(() => {
                       modal.style.display = "none";
                     }, 300);
@@ -1619,6 +1724,37 @@ function abrirDetalhesNota(notaNumero) {
         <div class="detalhes-item">
           <span class="detalhes-label">CT-e:</span>
           <span class="detalhes-value">${notaEncontrada.cte || "-"}</span>
+        </div>
+        <div class="detalhes-item">
+          <span class="detalhes-label">Data de Faturamento:</span>
+          <span class="detalhes-value">${formatarData(
+            notaEncontrada.docDate
+          )}</span>
+        </div>
+        <div class="detalhes-item">
+          <span class="detalhes-label">Data de Envio:</span>
+          <span class="detalhes-value">${formatarData(
+            notaEncontrada.dataEnvio
+          )}</span>
+        </div>
+        <div class="detalhes-item ${
+          notaEncontrada.atrasada ? "detalhes-atrasado" : ""
+        }">
+          <span class="detalhes-label">Previsão de Entrega:</span>
+          <span class="detalhes-value">
+            ${formatarData(notaEncontrada.previsaoEntrega)}
+            ${
+              notaEncontrada.atrasada
+                ? '<i class="fas fa-exclamation-triangle icone-atraso" title="Entrega atrasada"></i>'
+                : ""
+            }
+          </span>
+        </div>
+        <div class="detalhes-item">
+          <span class="detalhes-label">Última Atualização:</span>
+          <span class="detalhes-value">${
+            notaEncontrada.ultimaAtualizacao
+          }</span>
         </div>
       </div>
     </div>

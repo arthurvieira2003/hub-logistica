@@ -344,6 +344,878 @@ async function loadToolContent(tool, contentElement) {
           </div>
         `;
         break;
+      case "frota":
+        contentElement.innerHTML = `
+          <div class="tool-header">
+            <h2>Gerenciamento de Frota</h2>
+            <p>Sistema de gerenciamento de veículos da frota.</p>
+          </div>
+          <div class="frota-tabs">
+            <button class="frota-tab-button active" data-tab="veiculos">
+              <i class="fas fa-car"></i> Veículos
+            </button>
+            <button class="frota-tab-button" data-tab="manutencoes">
+              <i class="fas fa-tools"></i> Manutenções
+            </button>
+          </div>
+          <div class="frota-container">
+            <!-- Aba de Veículos -->
+            <div class="frota-tab-content active" id="veiculosTab">
+              <div class="frota-actions">
+                <button class="btn-primary frota-add-btn">
+                  <i class="fas fa-plus"></i> Adicionar Veículo
+                </button>
+                <div class="frota-search">
+                  <input type="text" id="frotaSearch" placeholder="Buscar veículo por placa ou modelo...">
+                  <button><i class="fas fa-search"></i></button>
+                </div>
+                <div class="frota-filter">
+                  <select id="frotaFilter">
+                    <option value="todos">Todos os veículos</option>
+                    <option value="Disponível">Disponíveis</option>
+                    <option value="Em uso">Em uso</option>
+                    <option value="Manutenção">Em manutenção</option>
+                  </select>
+                </div>
+              </div>
+              <div class="frota-list" id="frotaList">
+                <div class="loader">
+                  <i class="fas fa-spinner fa-spin"></i> Carregando veículos...
+                </div>
+              </div>
+              <div class="pagination" id="frotaPagination">
+                <!-- Paginação será adicionada dinamicamente -->
+              </div>
+            </div>
+            
+            <!-- Aba de Manutenções -->
+            <div class="frota-tab-content" id="manutencoesTab">
+              <div class="frota-actions">
+                <button class="btn-primary frota-add-manutencao-btn">
+                  <i class="fas fa-plus"></i> Registrar Manutenção
+                </button>
+                <div class="frota-search">
+                  <input type="text" id="manutencaoSearch" placeholder="Buscar por placa ou serviço...">
+                  <button><i class="fas fa-search"></i></button>
+                </div>
+                <div class="frota-filter">
+                  <select id="manutencaoFilter">
+                    <option value="todos">Todos os veículos</option>
+                  </select>
+                </div>
+              </div>
+              <div class="manutencao-list" id="manutencaoList">
+                <div class="loader">
+                  <i class="fas fa-spinner fa-spin"></i> Carregando manutenções...
+                </div>
+              </div>
+              <div class="pagination" id="manutencaoPagination">
+                <!-- Paginação será adicionada dinamicamente -->
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Configurar as abas
+        const tabButtons = document.querySelectorAll(".frota-tab-button");
+        const tabContents = document.querySelectorAll(".frota-tab-content");
+
+        tabButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const tabName = button.dataset.tab;
+
+            // Desativar todas as abas
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            tabContents.forEach((content) =>
+              content.classList.remove("active")
+            );
+
+            // Ativar a aba selecionada
+            button.classList.add("active");
+            document.getElementById(`${tabName}Tab`).classList.add("active");
+          });
+        });
+
+        // Configuração de paginação
+        const ITEMS_PER_PAGE = 6;
+        let currentFrotaPage = 1;
+        let currentManutencaoPage = 1;
+        let veiculosAtivos = [];
+        let manutencoesAgrupadas = [];
+
+        // Função para criar paginação
+        const createPagination = (
+          totalItems,
+          currentPage,
+          itemsPerPage,
+          containerId,
+          onPageChange
+        ) => {
+          const totalPages = Math.ceil(totalItems / itemsPerPage);
+          const container = document.getElementById(containerId);
+          container.innerHTML = "";
+
+          if (totalPages <= 1) {
+            return;
+          }
+
+          // Criar o controlador de paginação
+          const pagination = document.createElement("div");
+          pagination.className = "pagination-controls";
+
+          // Botão anterior
+          const prevButton = document.createElement("button");
+          prevButton.className = "pagination-btn prev-btn";
+          prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+          prevButton.disabled = currentPage === 1;
+          prevButton.addEventListener("click", () => {
+            if (currentPage > 1) {
+              onPageChange(currentPage - 1);
+            }
+          });
+          pagination.appendChild(prevButton);
+
+          // Números das páginas
+          const maxPagesToShow = 5;
+          const startPage = Math.max(
+            1,
+            currentPage - Math.floor(maxPagesToShow / 2)
+          );
+          const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+          // Primeira página, se não estiver no início
+          if (startPage > 1) {
+            const firstPageBtn = document.createElement("button");
+            firstPageBtn.className = "pagination-btn page-num";
+            firstPageBtn.textContent = "1";
+            firstPageBtn.addEventListener("click", () => onPageChange(1));
+            pagination.appendChild(firstPageBtn);
+
+            if (startPage > 2) {
+              const ellipsis = document.createElement("span");
+              ellipsis.className = "pagination-ellipsis";
+              ellipsis.textContent = "...";
+              pagination.appendChild(ellipsis);
+            }
+          }
+
+          // Páginas numéricas
+          for (let i = startPage; i <= endPage; i++) {
+            const pageButton = document.createElement("button");
+            pageButton.className = `pagination-btn page-num ${
+              i === currentPage ? "active" : ""
+            }`;
+            pageButton.textContent = i.toString();
+            pageButton.addEventListener("click", () => onPageChange(i));
+            pagination.appendChild(pageButton);
+          }
+
+          // Última página, se não estiver no final
+          if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+              const ellipsis = document.createElement("span");
+              ellipsis.className = "pagination-ellipsis";
+              ellipsis.textContent = "...";
+              pagination.appendChild(ellipsis);
+            }
+
+            const lastPageBtn = document.createElement("button");
+            lastPageBtn.className = "pagination-btn page-num";
+            lastPageBtn.textContent = totalPages.toString();
+            lastPageBtn.addEventListener("click", () =>
+              onPageChange(totalPages)
+            );
+            pagination.appendChild(lastPageBtn);
+          }
+
+          // Botão próximo
+          const nextButton = document.createElement("button");
+          nextButton.className = "pagination-btn next-btn";
+          nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+          nextButton.disabled = currentPage === totalPages;
+          nextButton.addEventListener("click", () => {
+            if (currentPage < totalPages) {
+              onPageChange(currentPage + 1);
+            }
+          });
+          pagination.appendChild(nextButton);
+
+          container.appendChild(pagination);
+
+          // Adicionar informação de paginação
+          const paginationInfo = document.createElement("div");
+          paginationInfo.className = "pagination-info";
+          const startItemNum = (currentPage - 1) * itemsPerPage + 1;
+          const endItemNum = Math.min(currentPage * itemsPerPage, totalItems);
+          paginationInfo.textContent = `Mostrando ${startItemNum} a ${endItemNum} de ${totalItems} itens`;
+          container.appendChild(paginationInfo);
+        };
+
+        // Carregar dados da frota
+        const loadFrotaData = async () => {
+          try {
+            const response = await fetch("http://localhost:4010/frota");
+            if (!response.ok) {
+              throw new Error("Falha ao carregar dados da frota");
+            }
+
+            const veiculos = await response.json();
+            const frotaList = document.getElementById("frotaList");
+            frotaList.innerHTML = "";
+
+            // Filtrar veículos para remover os desativados
+            veiculosAtivos = veiculos.filter(
+              (veiculo) => veiculo.situacaoativo !== "Desativado"
+            );
+
+            if (veiculosAtivos.length === 0) {
+              frotaList.innerHTML =
+                '<div class="empty-state">Nenhum veículo ativo encontrado.</div>';
+              return;
+            }
+
+            // Renderizar os veículos paginados
+            renderFrotaPage(currentFrotaPage);
+
+            // Preencher o filtro de manutenções com as placas
+            const manutencaoFilter =
+              document.getElementById("manutencaoFilter");
+
+            // Limpar opções existentes, exceto a primeira (todos)
+            while (manutencaoFilter.options.length > 1) {
+              manutencaoFilter.remove(1);
+            }
+
+            // Adicionar as placas como opções no filtro
+            veiculosAtivos.forEach((veiculo) => {
+              const option = document.createElement("option");
+              option.value = veiculo.idobject;
+              option.textContent = `${veiculo.idobject} - ${veiculo.nmobject}`;
+              manutencaoFilter.appendChild(option);
+            });
+
+            // Configurar funcionalidade de filtro
+            const frotaFilter = document.getElementById("frotaFilter");
+            frotaFilter.addEventListener("change", () => {
+              const selectedStatus = frotaFilter.value;
+              filterAndPaginateFrota(
+                selectedStatus,
+                document.getElementById("frotaSearch").value
+              );
+            });
+
+            // Configurar funcionalidade de busca
+            const frotaSearch = document.getElementById("frotaSearch");
+            frotaSearch.addEventListener("input", () => {
+              const searchTerm = frotaSearch.value.toLowerCase();
+              filterAndPaginateFrota(
+                document.getElementById("frotaFilter").value,
+                searchTerm
+              );
+            });
+          } catch (error) {
+            console.error("Erro ao carregar dados da frota:", error);
+            const frotaList = document.getElementById("frotaList");
+            frotaList.innerHTML = `
+              <div class="error-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Falha ao carregar dados da frota. Tente novamente mais tarde.</p>
+                <button class="retry-button" id="retryLoadFrota">Tentar novamente</button>
+              </div>
+            `;
+
+            document
+              .getElementById("retryLoadFrota")
+              .addEventListener("click", loadFrotaData);
+          }
+        };
+
+        // Função para filtrar e paginar veículos
+        const filterAndPaginateFrota = (statusFilter, searchTerm) => {
+          // Aplicar filtros
+          const filteredVeiculos = veiculosAtivos.filter((veiculo) => {
+            // Filtro de status
+            const matchStatus =
+              statusFilter === "todos" ||
+              veiculo.situacaoativo === statusFilter;
+
+            // Filtro de busca
+            const placa = veiculo.idobject.toLowerCase();
+            const modelo = veiculo.nmobject.toLowerCase();
+            const matchSearch =
+              searchTerm === "" ||
+              placa.includes(searchTerm) ||
+              modelo.includes(searchTerm);
+
+            return matchStatus && matchSearch;
+          });
+
+          // Verificar se há resultados
+          const frotaList = document.getElementById("frotaList");
+          if (filteredVeiculos.length === 0) {
+            frotaList.innerHTML =
+              '<div class="empty-state">Nenhum veículo encontrado com os filtros aplicados.</div>';
+            document.getElementById("frotaPagination").innerHTML = "";
+            return;
+          }
+
+          // Resetar para primeira página ao aplicar filtros
+          currentFrotaPage = 1;
+
+          // Renderizar resultados paginados
+          renderFrotaItems(filteredVeiculos);
+        };
+
+        // Função para renderizar os veículos paginados
+        const renderFrotaPage = (page) => {
+          currentFrotaPage = page;
+          renderFrotaItems(veiculosAtivos);
+        };
+
+        // Função para renderizar itens de frota com base nos filtros atuais
+        const renderFrotaItems = (items) => {
+          const frotaList = document.getElementById("frotaList");
+          frotaList.innerHTML = "";
+
+          // Calcular índices para paginação
+          const startIndex = (currentFrotaPage - 1) * ITEMS_PER_PAGE;
+          const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, items.length);
+          const paginatedItems = items.slice(startIndex, endIndex);
+
+          // Criar os cards para os itens paginados
+          paginatedItems.forEach((veiculo) => {
+            const card = document.createElement("div");
+            card.className = "frota-card";
+            card.dataset.placa = veiculo.idobject;
+            card.dataset.situacao = veiculo.situacaoativo;
+
+            let statusClass = "disponivel";
+            if (veiculo.situacaoativo === "Em uso") {
+              statusClass = "em_uso";
+            } else if (veiculo.situacaoativo === "Manutenção") {
+              statusClass = "manutencao";
+            }
+
+            card.innerHTML = `
+              <div class="frota-card-header">
+                <h3>${veiculo.idobject}</h3>
+                <span class="status-badge ${statusClass}">${
+              veiculo.situacaoativo
+            }</span>
+              </div>
+              <div class="frota-card-body">
+                <div class="vehicle-info">
+                  <p><strong>Modelo:</strong> ${veiculo.nmobject}</p>
+                  <p><strong>Tipo:</strong> ${veiculo.nmobjecttype}</p>
+                  <p><strong>Fabricante:</strong> ${
+                    veiculo.nmcompany || "Não informado"
+                  }</p>
+                  <p><strong>Local:</strong> ${veiculo.nmsite}</p>
+                </div>
+              </div>
+              <div class="frota-card-footer">
+                <button class="btn-outline btn-edit" data-placa="${
+                  veiculo.idobject
+                }"><i class="fas fa-edit"></i> Editar</button>
+                <button class="btn-outline btn-history" data-placa="${
+                  veiculo.idobject
+                }"><i class="fas fa-history"></i> Histórico</button>
+                ${
+                  veiculo.situacaoativo === "Manutenção"
+                    ? `<button class="btn-outline btn-maintenance-complete" data-placa="${veiculo.idobject}"><i class="fas fa-check"></i> Finalizar manutenção</button>`
+                    : `<button class="btn-outline btn-maintenance" data-placa="${veiculo.idobject}"><i class="fas fa-tools"></i> Manutenção</button>`
+                }
+              </div>
+            `;
+
+            frotaList.appendChild(card);
+          });
+
+          // Configurar os botões de ação
+          setupFrotaButtons();
+
+          // Atualizar a paginação
+          createPagination(
+            items.length,
+            currentFrotaPage,
+            ITEMS_PER_PAGE,
+            "frotaPagination",
+            renderFrotaPage
+          );
+        };
+
+        // Configurar botões de ação para os cards de veículos
+        const setupFrotaButtons = () => {
+          // Configurar os botões de ação dos cartões
+          document.querySelectorAll(".btn-edit").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              showNotification(`Editando veículo ${btn.dataset.placa}`, "info");
+            });
+          });
+
+          document.querySelectorAll(".btn-history").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              // Alternar para a aba de manutenções e filtrar pelo veículo
+              document
+                .querySelector('.frota-tab-button[data-tab="manutencoes"]')
+                .click();
+              document.getElementById("manutencaoFilter").value =
+                btn.dataset.placa;
+              document
+                .getElementById("manutencaoFilter")
+                .dispatchEvent(new Event("change"));
+            });
+          });
+
+          document.querySelectorAll(".btn-maintenance").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              showNotification(
+                `Registrando manutenção para o veículo ${btn.dataset.placa}`,
+                "info"
+              );
+            });
+          });
+
+          document
+            .querySelectorAll(".btn-maintenance-complete")
+            .forEach((btn) => {
+              btn.addEventListener("click", () => {
+                showNotification(
+                  `Finalizando manutenção do veículo ${btn.dataset.placa}`,
+                  "info"
+                );
+              });
+            });
+        };
+
+        // Carregar dados de manutenções
+        const loadManutencoesData = async () => {
+          try {
+            const response = await fetch(
+              "http://localhost:4010/frota/manutencoes"
+            );
+            if (!response.ok) {
+              throw new Error("Falha ao carregar dados de manutenções");
+            }
+
+            const manutencoes = await response.json();
+            const manutencaoList = document.getElementById("manutencaoList");
+            manutencaoList.innerHTML = "";
+
+            if (manutencoes.length === 0) {
+              manutencaoList.innerHTML =
+                '<div class="empty-state">Nenhuma manutenção encontrada.</div>';
+              return;
+            }
+
+            // Agrupar manutenções por veículo e data
+            const grupamentoManutencoes = {};
+
+            manutencoes.forEach((manutencao) => {
+              const placa = manutencao.idobject;
+              const data = manutencao.dtcheckin;
+
+              // Criar chave combinada de placa e data
+              const chave = `${placa}-${data}`;
+
+              if (!grupamentoManutencoes[chave]) {
+                grupamentoManutencoes[chave] = {
+                  placa,
+                  modelo: manutencao.nmobject,
+                  local: manutencao.nmsite,
+                  data,
+                  status: manutencao.situacaoativo,
+                  responsavel: manutencao.idcommercial,
+                  observacao: manutencao.dsobservation,
+                  servicos: [],
+                };
+              }
+
+              // Adicionar o serviço ao grupo
+              grupamentoManutencoes[chave].servicos.push({
+                descricao: manutencao.nmcostvariable,
+                origem: manutencao.origemcusto,
+                valor: manutencao.vlrealcost,
+              });
+            });
+
+            // Agrupar por veículo para exibição
+            const manutencoesVeiculos = {};
+
+            // Converter grupos para array de manutenções
+            Object.values(grupamentoManutencoes).forEach((manutencao) => {
+              const placa = manutencao.placa;
+
+              if (!manutencoesVeiculos[placa]) {
+                manutencoesVeiculos[placa] = {
+                  placa,
+                  modelo: manutencao.modelo,
+                  status: manutencao.status,
+                  local: manutencao.local,
+                  manutencoes: [],
+                };
+              }
+
+              manutencoesVeiculos[placa].manutencoes.push(manutencao);
+            });
+
+            // Converter para array para paginação
+            manutencoesAgrupadas = Object.values(manutencoesVeiculos);
+
+            // Renderizar primeira página
+            renderManutencaoPage(1);
+
+            // Configurar funcionalidade de filtro para manutenções
+            const manutencaoFilter =
+              document.getElementById("manutencaoFilter");
+            manutencaoFilter.addEventListener("change", () => {
+              const selectedPlaca = manutencaoFilter.value;
+              filterAndPaginateManutencoes(
+                selectedPlaca,
+                document.getElementById("manutencaoSearch").value
+              );
+            });
+
+            // Configurar funcionalidade de busca para manutenções
+            const manutencaoSearch =
+              document.getElementById("manutencaoSearch");
+            manutencaoSearch.addEventListener("input", () => {
+              const searchTerm = manutencaoSearch.value.toLowerCase();
+              filterAndPaginateManutencoes(
+                document.getElementById("manutencaoFilter").value,
+                searchTerm
+              );
+            });
+          } catch (error) {
+            console.error("Erro ao carregar dados de manutenções:", error);
+            const manutencaoList = document.getElementById("manutencaoList");
+            manutencaoList.innerHTML = `
+              <div class="error-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Falha ao carregar dados de manutenções. Tente novamente mais tarde.</p>
+                <button class="retry-button" id="retryLoadManutencoes">Tentar novamente</button>
+              </div>
+            `;
+
+            document
+              .getElementById("retryLoadManutencoes")
+              .addEventListener("click", loadManutencoesData);
+          }
+        };
+
+        // Função para filtrar e paginar manutenções
+        const filterAndPaginateManutencoes = (placaFilter, searchTerm) => {
+          // Aplicar filtros
+          const filteredManutencoes = manutencoesAgrupadas.filter((veiculo) => {
+            // Filtro de placa
+            const matchPlaca =
+              placaFilter === "todos" || veiculo.placa === placaFilter;
+
+            // Filtro de busca
+            const placa = veiculo.placa.toLowerCase();
+            const modelo = veiculo.modelo.toLowerCase();
+
+            // Verificar se o termo de busca está nos serviços
+            const servicosMatch = veiculo.manutencoes.some((manutencao) => {
+              return manutencao.servicos.some((servico) =>
+                servico.descricao.toLowerCase().includes(searchTerm)
+              );
+            });
+
+            const matchSearch =
+              searchTerm === "" ||
+              placa.includes(searchTerm) ||
+              modelo.includes(searchTerm) ||
+              servicosMatch;
+
+            return matchPlaca && matchSearch;
+          });
+
+          // Verificar se há resultados
+          const manutencaoList = document.getElementById("manutencaoList");
+          if (filteredManutencoes.length === 0) {
+            manutencaoList.innerHTML =
+              '<div class="empty-state">Nenhuma manutenção encontrada com os filtros aplicados.</div>';
+            document.getElementById("manutencaoPagination").innerHTML = "";
+            return;
+          }
+
+          // Resetar para primeira página ao aplicar filtros
+          currentManutencaoPage = 1;
+
+          // Renderizar resultados paginados
+          renderManutencaoItems(filteredManutencoes);
+        };
+
+        // Função para renderizar a página de manutenções
+        const renderManutencaoPage = (page) => {
+          currentManutencaoPage = page;
+          renderManutencaoItems(manutencoesAgrupadas);
+        };
+
+        // Função para renderizar itens de manutenção com base nos filtros atuais
+        const renderManutencaoItems = (items) => {
+          const manutencaoList = document.getElementById("manutencaoList");
+          manutencaoList.innerHTML = "";
+
+          // Calcular índices para paginação
+          const startIndex = (currentManutencaoPage - 1) * ITEMS_PER_PAGE;
+          const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, items.length);
+          const paginatedItems = items.slice(startIndex, endIndex);
+
+          // Criar os cards para os itens paginados
+          paginatedItems.forEach((veiculo) => {
+            const card = document.createElement("div");
+            card.className = "manutencao-veiculo-card";
+            card.dataset.placa = veiculo.placa;
+
+            let statusClass = "disponivel";
+            if (veiculo.status === "Em uso") {
+              statusClass = "em_uso";
+            } else if (veiculo.status === "Manutenção") {
+              statusClass = "manutencao";
+            }
+
+            // Ordenar manutenções por data - mais recentes primeiro
+            const manutencoes = veiculo.manutencoes.sort((a, b) => {
+              return new Date(b.data) - new Date(a.data);
+            });
+
+            // Contar total de serviços em todas as manutenções
+            const totalServicos = manutencoes.reduce((total, manutencao) => {
+              return total + manutencao.servicos.length;
+            }, 0);
+
+            // Obter a data da última manutenção
+            const ultimaManutencao = manutencoes[0];
+            const dataUltimaManutencao = new Date(
+              ultimaManutencao.data
+            ).toLocaleDateString("pt-BR");
+
+            // Obter serviços da última manutenção para preview
+            const servicosPreview = ultimaManutencao.servicos
+              .map((s) => s.descricao)
+              .slice(0, 2);
+            const temMaisServicos = ultimaManutencao.servicos.length > 2;
+
+            // Obter valor total se disponível na observação
+            let valorUltimaManutencao = "";
+            if (
+              ultimaManutencao.observacao &&
+              ultimaManutencao.observacao.includes("R$")
+            ) {
+              const match =
+                ultimaManutencao.observacao.match(/R\$\s*([\d.]+,\d+)/);
+              if (match) {
+                valorUltimaManutencao = match[0];
+              }
+            }
+
+            card.innerHTML = `
+              <div class="manutencao-veiculo-header">
+                <div class="manutencao-veiculo-info">
+                  <h3>${veiculo.placa}</h3>
+                  <p class="veiculo-modelo">${veiculo.modelo}</p>
+                </div>
+                <span class="status-badge ${statusClass}">${
+              veiculo.status
+            }</span>
+              </div>
+              <div class="manutencao-veiculo-body">
+                <div class="manutencao-veiculo-stats">
+                  <div class="manutencao-stat">
+                    <span class="stat-value">${manutencoes.length}</span>
+                    <span class="stat-label">Manutenções</span>
+                  </div>
+                  <div class="manutencao-stat">
+                    <span class="stat-value">${totalServicos}</span>
+                    <span class="stat-label">Serviços</span>
+                  </div>
+                  <div class="manutencao-stat">
+                    <span class="stat-value">${dataUltimaManutencao}</span>
+                    <span class="stat-label">Última manutenção</span>
+                  </div>
+                </div>
+                <div class="manutencao-veiculo-preview">
+                  <h4>Últimos serviços:</h4>
+                  <ul class="servicos-preview">
+                    ${servicosPreview
+                      .map((servico) => `<li>${servico}</li>`)
+                      .join("")}
+                    ${
+                      temMaisServicos
+                        ? `<li class="mais-servicos">+ ${
+                            ultimaManutencao.servicos.length - 2
+                          } mais</li>`
+                        : ""
+                    }
+                  </ul>
+                  ${
+                    valorUltimaManutencao
+                      ? `<p class="ultimo-valor">Valor: ${valorUltimaManutencao}</p>`
+                      : ""
+                  }
+                </div>
+              </div>
+              <div class="manutencao-veiculo-footer">
+                <button class="btn-outline btn-expandir" data-placa="${
+                  veiculo.placa
+                }">
+                  <i class="fas fa-chevron-down"></i> Ver histórico de manutenções
+                </button>
+              </div>
+              <div class="manutencao-veiculo-detalhes" style="display: none;">
+                <div class="manutencao-timeline">
+                  ${manutencoes
+                    .map((manutencao, index) => {
+                      const dataFormatada = new Date(
+                        manutencao.data
+                      ).toLocaleDateString("pt-BR");
+
+                      // Extrair valor total se disponível na observação
+                      let valorTotal = "";
+                      if (
+                        manutencao.observacao &&
+                        manutencao.observacao.includes("R$")
+                      ) {
+                        const match =
+                          manutencao.observacao.match(/R\$\s*([\d.]+,\d+)/);
+                        if (match) {
+                          valorTotal = match[0];
+                        }
+                      }
+
+                      // Criar lista de serviços
+                      const servicosHtml = manutencao.servicos
+                        .map(
+                          (servico) => `
+                        <li class="servico-item">
+                          <div class="servico-descricao">${servico.descricao}</div>
+                          <div class="servico-origem">${servico.origem}</div>
+                        </li>
+                      `
+                        )
+                        .join("");
+
+                      return `
+                      <div class="manutencao-evento ${
+                        index === 0 ? "primeiro-evento" : ""
+                      }">
+                        <div class="evento-data">
+                          <div class="evento-data-ponto"></div>
+                          <div class="evento-data-valor">${dataFormatada}</div>
+                        </div>
+                        <div class="evento-conteudo">
+                          <div class="evento-info">
+                            <p>${
+                              manutencao.responsavel
+                                ? `<strong>Responsável:</strong> ${manutencao.responsavel}`
+                                : ""
+                            }</p>
+                            ${
+                              valorTotal
+                                ? `<p><strong>Valor:</strong> ${valorTotal}</p>`
+                                : ""
+                            }
+                            ${
+                              manutencao.observacao
+                                ? `<p><strong>Observação:</strong> ${manutencao.observacao}</p>`
+                                : ""
+                            }
+                          </div>
+                          <div class="evento-servicos">
+                            <h5>Serviços realizados:</h5>
+                            <ul class="servicos-lista">
+                              ${servicosHtml}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    })
+                    .join("")}
+                </div>
+              </div>
+            `;
+
+            manutencaoList.appendChild(card);
+          });
+
+          // Configurar os botões e comportamentos
+          setupManutencaoButtons();
+
+          // Atualizar a paginação
+          createPagination(
+            items.length,
+            currentManutencaoPage,
+            ITEMS_PER_PAGE,
+            "manutencaoPagination",
+            renderManutencaoPage
+          );
+        };
+
+        // Configurar botões de ação para os cards de manutenção
+        const setupManutencaoButtons = () => {
+          // Configurar os botões de expandir/colapsar
+          document.querySelectorAll(".btn-expandir").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              const card = btn.closest(".manutencao-veiculo-card");
+              const detalhes = card.querySelector(
+                ".manutencao-veiculo-detalhes"
+              );
+              const icone = btn.querySelector("i");
+
+              if (detalhes.style.display === "none") {
+                // Expandir
+                detalhes.style.display = "block";
+                btn.innerHTML =
+                  '<i class="fas fa-chevron-up"></i> Ocultar histórico de manutenções';
+
+                // Animar a abertura
+                detalhes.style.maxHeight = "0";
+                setTimeout(() => {
+                  detalhes.style.maxHeight = detalhes.scrollHeight + "px";
+                }, 10);
+              } else {
+                // Colapsar
+                detalhes.style.maxHeight = "0";
+
+                // Aguardar o término da animação para esconder
+                setTimeout(() => {
+                  detalhes.style.display = "none";
+                  btn.innerHTML =
+                    '<i class="fas fa-chevron-down"></i> Ver histórico de manutenções';
+                }, 300);
+              }
+            });
+          });
+        };
+
+        // Iniciar o carregamento dos dados
+        loadFrotaData();
+        loadManutencoesData();
+
+        // Configurar o botão de adicionar veículo
+        document
+          .querySelector(".frota-add-btn")
+          .addEventListener("click", () => {
+            showNotification(
+              "Funcionalidade de adicionar veículo em desenvolvimento",
+              "info"
+            );
+          });
+
+        // Configurar o botão de registrar manutenção
+        document
+          .querySelector(".frota-add-manutencao-btn")
+          .addEventListener("click", () => {
+            showNotification(
+              "Funcionalidade de registrar manutenção em desenvolvimento",
+              "info"
+            );
+          });
+
+        break;
       case "rastreamento":
         // Carregar o script de rastreamento se ainda não estiver carregado
         if (!window.initRastreamento) {
@@ -876,9 +1748,6 @@ async function loadToolContent(tool, contentElement) {
         const rastreamentoButton =
           document.getElementById("rastreamentoButton");
         if (rastreamentoButton) {
-          console.log(
-            "Botão de rastreamento encontrado, adicionando evento de clique"
-          );
           rastreamentoButton.addEventListener("click", () => {
             if (window.showTracking) {
               window.showTracking();
@@ -894,15 +1763,12 @@ async function loadToolContent(tool, contentElement) {
           const voltarButton = document.getElementById("voltarDashboardButton");
 
           if (voltarButton) {
-            console.log("Botão de voltar ao dashboard encontrado pelo ID");
-
             // Remover eventos de clique existentes para evitar duplicação
             const newButton = voltarButton.cloneNode(true);
             voltarButton.parentNode.replaceChild(newButton, voltarButton);
 
             // Adicionar novo evento de clique
             newButton.addEventListener("click", () => {
-              console.log("Clique no botão Voltar ao Dashboard");
               if (window.showDashboard) {
                 window.showDashboard();
               }
@@ -912,10 +1778,6 @@ async function loadToolContent(tool, contentElement) {
             newButton.style.display = "flex";
             newButton.style.visibility = "visible";
             newButton.style.opacity = "1";
-
-            console.log(
-              "Evento de clique adicionado ao botão Voltar ao Dashboard"
-            );
           } else {
             console.error(
               "Botão de voltar ao dashboard não encontrado pelo ID"
@@ -927,10 +1789,6 @@ async function loadToolContent(tool, contentElement) {
             );
 
             if (voltarButtonByClass) {
-              console.log(
-                "Botão de voltar ao dashboard encontrado pela classe"
-              );
-
               // Remover eventos de clique existentes para evitar duplicação
               const newButton = voltarButtonByClass.cloneNode(true);
               voltarButtonByClass.parentNode.replaceChild(
@@ -940,9 +1798,6 @@ async function loadToolContent(tool, contentElement) {
 
               // Adicionar novo evento de clique
               newButton.addEventListener("click", () => {
-                console.log(
-                  "Clique no botão Voltar ao Dashboard (pela classe)"
-                );
                 if (window.showDashboard) {
                   window.showDashboard();
                 }
@@ -952,17 +1807,10 @@ async function loadToolContent(tool, contentElement) {
               newButton.style.display = "flex";
               newButton.style.visibility = "visible";
               newButton.style.opacity = "1";
-
-              console.log(
-                "Evento de clique adicionado ao botão Voltar ao Dashboard (pela classe)"
-              );
             } else {
               console.error(
                 "Botão de voltar ao dashboard não encontrado de nenhuma forma"
               );
-
-              // Criar o botão manualmente como último recurso
-              console.log("Tentando criar o botão manualmente");
 
               const trackingView = document.getElementById("trackingView");
               if (trackingView) {
@@ -1012,9 +1860,6 @@ async function loadToolContent(tool, contentElement) {
 
                     // Adicionar evento de clique
                     newButton.addEventListener("click", () => {
-                      console.log(
-                        "Clique no botão Voltar ao Dashboard (criado manualmente)"
-                      );
                       if (window.showDashboard) {
                         window.showDashboard();
                       }
@@ -1025,8 +1870,6 @@ async function loadToolContent(tool, contentElement) {
 
                     // Adicionar container ao titleRow
                     titleRow.appendChild(buttonContainer);
-
-                    console.log("Botão criado manualmente e adicionado ao DOM");
                   } else {
                     console.error("titleRow não encontrado");
                   }

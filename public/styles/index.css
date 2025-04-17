@@ -1,6 +1,7 @@
 :root {
   --primary-color: #247675;
   --primary-hover: #357776;
+  --primary-dark: #1b5a59;
   --secondary-color: #8cb441;
   --background-color: #f1f5f9;
   --surface-color: #ffffff;
@@ -305,7 +306,6 @@ body {
 
 .tool-content {
   position: relative;
-  width: calc(100% - 2rem);
   min-height: auto;
   height: auto;
   background-color: var(--surface-color);
@@ -904,4 +904,688 @@ body.sidebar-collapsed .toggle-sidebar-button {
 /* Ajuste para o tab-bar quando a sidebar está visível */
 .main-content:not(.expanded) .tab-bar {
   padding-left: 1rem;
+}
+
+/* Estilos para a ferramenta de Frota */
+.tool-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tool-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tool-header p {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.frota-container {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.frota-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.frota-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.frota-add-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+.frota-search {
+  display: flex;
+  flex-grow: 1;
+  max-width: 400px;
+  position: relative;
+}
+
+.frota-search input {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  padding-right: 2.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.frota-search button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 2.5rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.frota-filter select {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background-color: white;
+  font-size: 0.875rem;
+}
+
+.frota-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.frota-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.frota-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.frota-card-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.frota-card-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge.disponivel {
+  background-color: #e6f7ed;
+  color: #05603a;
+}
+
+.status-badge.em_uso {
+  background-color: #e7f0ff;
+  color: #0747a6;
+}
+
+.status-badge.manutencao {
+  background-color: #fff0e5;
+  color: #c25100;
+}
+
+.frota-card-body {
+  padding: 1rem;
+}
+
+.vehicle-info p {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.frota-card-footer {
+  padding: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-outline {
+  padding: 0.5rem;
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-outline:hover {
+  background-color: var(--background-color);
+}
+
+/* Estados da ferramenta de Frota */
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.loader i {
+  font-size: 1.25rem;
+  color: var(--primary-color);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-secondary);
+  background-color: var(--background-color);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: var(--danger-color);
+  background-color: #fff5f5;
+  border-radius: 0.5rem;
+  gap: 1rem;
+}
+
+.error-state i {
+  font-size: 2rem;
+}
+
+.retry-button {
+  padding: 0.5rem 1rem;
+  background-color: var(--danger-color);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  background-color: #e53e3e;
+}
+
+/* Abas da ferramenta de Frota */
+.frota-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--surface-color);
+}
+
+.frota-tab-button {
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.frota-tab-button:hover {
+  color: var(--primary-color);
+  background-color: rgba(36, 118, 117, 0.05);
+}
+
+.frota-tab-button.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+.frota-tab-button i {
+  font-size: 1rem;
+}
+
+.frota-tab-content {
+  display: none;
+}
+
+.frota-tab-content.active {
+  display: block;
+}
+
+/* Cards de manutenção */
+.manutencao-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.manutencao-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.manutencao-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.manutencao-card-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.manutencao-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.manutencao-header-info h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.manutencao-data {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.manutencao-card-body {
+  padding: 1rem;
+}
+
+.manutencao-info {
+  margin-bottom: 1.5rem;
+}
+
+.manutencao-info p {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.manutencao-servicos h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.servicos-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+}
+
+.servico-item {
+  padding: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.servico-item:last-child {
+  border-bottom: none;
+}
+
+.servico-descricao {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.servico-origem {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  background-color: var(--background-color);
+  border-radius: 0.25rem;
+}
+
+.manutencao-card-footer {
+  padding: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Botões da ferramenta de adicionar manutenção */
+.frota-add-manutencao-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.frota-add-manutencao-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Paginação */
+.pagination {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-color);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--background-color);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.pagination-btn.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+  width: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.pagination-info {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Cards de manutenção por veículo */
+.manutencao-veiculo-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.manutencao-veiculo-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.manutencao-veiculo-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.manutencao-veiculo-info h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.veiculo-modelo {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.manutencao-veiculo-body {
+  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.manutencao-veiculo-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.manutencao-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.manutencao-veiculo-preview {
+  flex: 1;
+  min-width: 250px;
+}
+
+.manutencao-veiculo-preview h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.servicos-preview {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.servicos-preview li {
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.servicos-preview li:last-child {
+  border-bottom: none;
+}
+
+.mais-servicos {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.75rem;
+}
+
+.ultimo-valor {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+.manutencao-veiculo-footer {
+  padding: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.btn-expandir {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Timeline de manutenções */
+.manutencao-veiculo-detalhes {
+  padding: 0;
+  overflow: hidden;
+  max-height: 1000px;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.manutencao-timeline {
+  padding: 1.5rem;
+  background-color: var(--background-color);
+}
+
+.manutencao-evento {
+  display: flex;
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.manutencao-evento:last-child {
+  margin-bottom: 0;
+}
+
+.manutencao-evento:before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 24px;
+  bottom: -24px;
+  width: 2px;
+  background-color: var(--border-color);
+  z-index: 1;
+}
+
+.manutencao-evento.primeiro-evento:before {
+  background-color: var(--primary-color);
+}
+
+.manutencao-evento:last-child:before {
+  display: none;
+}
+
+.evento-data {
+  position: relative;
+  width: 120px;
+  flex-shrink: 0;
+  padding-right: 1rem;
+  z-index: 2;
+}
+
+.evento-data-ponto {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--background-color);
+  border: 2px solid var(--border-color);
+  margin-bottom: 0.25rem;
+}
+
+.primeiro-evento .evento-data-ponto {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.evento-data-valor {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.primeiro-evento .evento-data-valor {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.evento-conteudo {
+  flex: 1;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.evento-info {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.evento-info p {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.evento-servicos {
+  padding: 1rem;
+}
+
+.evento-servicos h5 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }

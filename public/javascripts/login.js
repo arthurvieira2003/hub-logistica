@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    console.log("Formulário submetido");
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
@@ -48,7 +47,6 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
         if (data.token) {
           document.cookie = `token=${data.token}; path=/`;
           window.location.href = "/home";
