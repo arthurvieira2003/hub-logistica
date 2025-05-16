@@ -1888,24 +1888,44 @@ async function loadToolContent(tool, contentElement) {
           window.initRastreamento();
         }
 
-        // Garantir que o dashboard seja exibido por padrão
+        // Adicionar eventos para todos os botões "Ver Rastreamento"
         setTimeout(() => {
-          // Mostrar o dashboard explicitamente
-          if (window.showDashboard) {
-            window.showDashboard();
-          } else {
-            // Fallback se a função showDashboard não estiver disponível
-            const dashboardView = document.getElementById("dashboardView");
-            const trackingView = document.getElementById("trackingView");
+          // Selecionar todos os botões com onclick="showTracking()"
+          document
+            .querySelectorAll('[onclick="showTracking()"]')
+            .forEach((button) => {
+              // Remover o atributo onclick para evitar duplicação
+              button.removeAttribute("onclick");
 
-            if (dashboardView && trackingView) {
-              dashboardView.style.display = "block";
-              dashboardView.classList.add("active");
-              trackingView.style.display = "none";
-              trackingView.classList.remove("active");
-            }
-          }
-        }, 100); // Pequeno atraso para garantir que os elementos estejam carregados
+              // Adicionar evento de clique
+              button.addEventListener("click", () => {
+                if (window.showTracking) {
+                  window.showTracking();
+                }
+              });
+            });
+
+          // Selecionar todos os botões com a classe view-tracking-button
+          document
+            .querySelectorAll(".view-tracking-button")
+            .forEach((button) => {
+              if (!button.getAttribute("data-event-attached")) {
+                // Marcar o botão como tendo um evento já anexado
+                button.setAttribute("data-event-attached", "true");
+
+                // Adicionar evento de clique
+                button.addEventListener("click", () => {
+                  if (window.showTracking) {
+                    window.showTracking();
+                  }
+                });
+              }
+            });
+        }, 300);
+
+        // NÃO forçar nenhuma visualização por padrão, deixar que o usuário escolha
+        // ou manter a visualização atual
+
         break;
       case "contratos":
         contentElement.innerHTML = `

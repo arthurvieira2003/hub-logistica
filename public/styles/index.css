@@ -394,14 +394,6 @@ body {
   right: 0;
 }
 
-.status-indicator.active {
-  background-color: var(--success-color);
-}
-
-.status-indicator.inactive {
-  background-color: var(--secondary-color);
-}
-
 .user-info {
   flex: 1;
   min-width: 0;

@@ -508,37 +508,34 @@
 </div>
 
 <!-- Modal de detalhes -->
-<div class="modal" id="detalhesModal">
-  <div class="modal-content detalhes-modal-content">
+<div id="detalhesModal" class="modal">
+  <div class="modal-content">
     <div class="modal-header">
-      <h3>Detalhes da Nota</h3>
-      <button class="close-button" id="closeDetalhesModal">&times;</button>
+      <h3 id="modalNotaNumero">Detalhes da Nota</h3>
+      <button id="closeDetalhesModal" class="modal-close">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="detalhes-container" id="detalhesContainer">
+      <div id="detalhesContainer">
         <!-- Preenchido dinamicamente -->
       </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/javascripts/rastreamento.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/javascripts/dashboard.js"></script>
 
 <script>
-  // Script para garantir que o botão "Voltar ao Dashboard" seja exibido
+  // Script para configurar o botão "Voltar ao Dashboard" corretamente
   document.addEventListener("DOMContentLoaded", function () {
-    // Garantir que o botão "Voltar ao Dashboard" esteja visível
+    // Verificar se o botão existe
     const voltarButton = document.getElementById("voltarDashboardButton");
     const voltarButtonContainer = document.querySelector(
       ".dashboard-access-simple"
     );
 
     if (voltarButton) {
-      voltarButton.style.display = "flex";
-      voltarButton.style.visibility = "visible";
-
       // Adicionar evento de clique diretamente
       voltarButton.onclick = function () {
         const dashboardView = document.getElementById("dashboardView");
@@ -565,15 +562,6 @@
 
         return false; // Prevenir comportamento padrão
       };
-    } else {
-      console.error(
-        "Botão 'Voltar ao Dashboard' não encontrado na inicialização"
-      );
-    }
-
-    if (voltarButtonContainer) {
-      voltarButtonContainer.style.display = "flex";
-      voltarButtonContainer.style.visibility = "visible";
     }
   });
 </script>

@@ -364,6 +364,21 @@ function verificarNotaAtrasada(nota) {
 async function initRastreamento(contentElement) {
   console.log("Iniciando função initRastreamento...");
 
+  // Verificar se contentElement foi fornecido, se não, tentar encontrar o trackingView
+  if (!contentElement) {
+    contentElement = document.getElementById("trackingView");
+    console.log(
+      "contentElement não fornecido, usando trackingView:",
+      contentElement
+    );
+    if (!contentElement) {
+      console.error(
+        "trackingView não encontrado e contentElement não fornecido"
+      );
+      return;
+    }
+  }
+
   // Carregar Font Awesome se não estiver disponível
   if (!document.querySelector('link[href*="font-awesome"]')) {
     const fontAwesome = document.createElement("link");
@@ -461,32 +476,15 @@ async function initRastreamento(contentElement) {
   console.log("Elementos de visualização:", { dashboardView, trackingView });
 
   if (dashboardView && trackingView) {
-    // MODIFICAÇÃO: Garantir que a visualização de rastreamento esteja ativa
-    console.log("Ativando a visualização de rastreamento...");
-    dashboardView.classList.remove("active");
-    trackingView.classList.add("active");
+    // Não modifica o estado inicial das views
+    // Apenas verificar se o trackingView está presente
+    console.log("Estrutura de visualização dupla detectada");
 
-    // MODIFICAÇÃO: Garantir que o trackingView esteja visível e o dashboardView esteja oculto
-    dashboardView.style.display = "none";
-    trackingView.style.display = "block";
-    trackingView.style.visibility = "visible";
-    trackingView.style.opacity = "1";
-
-    // Forçar a visibilidade do trackingView
-    setTimeout(() => {
-      console.log("Forçando a visibilidade do trackingView...");
-      trackingView.style.display = "block !important";
-      trackingView.setAttribute(
-        "style",
-        "display: block !important; visibility: visible !important; opacity: 1 !important;"
-      );
-
-      // Verificar se o trackingView está visível
-      const trackingViewStyle = window.getComputedStyle(trackingView);
-      console.log("trackingView display:", trackingViewStyle.display);
-      console.log("trackingView visibility:", trackingViewStyle.visibility);
-      console.log("trackingView opacity:", trackingViewStyle.opacity);
-    }, 100);
+    // Verificar se o trackingView está visível
+    const trackingViewStyle = window.getComputedStyle(trackingView);
+    console.log("trackingView display:", trackingViewStyle.display);
+    console.log("trackingView visibility:", trackingViewStyle.visibility);
+    console.log("trackingView opacity:", trackingViewStyle.opacity);
 
     // NOVA ABORDAGEM: Criar uma tabela simples diretamente no trackingView
     console.log("Criando tabela simples diretamente no trackingView");
@@ -513,12 +511,6 @@ async function initRastreamento(contentElement) {
 
       // Criar uma tabela simples
       const tabelaSimples = document.createElement("div");
-      tabelaSimples.style.padding = "20px";
-      tabelaSimples.style.backgroundColor = "#fff";
-      tabelaSimples.style.borderRadius = "12px";
-      tabelaSimples.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08)";
-      tabelaSimples.style.margin = "20px";
-      tabelaSimples.style.width = "calc(100% - 40px)";
       tabelaSimples.style.transition = "all 0.3s ease";
       tabelaSimples.style.animation = "fadeIn 0.5s ease-out forwards";
       tabelaSimples.innerHTML = `
@@ -1065,7 +1057,6 @@ async function initRastreamento(contentElement) {
         </style>
         
         <div class="header-rastreamento" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #247675;">
-          <h2 style="margin: 0; color: #333; font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 12px;">Sistema de Rastreamento</h2>
           <div class="stats" style="display: flex; gap: 16px;">
             <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
               <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">${
@@ -1179,11 +1170,7 @@ async function initRastreamento(contentElement) {
                       : "rgba(117, 117, 117, 0.3)"
                   };">
                       ${nota.status}
-                      ${
-                        nota.atrasada
-                          ? '<i class="fas fa-exclamation-circle" style="margin-left: 5px;"></i>'
-                          : ""
-                      }
+                      ${nota.atrasada ? "" : ""}
                       </span>
                     </td>
                   <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${
@@ -1203,7 +1190,11 @@ async function initRastreamento(contentElement) {
                   )}</td>
                   <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: ${
                     nota.atrasada ? "#dc3545" : "#555"
-                  };">${formatarData(nota.previsaoEntrega)}</td>
+                  };">${
+                    nota.status === "Aguardando coleta"
+                      ? "-"
+                      : formatarData(nota.previsaoEntrega)
+                  }</td>
                   <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
                     <button class="btn-detalhes detalhes-btn" data-nota="${
                       nota.numero

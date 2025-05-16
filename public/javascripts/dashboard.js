@@ -1247,7 +1247,103 @@ function showTracking() {
       console.error("Elementos de visualização não encontrados");
     }
   } else {
-    console.error("Elementos do rastreamento não encontrados");
+    console.error("Elementos de visualização não encontrados");
+
+    // Verificar se o rastreamentoContent existe
+    const rastreamentoContent = document.getElementById("rastreamentoContent");
+
+    if (rastreamentoContent) {
+      // Se não existe dashboardView, criar um
+      if (!dashboardView) {
+        const newDashboardView = document.createElement("div");
+        newDashboardView.id = "dashboardView";
+        newDashboardView.className = "dashboard-container";
+        rastreamentoContent.appendChild(newDashboardView);
+        console.log("Elemento dashboardView criado");
+      }
+
+      // Se não existe trackingView, criar um
+      if (!trackingView) {
+        const newTrackingView = document.createElement("div");
+        newTrackingView.id = "trackingView";
+        newTrackingView.className = "rastreamento-container active";
+        newTrackingView.style.display = "block";
+
+        // Criar a estrutura básica do trackingView
+        newTrackingView.innerHTML = `
+          <div class="rastreamento-header">
+            <div class="dashboard-title-row">
+              <h2>Rastreamento de Notas</h2>
+            </div>
+          </div>
+          <div class="view-container">
+            <div id="tableView" class="view-content active">
+              <div class="tabela-container"></div>
+            </div>
+            <div id="cardsView" class="view-content"></div>
+          </div>
+        `;
+
+        rastreamentoContent.appendChild(newTrackingView);
+        console.log("Elemento trackingView criado");
+
+        // Inicializar o rastreamento
+        if (window.initRastreamento) {
+          window.initRastreamento(newTrackingView);
+        }
+      }
+
+      // Tentar novamente
+      setTimeout(() => {
+        showTracking();
+      }, 100);
+    } else {
+      console.error("Elemento rastreamentoContent não encontrado");
+
+      // Se o rastreamentoContent não existe, tentar encontrar o elemento main
+      const mainElement = document.querySelector("main") || document.body;
+
+      if (mainElement) {
+        // Criar o rastreamentoContent
+        const newRastreamentoContent = document.createElement("div");
+        newRastreamentoContent.id = "rastreamentoContent";
+        newRastreamentoContent.className = "tool-content active";
+
+        // Criar o trackingView dentro do rastreamentoContent
+        const newTrackingView = document.createElement("div");
+        newTrackingView.id = "trackingView";
+        newTrackingView.className = "rastreamento-container active";
+        newTrackingView.style.display = "block";
+
+        // Criar a estrutura básica do trackingView
+        newTrackingView.innerHTML = `
+          <div class="rastreamento-header">
+            <div class="dashboard-title-row">
+              <h2>Rastreamento de Notas</h2>
+            </div>
+          </div>
+          <div class="view-container">
+            <div id="tableView" class="view-content active">
+              <div class="tabela-container"></div>
+            </div>
+            <div id="cardsView" class="view-content"></div>
+          </div>
+        `;
+
+        newRastreamentoContent.appendChild(newTrackingView);
+        mainElement.appendChild(newRastreamentoContent);
+        console.log("Elementos rastreamentoContent e trackingView criados");
+
+        // Inicializar o rastreamento
+        if (window.initRastreamento) {
+          window.initRastreamento(newTrackingView);
+        }
+      } else {
+        console.error(
+          "Não foi possível encontrar um elemento para adicionar o conteúdo de rastreamento"
+        );
+      }
+    }
   }
 }
 
