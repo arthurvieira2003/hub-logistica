@@ -1581,3 +1581,211 @@ body.sidebar-collapsed .toggle-sidebar-button {
   font-size: 0.875rem;
   font-weight: 500;
 }
+
+/* Estilos para a seção de Fretes (CT-e) */
+.fretes-container {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.fretes-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fretes-search {
+  flex: 1;
+  max-width: 500px;
+  display: flex;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background-color: white;
+}
+
+.fretes-search input {
+  flex: 1;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.fretes-search button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.fretes-search button:hover {
+  background-color: var(--primary-color-dark);
+}
+
+/* Tabela de Fretes */
+.fretes-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.fretes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.fretes-table thead {
+  background-color: var(--background-color-light);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.fretes-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.fretes-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+}
+
+.fretes-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.fretes-table tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.fretes-table td {
+  padding: 0.875rem 1rem;
+  vertical-align: middle;
+}
+
+.frete-serial {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.frete-serial i {
+  color: var(--primary-color);
+}
+
+.frete-customer {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.frete-date {
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.frete-value {
+  font-weight: 600;
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
+.frete-actions {
+  display: flex;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.btn-view-frete,
+.btn-download-xml {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border-color);
+  background-color: white;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.btn-view-frete:hover,
+.btn-download-xml:hover {
+  background-color: var(--background-color-light);
+  border-color: var(--text-secondary);
+}
+
+.btn-view-frete i,
+.btn-download-xml i {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  gap: 1rem;
+}
+
+.error-message i {
+  font-size: 2.5rem;
+  color: #f44336;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .fretes-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .fretes-search {
+    max-width: 100%;
+  }
+
+  .fretes-table th:nth-child(2),
+  .fretes-table td:nth-child(2) {
+    max-width: 150px;
+  }
+
+  .fretes-table th:nth-child(3),
+  .fretes-table td:nth-child(3) {
+    display: none;
+  }
+}

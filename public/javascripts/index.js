@@ -339,10 +339,180 @@ async function loadToolContent(tool, contentElement) {
       case "fretes":
         contentElement.innerHTML = `
           <div class="tool-header">
-            <h2>Fretes</h2>
-            <p>Esta ferramenta está em desenvolvimento.</p>
+            <h2>Conhecimentos de Transporte Eletrônicos (CT-e)</h2>
+            <p>Gerenciamento de fretes e conhecimentos de transporte.</p>
+          </div>
+          <div class="fretes-container">
+            <div class="fretes-actions">
+              <div class="fretes-search">
+                <input type="text" id="fretesSearch" placeholder="Buscar por número ou cliente...">
+                <button><i class="fas fa-search"></i></button>
+              </div>
+            </div>
+            <div class="fretes-list" id="fretesList">
+              <div class="loader">
+                <i class="fas fa-spinner fa-spin"></i> Carregando conhecimentos de transporte...
+              </div>
+            </div>
+            <div class="pagination" id="fretesPagination">
+              <!-- Paginação será adicionada dinamicamente -->
+            </div>
           </div>
         `;
+
+        // Função para carregar os dados de fretes (CT-e)
+        const loadCteData = async () => {
+          try {
+            const response = await fetch("http://localhost:4010/cte");
+            if (!response.ok) {
+              throw new Error("Erro ao buscar dados de CT-e");
+            }
+            const data = await response.json();
+            return data;
+          } catch (error) {
+            console.error("Erro ao carregar dados de CT-e:", error);
+            document.getElementById("fretesList").innerHTML = `
+              <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Erro ao carregar os dados. Verifique se o servidor está online.</p>
+              </div>
+            `;
+            return [];
+          }
+        };
+
+        // Função para renderizar os itens de CT-e
+        const renderCteItems = (items) => {
+          const fretesListElement = document.getElementById("fretesList");
+
+          if (items.length === 0) {
+            fretesListElement.innerHTML = `
+              <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>Nenhum conhecimento de transporte encontrado.</p>
+              </div>
+            `;
+            return;
+          }
+
+          let html = `
+            <div class="fretes-table-container">
+              <table class="fretes-table">
+                <thead>
+                  <tr>
+                    <th>Número</th>
+                    <th>Cliente</th>
+                    <th>Data</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+          items.forEach((item) => {
+            // Extrair a data e formatá-la
+            const dateObj = new Date(item.DateAdd);
+            const formattedDate = dateObj.toLocaleDateString("pt-BR");
+
+            // Formatar o valor
+            const formattedValue = new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            }).format(item.DocTotal);
+
+            html += `
+              <tr data-serial="${item.Serial}">
+                <td class="frete-serial">
+                  <i class="fas fa-file-invoice"></i>
+                  <span>${item.Serial}</span>
+                </td>
+                <td class="frete-customer">${item.CardName}</td>
+                <td class="frete-date">${formattedDate}</td>
+                <td class="frete-value">${formattedValue}</td>
+                <td class="frete-actions">
+                  <button class="btn-view-frete" data-serial="${item.Serial}" title="Visualizar">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn-download-xml" data-serial="${item.Serial}" title="Baixar XML">
+                    <i class="fas fa-download"></i>
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+
+          html += `
+                </tbody>
+              </table>
+            </div>
+          `;
+
+          fretesListElement.innerHTML = html;
+
+          // Adicionar eventos aos botões
+          setupCteButtons();
+        };
+
+        // Configurar os botões
+        const setupCteButtons = () => {
+          // Botões para visualizar detalhes
+          document.querySelectorAll(".btn-view-frete").forEach((button) => {
+            button.addEventListener("click", (e) => {
+              const serial = e.currentTarget.dataset.serial;
+              showNotification(`Visualizando CT-e ${serial}`, "info");
+              // Aqui você pode implementar a lógica para mostrar detalhes do CT-e
+            });
+          });
+
+          // Botões para download do XML
+          document.querySelectorAll(".btn-download-xml").forEach((button) => {
+            button.addEventListener("click", (e) => {
+              const serial = e.currentTarget.dataset.serial;
+              showNotification(
+                `Iniciando download do XML do CT-e ${serial}`,
+                "success"
+              );
+              // Aqui você pode implementar a lógica para download do XML
+            });
+          });
+        };
+
+        // Configuração de busca
+        const setupCteSearch = () => {
+          const searchInput = document.getElementById("fretesSearch");
+          let searchTimeout;
+
+          searchInput.addEventListener("input", (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+              const searchTerm = e.target.value.toLowerCase();
+              filterCteItems(searchTerm);
+            }, 300);
+          });
+        };
+
+        // Função para filtrar os itens de CT-e
+        const filterCteItems = (searchTerm) => {
+          const filteredItems = allCteItems.filter((item) => {
+            return (
+              item.Serial.toLowerCase().includes(searchTerm) ||
+              item.CardName.toLowerCase().includes(searchTerm)
+            );
+          });
+
+          renderCteItems(filteredItems);
+        };
+
+        // Carregar e renderizar os dados
+        let allCteItems = [];
+
+        (async () => {
+          allCteItems = await loadCteData();
+          renderCteItems(allCteItems);
+          setupCteSearch();
+        })();
+
         break;
       case "frota":
         contentElement.innerHTML = `
