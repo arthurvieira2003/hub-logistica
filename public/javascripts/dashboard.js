@@ -1460,6 +1460,14 @@ function setupVoltarDashboardButton() {
   if (!voltarButton) {
     const trackingView = document.getElementById("trackingView");
 
+    // Se não há trackingView, não há necessidade de configurar o botão
+    if (!trackingView) {
+      console.log(
+        "ℹ️ [DEBUG] trackingView não encontrado, pulando configuração do botão"
+      );
+      return;
+    }
+
     if (trackingView) {
       // Verificar se o container do botão existe
       const headerContainer = trackingView.querySelector(
