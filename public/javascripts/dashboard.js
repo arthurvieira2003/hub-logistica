@@ -1259,7 +1259,6 @@ function showTracking() {
         newDashboardView.id = "dashboardView";
         newDashboardView.className = "dashboard-container";
         rastreamentoContent.appendChild(newDashboardView);
-        console.log("Elemento dashboardView criado");
       }
 
       // Se não existe trackingView, criar um
@@ -1285,7 +1284,6 @@ function showTracking() {
         `;
 
         rastreamentoContent.appendChild(newTrackingView);
-        console.log("Elemento trackingView criado");
 
         // Inicializar o rastreamento
         if (window.initRastreamento) {
@@ -1332,7 +1330,6 @@ function showTracking() {
 
         newRastreamentoContent.appendChild(newTrackingView);
         mainElement.appendChild(newRastreamentoContent);
-        console.log("Elementos rastreamentoContent e trackingView criados");
 
         // Inicializar o rastreamento
         if (window.initRastreamento) {
@@ -1462,9 +1459,6 @@ function setupVoltarDashboardButton() {
 
     // Se não há trackingView, não há necessidade de configurar o botão
     if (!trackingView) {
-      console.log(
-        "ℹ️ [DEBUG] trackingView não encontrado, pulando configuração do botão"
-      );
       return;
     }
 

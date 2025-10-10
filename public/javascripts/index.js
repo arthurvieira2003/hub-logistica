@@ -29,7 +29,6 @@ async function loadWelcomeDashboard() {
     if (welcomeScreen) {
       // Esconder a tela de boas-vindas inicialmente
       welcomeScreen.style.display = "none";
-      console.log("✅ [DEBUG] Welcome screen escondido inicialmente");
     }
   } catch (error) {
     console.error("Erro ao carregar tela inicial:", error);
@@ -80,22 +79,9 @@ function initializeToolButtons() {
   const contentArea = document.getElementById("contentArea");
   const welcomeScreen = document.getElementById("welcomeScreen");
 
-  // URLs das ferramentas externas
-  const externalTools = {
-    os: "https://auvo.com.br",
-    armazem: "https://wms.xclog.com.br",
-    sesuite: "https://sesuite.com.br",
-  };
-
   toolButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const tool = button.dataset.tool;
-
-      // Se for uma ferramenta externa, abrir em nova guia
-      if (externalTools[tool]) {
-        window.open(externalTools[tool], "_blank");
-        return;
-      }
 
       // Verificar se a ferramenta já está aberta
       const existingTab = document.querySelector(`.tab[data-tool="${tool}"]`);
@@ -173,8 +159,6 @@ function createToolContent(tool) {
 }
 
 function activateTab(tab) {
-  console.log("🔄 [DEBUG] Ativando aba:", tab.dataset.tool);
-
   // Desativar todas as abas e conteúdos
   document
     .querySelectorAll(".tab")
@@ -186,52 +170,32 @@ function activateTab(tab) {
   // Ativar a aba selecionada e seu conteúdo
   tab.classList.add("active");
   const tool = tab.dataset.tool;
-  console.log("🔍 [DEBUG] Procurando conteúdo para tool:", tool);
   const content = document.querySelector(`.tool-content[data-tool="${tool}"]`);
   if (content) {
-    console.log("✅ [DEBUG] Conteúdo encontrado:", content);
     content.classList.add("active");
-    console.log("✅ [DEBUG] Conteúdo ativado");
   } else {
     console.error("❌ [DEBUG] Conteúdo NÃO encontrado para tool:", tool);
   }
 
   // Inicializar dashboard se for a aba do dashboard
   if (tool === "dashboard") {
-    console.log("🎯 [DEBUG] Inicializando dashboard");
-
     // Carregar CSS do dashboard se ainda não estiver carregado
     if (!document.querySelector('link[href="../styles/dashboard.css"]')) {
-      console.log("📄 [DEBUG] Carregando CSS do dashboard na ativação");
       loadCSS("/styles/dashboard.css");
-      console.log("✅ [DEBUG] CSS do dashboard carregado na ativação da aba");
-    } else {
-      console.log("✅ [DEBUG] CSS do dashboard já estava carregado");
     }
 
     const dashboardView = document.getElementById("dashboardView");
-    console.log("🔍 [DEBUG] Procurando dashboardView:", dashboardView);
     if (dashboardView) {
-      console.log("✅ [DEBUG] dashboardView encontrado");
-      console.log(
-        "🔍 [DEBUG] dashboardView já inicializado?",
-        dashboardView.dataset.initialized
-      );
       if (!dashboardView.dataset.initialized) {
-        console.log("⏳ [DEBUG] Aguardando 100ms para inicializar dashboard");
         // Aguardar um pouco para o CSS ser aplicado
         setTimeout(() => {
-          console.log("🚀 [DEBUG] Inicializando dashboard com initDashboard");
           if (window.initDashboard) {
             window.initDashboard();
             dashboardView.dataset.initialized = "true";
-            console.log("✅ [DEBUG] Dashboard inicializado com sucesso");
           } else {
             console.error("❌ [DEBUG] initDashboard não está disponível");
           }
         }, 100);
-      } else {
-        console.log("✅ [DEBUG] Dashboard já estava inicializado");
       }
     } else {
       console.error("❌ [DEBUG] dashboardView NÃO encontrado durante ativação");
@@ -242,7 +206,6 @@ function activateTab(tab) {
   const welcomeScreen = document.getElementById("welcomeScreen");
   if (welcomeScreen) {
     welcomeScreen.style.display = "none";
-    console.log("✅ [DEBUG] Welcome screen escondido na ativação da aba");
   }
 
   // Atualizar botões da barra lateral
@@ -274,7 +237,6 @@ function closeTab(tab) {
       const welcomeScreen = document.getElementById("welcomeScreen");
       if (welcomeScreen) {
         welcomeScreen.style.display = "flex";
-        console.log("✅ [DEBUG] Welcome screen exibido - nenhuma aba ativa");
       }
       document.querySelectorAll(".tool-button").forEach((button) => {
         button.classList.remove("active");
@@ -407,55 +369,40 @@ function initializeTabSystem() {
   }
 
   // Adicionar aba Dashboard sempre disponível
-  console.log("🚀 [DEBUG] Inicializando sistema de abas");
   addDashboardTab();
-  console.log("✅ [DEBUG] Sistema de abas inicializado");
 }
 
 function addDashboardTab() {
-  console.log("🚀 [DEBUG] Iniciando addDashboardTab");
-
   const tabList = document.getElementById("tabList");
   if (!tabList) {
     console.error("❌ [DEBUG] tabList não encontrado");
     return;
   }
-  console.log("✅ [DEBUG] tabList encontrado:", tabList);
 
   // Verificar se a aba dashboard já existe
   const existingDashboardTab = document.querySelector(
     '.tab[data-tool="dashboard"]'
   );
   if (existingDashboardTab) {
-    console.log("⚠️ [DEBUG] Aba dashboard já existe, saindo");
     return;
   }
-  console.log("✅ [DEBUG] Aba dashboard não existe, continuando");
 
   // Carregar CSS do dashboard se ainda não estiver carregado
   if (!document.querySelector('link[href="../styles/dashboard.css"]')) {
-    console.log("📄 [DEBUG] Carregando CSS do dashboard");
     loadCSS("/styles/dashboard.css");
-    console.log("✅ [DEBUG] CSS do dashboard carregado");
   } else {
-    console.log("✅ [DEBUG] CSS do dashboard já estava carregado");
   }
 
   // Carregar script do dashboard se ainda não estiver carregado
   if (!window.initDashboard) {
-    console.log("📄 [DEBUG] Carregando script dashboard.js");
-
     // Carregar Chart.js primeiro
     if (typeof Chart === "undefined") {
-      console.log("📊 [DEBUG] Carregando Chart.js");
       loadScript("https://cdn.jsdelivr.net/npm/chart.js")
         .then(() => {
-          console.log("✅ [DEBUG] Chart.js carregado");
           // Agora carregar dashboard.js
           return loadScript("/javascripts/dashboard.js");
         })
         .then(() => {
-          console.log("✅ [DEBUG] Script dashboard.js carregado");
           // Recriar a aba após o script ser carregado
           createDashboardTab();
         })
@@ -466,7 +413,6 @@ function addDashboardTab() {
       // Chart.js já está carregado, carregar apenas dashboard.js
       loadScript("/javascripts/dashboard.js")
         .then(() => {
-          console.log("✅ [DEBUG] Script dashboard.js carregado");
           // Recriar a aba após o script ser carregado
           createDashboardTab();
         })
@@ -482,7 +428,6 @@ function addDashboardTab() {
 }
 
 function createDashboardTab() {
-  console.log("🔧 [DEBUG] Criando aba do dashboard");
   const tabList = document.getElementById("tabList");
   if (!tabList) {
     console.error("❌ [DEBUG] tabList não encontrado em createDashboardTab");
@@ -499,60 +444,33 @@ function createDashboardTab() {
       <i class="fas fa-times"></i>
     </div>
   `;
-  console.log("✅ [DEBUG] Aba criada:", dashboardTab);
 
   // Adicionar evento de clique
   dashboardTab.addEventListener("click", () => {
-    console.log("🖱️ [DEBUG] Clique na aba dashboard");
     activateTab(dashboardTab);
     showDashboard();
   });
 
   // Adicionar como primeira aba
   tabList.insertBefore(dashboardTab, tabList.firstChild);
-  console.log("✅ [DEBUG] Aba adicionada à tabList");
-
-  // Verificar se a aba está visível e ativa
-  console.log(
-    "🔍 [DEBUG] Aba dashboard visível?",
-    dashboardTab.offsetParent !== null
-  );
-  console.log(
-    "🔍 [DEBUG] Aba dashboard tem classe active?",
-    dashboardTab.classList.contains("active")
-  );
-  console.log(
-    "🔍 [DEBUG] Aba dashboard display:",
-    window.getComputedStyle(dashboardTab).display
-  );
-  console.log(
-    "🔍 [DEBUG] Aba dashboard visibility:",
-    window.getComputedStyle(dashboardTab).visibility
-  );
 
   // Ativar a aba automaticamente após um pequeno delay
   setTimeout(() => {
-    console.log("🔄 [DEBUG] Ativando aba dashboard automaticamente");
-
     // Garantir que a tela de boas-vindas esteja escondida
     const welcomeScreen = document.getElementById("welcomeScreen");
     if (welcomeScreen) {
       welcomeScreen.style.display = "none";
-      console.log("✅ [DEBUG] Welcome screen escondido durante ativação");
     }
 
     activateTab(dashboardTab);
   }, 200);
 
   // Criar conteúdo do dashboard
-  console.log("🔧 [DEBUG] Criando conteúdo do dashboard");
   const dashboardContent = document.createElement("div");
   dashboardContent.className = "tool-content active";
   dashboardContent.dataset.tool = "dashboard";
-  console.log("✅ [DEBUG] Container do dashboard criado:", dashboardContent);
 
   // Adicionar estilos inline temporários para debug
-  console.log("🎨 [DEBUG] Aplicando estilos inline");
   dashboardContent.style.cssText = `
     position: absolute;
     top: 1rem;
@@ -572,7 +490,7 @@ function createDashboardTab() {
     flex-direction: column;
     overflow: auto;
   `;
-  console.log("✅ [DEBUG] Estilos aplicados");
+
   dashboardContent.innerHTML = `
     <!-- Dashboard View -->
     <div id="dashboardView" class="dashboard-container active">
@@ -1043,61 +961,17 @@ function createDashboardTab() {
     </div>
   `;
 
-  console.log(
-    "📝 [DEBUG] HTML do dashboard definido, tamanho:",
-    dashboardContent.innerHTML.length,
-    "caracteres"
-  );
-  console.log(
-    "🔍 [DEBUG] Primeiros 200 caracteres do HTML:",
-    dashboardContent.innerHTML.substring(0, 200)
-  );
-
   // Adicionar conteúdo à área de conteúdo
-  console.log("🔍 [DEBUG] Procurando contentArea");
   const contentArea = document.getElementById("contentArea");
   if (contentArea) {
-    console.log("✅ [DEBUG] contentArea encontrado:", contentArea);
     contentArea.appendChild(dashboardContent);
-    console.log("✅ [DEBUG] Dashboard content adicionado ao DOM");
-    console.log(
-      "📊 [DEBUG] Tamanho final do HTML:",
-      dashboardContent.innerHTML.length,
-      "caracteres"
-    );
 
     // Verificar se o dashboardView foi criado
     const dashboardView = document.getElementById("dashboardView");
     if (dashboardView) {
-      console.log("✅ [DEBUG] dashboardView encontrado no DOM:", dashboardView);
-      console.log(
-        "🔍 [DEBUG] Classes do dashboardView:",
-        dashboardView.className
-      );
-      console.log(
-        "🔍 [DEBUG] Estilos computados do dashboardView:",
-        window.getComputedStyle(dashboardView)
-      );
-
-      // Verificar se o dashboardView está visível
-      const computedStyle = window.getComputedStyle(dashboardView);
-      console.log("🔍 [DEBUG] dashboardView display:", computedStyle.display);
-      console.log(
-        "🔍 [DEBUG] dashboardView visibility:",
-        computedStyle.visibility
-      );
-      console.log("🔍 [DEBUG] dashboardView opacity:", computedStyle.opacity);
-      console.log("🔍 [DEBUG] dashboardView height:", computedStyle.height);
-      console.log("🔍 [DEBUG] dashboardView width:", computedStyle.width);
-
       // Verificar se há conteúdo dentro do dashboardView
       const dashboardGrid = dashboardView.querySelector(".dashboard-grid");
       if (dashboardGrid) {
-        console.log("✅ [DEBUG] dashboard-grid encontrado:", dashboardGrid);
-        console.log(
-          "🔍 [DEBUG] Número de cards no grid:",
-          dashboardGrid.children.length
-        );
       } else {
         console.error("❌ [DEBUG] dashboard-grid NÃO encontrado");
       }
@@ -1110,22 +984,18 @@ function createDashboardTab() {
 }
 
 function showDashboard() {
-  console.log("🎯 [DEBUG] showDashboard chamado");
-
   // Esconder tela de boas-vindas
   const welcomeScreen = document.getElementById("welcomeScreen");
   if (welcomeScreen) {
-    console.log("✅ [DEBUG] Escondendo welcomeScreen");
     welcomeScreen.style.display = "none";
   } else {
     console.error("❌ [DEBUG] welcomeScreen não encontrado");
   }
 
   // Ativar aba do dashboard
-  console.log("🔍 [DEBUG] Procurando aba do dashboard");
+
   const dashboardTab = document.querySelector('.tab[data-tool="dashboard"]');
   if (dashboardTab) {
-    console.log("✅ [DEBUG] Aba do dashboard encontrada:", dashboardTab);
     activateTab(dashboardTab);
   } else {
     console.error("❌ [DEBUG] Aba do dashboard NÃO encontrada");
@@ -2240,11 +2110,6 @@ async function loadToolContent(tool, contentElement) {
           window.initRastreamento();
         }
 
-        // Inicializar o rastreamento
-        if (window.initRastreamento) {
-          window.initRastreamento();
-        }
-
         // Adicionar eventos para todos os botões "Ver Rastreamento"
         setTimeout(() => {
           // Selecionar todos os botões com onclick="showTracking()"
@@ -2283,14 +2148,6 @@ async function loadToolContent(tool, contentElement) {
         // NÃO forçar nenhuma visualização por padrão, deixar que o usuário escolha
         // ou manter a visualização atual
 
-        break;
-      case "contratos":
-        contentElement.innerHTML = `
-          <div class="tool-header">
-            <h2>Copasign</h2>
-            <p>Esta ferramenta está em desenvolvimento.</p>
-          </div>
-        `;
         break;
       default:
         contentElement.innerHTML = `

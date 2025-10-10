@@ -157,41 +157,6 @@ body {
   font-weight: 500;
 }
 
-/* Estilo específico para ferramentas externas */
-.tool-button[data-tool="os"],
-.tool-button[data-tool="armazem"],
-.tool-button[data-tool="sesuite"] {
-  padding-right: 2.5rem;
-}
-
-.tool-button[data-tool="os"]::after,
-.tool-button[data-tool="armazem"]::after,
-.tool-button[data-tool="sesuite"]::after {
-  content: "\f08e"; /* Ícone de link externo do Font Awesome */
-  font-family: "Font Awesome 6 Free";
-  font-weight: 900;
-  font-size: 0.875rem;
-  position: absolute;
-  right: 1rem;
-  opacity: 0.8;
-  transition: var(--transition);
-  color: var(--primary-color);
-}
-
-.tool-button[data-tool="os"]:hover::after,
-.tool-button[data-tool="armazem"]:hover::after,
-.tool-button[data-tool="sesuite"]:hover::after {
-  opacity: 1;
-  transform: translateX(2px);
-  color: var(--primary-hover);
-}
-
-.tool-button.active[data-tool="os"]::after,
-.tool-button.active[data-tool="armazem"]::after,
-.tool-button.active[data-tool="sesuite"]::after {
-  color: white;
-}
-
 .tool-status {
   position: absolute;
   top: 0.25rem;
