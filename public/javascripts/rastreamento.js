@@ -10,29 +10,36 @@ const transportadoras = [
   {
     id: 2,
     nome: "Expresso Leomar LTDA",
-    cor: "52, 152, 219", // RGB para azul
-    logo: "../assets/images/transportadoras/generic.svg",
+    cor: "0, 52, 150", // RGB para azul Leomar
+    logo: "../assets/images/transportadoras/leomar.png",
     notas: [], // Será preenchido com dados reais da API
   },
   {
     id: 3,
     nome: "Schreiber Logística LTDA",
-    cor: "76, 175, 80", // RGB para verde
-    logo: "../assets/images/transportadoras/generic.svg",
+    cor: "21, 50, 127", // RGB para azul Schreiber
+    logo: "../assets/images/transportadoras/schreiber.svg",
     notas: [], // Será preenchido com dados reais da API
   },
   {
     id: 4,
     nome: "Mengue Express transportes LTDA",
-    cor: "156, 39, 176", // RGB para roxo
-    logo: "../assets/images/transportadoras/generic.svg",
+    cor: "255, 101, 38", // RGB para laranja Mengue
+    logo: "../assets/images/transportadoras/mengue.png",
     notas: [], // Será preenchido com dados reais da API
   },
   {
     id: 5,
     nome: "Transportes Expresso Santa Catarina LTDA",
-    cor: "255, 87, 34", // RGB para laranja
-    logo: "../assets/images/transportadoras/generic.svg",
+    cor: "2, 118, 116", // RGB para transportadora sem logo
+    logo: "fas fa-truck",
+    notas: [], // Será preenchido com dados reais da API
+  },
+  {
+    id: 6,
+    nome: "Expresso Princesa Dos Campos S/A",
+    cor: "2, 118, 116", // RGB para transportadora sem logo
+    logo: "../assets/images/transportadoras/princesa.png",
     notas: [], // Será preenchido com dados reais da API
   },
 ];
@@ -48,6 +55,35 @@ function inicializarModal() {
 
 // Inicializar modal quando o script carregar
 document.addEventListener("DOMContentLoaded", inicializarModal);
+
+// Função para renderizar o logo da transportadora (imagem ou ícone FontAwesome)
+function renderizarLogoTransportadora(transportadora) {
+  if (
+    transportadora.logo.startsWith("fas ") ||
+    transportadora.logo.startsWith("far ") ||
+    transportadora.logo.startsWith("fab ")
+  ) {
+    // É um ícone FontAwesome
+    return `<i class="${transportadora.logo}" style="font-size: 20px; color: #247675;"></i>`;
+  } else {
+    // É uma imagem
+    return `<img src="${transportadora.logo}" alt="${transportadora.nome}">`;
+  }
+}
+
+// Função para obter a cor da borda da transportadora
+function obterCorBordaTransportadora(nomeTransportadora) {
+  const coresTransportadoras = {
+    "Ouro Negro": "rgba(255, 204, 0, 0.3)",
+    "Expresso Leomar LTDA": "rgba(0, 52, 150, 0.3)",
+    "Schreiber Logística LTDA": "rgba(21, 50, 127, 0.3)",
+    "Mengue Express transportes LTDA": "rgba(255, 101, 38, 0.3)",
+    "Transportes Expresso Santa Catarina LTDA": "rgba(2, 118, 116, 0.3)",
+    "Expresso Princesa Dos Campos S/A": "rgba(14, 88, 46, 0.3)",
+  };
+
+  return coresTransportadoras[nomeTransportadora] || "rgba(2, 118, 116, 0.3)"; // Cor padrão
+}
 
 // Função para formatar data no formato DD/MM/YYYY
 function formatarData(dataString) {
@@ -211,28 +247,9 @@ async function recarregarDadosComNovaData(novaData) {
                 <tbody>
                   ${todasNotas
                     .map((nota, index) => {
-                      let borderColor = "rgba(52, 152, 219, 0.3)";
-                      if (nota.transportadora.nome === "Ouro Negro") {
-                        borderColor = "rgba(255, 193, 7, 0.3)";
-                      } else if (
-                        nota.transportadora.nome === "Expresso Leomar LTDA"
-                      ) {
-                        borderColor = "rgba(52, 152, 219, 0.3)";
-                      } else if (
-                        nota.transportadora.nome === "Schreiber Logística LTDA"
-                      ) {
-                        borderColor = "rgba(76, 175, 80, 0.3)";
-                      } else if (
-                        nota.transportadora.nome ===
-                        "Mengue Express transportes LTDA"
-                      ) {
-                        borderColor = "rgba(156, 39, 176, 0.3)";
-                      } else if (
-                        nota.transportadora.nome ===
-                        "Transportes Expresso Santa Catarina LTDA"
-                      ) {
-                        borderColor = "rgba(255, 87, 34, 0.3)";
-                      }
+                      let borderColor = obterCorBordaTransportadora(
+                        nota.transportadora.nome
+                      );
 
                       return `
                       <tr style="background-color: ${
@@ -243,9 +260,7 @@ async function recarregarDadosComNovaData(novaData) {
                         }</strong></td>
                         <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
                           <div style="display: flex; align-items: center; gap: 8px;">
-                            <img src="${nota.transportadora.logo}" alt="${
-                        nota.transportadora.nome
-                      }" style="height: 20px; width: auto;">
+                            ${renderizarLogoTransportadora(nota.transportadora)}
                             <span>${nota.transportadora.nome}</span>
                           </div>
                         </td>
@@ -593,23 +608,80 @@ async function recarregarDadosComNovaData(novaData) {
             });
           }, 100);
         } else {
-          // Exibir mensagem quando não há notas
-          const mensagemVazia = document.createElement("div");
-          mensagemVazia.style.textAlign = "center";
-          mensagemVazia.style.padding = "60px 20px";
-          mensagemVazia.style.color = "#666";
-          mensagemVazia.innerHTML = `
-            <div style="background-color: #f8f9fa; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-              <i class="fas fa-search" style="font-size: 48px; color: #247675; margin-bottom: 20px;"></i>
-              <h3 style="margin: 0 0 16px 0; color: #333; font-size: 24px; font-weight: 600;">Nenhuma nota encontrada</h3>
-              <p style="margin: 0 0 24px 0; color: #666; font-size: 16px;">Não foram encontradas notas de rastreamento para a data <strong>${formatarData(
-                dataRastreamento
-              )}</strong></p>
-              <p style="margin: 0; color: #888; font-size: 14px;">Tente selecionar uma data diferente ou verifique se há envios programados para esta data.</p>
+          // Exibir mensagem quando não há notas, mas incluir o datepicker
+          const containerVazio = document.createElement("div");
+          containerVazio.style.transition = "all 0.3s ease";
+          containerVazio.style.animation = "fadeIn 0.5s ease-out forwards";
+          containerVazio.innerHTML = `
+            <div class="header-rastreamento" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #247675;">
+              <div class="stats" style="display: flex; gap: 16px;">
+                <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                  <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">0</div>
+                  <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Notas</div>
+                </div>
+                <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                  <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">0</div>
+                  <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Em Trânsito</div>
+                </div>
+                <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                  <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">0</div>
+                  <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Entregues</div>
+                </div>
+                <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                  <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">0</div>
+                  <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Atrasadas</div>
+                </div>
+              </div>
+              
+              <div class="date-selector" style="display: flex; align-items: center; gap: 12px;">
+                <label for="dataRastreamento" style="font-size: 14px; font-weight: 600; color: #333;">Data:</label>
+                <input type="date" id="dataRastreamento" value="${dataRastreamento}" style="padding: 8px 12px; border: 2px solid #247675; border-radius: 6px; font-size: 14px; color: #333; background: white; cursor: pointer; transition: all 0.2s ease;">
+                <button id="btnAtualizarData" style="background: #247675; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+                  <i class="fas fa-sync-alt"></i> Atualizar
+                </button>
+              </div>
+            </div>
+            
+            <div style="text-align: center; padding: 60px 20px; color: #666;">
+              <div style="background-color: #f8f9fa; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <i class="fas fa-search" style="font-size: 48px; color: #247675; margin-bottom: 20px;"></i>
+                <h3 style="margin: 0 0 16px 0; color: #333; font-size: 24px; font-weight: 600;">Nenhuma nota encontrada</h3>
+                <p style="margin: 0 0 24px 0; color: #666; font-size: 16px;">Não foram encontradas notas de rastreamento para a data <strong>${formatarData(
+                  dataRastreamento
+                )}</strong></p>
+                <p style="margin: 0; color: #888; font-size: 14px;">Tente selecionar uma data diferente ou verifique se há envios programados para esta data.</p>
+              </div>
             </div>
           `;
 
-          trackingView.appendChild(mensagemVazia);
+          trackingView.appendChild(containerVazio);
+
+          // Adicionar eventos ao datepicker mesmo quando não há notas
+          setTimeout(() => {
+            const dataInput = document.getElementById("dataRastreamento");
+            const btnAtualizar = document.getElementById("btnAtualizarData");
+
+            if (dataInput && btnAtualizar) {
+              btnAtualizar.addEventListener("click", async function () {
+                const novaData = dataInput.value;
+                if (novaData && novaData !== dataRastreamento) {
+                  // Mostrar loading no botão
+                  const originalText = this.innerHTML;
+                  this.innerHTML =
+                    '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+                  this.disabled = true;
+
+                  try {
+                    await recarregarDadosComNovaData(novaData);
+                  } finally {
+                    // Restaurar botão
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                  }
+                }
+              });
+            }
+          }, 100);
         }
       }
       console.log(`✅ Dados recarregados com sucesso para ${novaData}`);
@@ -774,7 +846,7 @@ async function carregarDadosGenericos() {
           id: transportadoras.length + 1,
           nome: item.carrierName,
           cor: cor,
-          logo: "../assets/images/transportadoras/generic.svg", // Logo genérico
+          logo: "fas fa-truck", // Logo genérico
           notas: [],
         };
         transportadoras.push(novaTransportadora);
@@ -2106,29 +2178,9 @@ async function initRastreamento(contentElement) {
               <tbody>
               ${todasNotas
                 .map((nota, index) => {
-                  // Determinar a cor da borda lateral baseada na transportadora (versão mais sutil)
-                  let borderColor = "rgba(52, 152, 219, 0.3)"; // Cor padrão mais suave
-                  if (nota.transportadora.nome === "Ouro Negro") {
-                    borderColor = "rgba(255, 193, 7, 0.3)"; // Amarelo suave
-                  } else if (
-                    nota.transportadora.nome === "Expresso Leomar LTDA"
-                  ) {
-                    borderColor = "rgba(52, 152, 219, 0.3)"; // Azul suave
-                  } else if (
-                    nota.transportadora.nome === "Schreiber Logística LTDA"
-                  ) {
-                    borderColor = "rgba(76, 175, 80, 0.3)"; // Verde suave
-                  } else if (
-                    nota.transportadora.nome ===
-                    "Mengue Express transportes LTDA"
-                  ) {
-                    borderColor = "rgba(156, 39, 176, 0.3)"; // Roxo suave
-                  } else if (
-                    nota.transportadora.nome ===
-                    "Transportes Expresso Santa Catarina LTDA"
-                  ) {
-                    borderColor = "rgba(255, 87, 34, 0.3)"; // Laranja suave
-                  }
+                  let borderColor = obterCorBordaTransportadora(
+                    nota.transportadora.nome
+                  );
 
                   return `
                 <tr style="background-color: ${
@@ -2139,9 +2191,7 @@ async function initRastreamento(contentElement) {
                   }</strong></td>
                   <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                      <img src="${nota.transportadora.logo}" alt="${
-                    nota.transportadora.nome
-                  }" style="height: 20px; width: auto;">
+                      ${renderizarLogoTransportadora(nota.transportadora)}
                       <span>${nota.transportadora.nome}</span>
                     </div>
                   </td>
@@ -2221,23 +2271,80 @@ async function initRastreamento(contentElement) {
 
       trackingView.appendChild(tabelaSimples);
     } else {
-      // Exibir mensagem quando não há notas
-      const mensagemVazia = document.createElement("div");
-      mensagemVazia.style.textAlign = "center";
-      mensagemVazia.style.padding = "60px 20px";
-      mensagemVazia.style.color = "#666";
-      mensagemVazia.innerHTML = `
-        <div style="background-color: #f8f9fa; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-          <i class="fas fa-search" style="font-size: 48px; color: #247675; margin-bottom: 20px;"></i>
-          <h3 style="margin: 0 0 16px 0; color: #333; font-size: 24px; font-weight: 600;">Nenhuma nota encontrada</h3>
-          <p style="margin: 0 0 24px 0; color: #666; font-size: 16px;">Não foram encontradas notas de rastreamento para a data <strong>${formatarData(
-            dataRastreamento
-          )}</strong></p>
-          <p style="margin: 0; color: #888; font-size: 14px;">Tente selecionar uma data diferente ou verifique se há envios programados para esta data.</p>
+      // Exibir mensagem quando não há notas, mas incluir o datepicker
+      const containerVazio = document.createElement("div");
+      containerVazio.style.transition = "all 0.3s ease";
+      containerVazio.style.animation = "fadeIn 0.5s ease-out forwards";
+      containerVazio.innerHTML = `
+        <div class="header-rastreamento" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #247675;">
+          <div class="stats" style="display: flex; gap: 16px;">
+            <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">0</div>
+              <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Notas</div>
+            </div>
+            <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">0</div>
+              <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Em Trânsito</div>
+            </div>
+            <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">0</div>
+              <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Entregues</div>
+            </div>
+            <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+              <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">0</div>
+              <div class="stat-label" style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Atrasadas</div>
+            </div>
+          </div>
+          
+          <div class="date-selector" style="display: flex; align-items: center; gap: 12px;">
+            <label for="dataRastreamento" style="font-size: 14px; font-weight: 600; color: #333;">Data:</label>
+            <input type="date" id="dataRastreamento" value="${dataRastreamento}" style="padding: 8px 12px; border: 2px solid #247675; border-radius: 6px; font-size: 14px; color: #333; background: white; cursor: pointer; transition: all 0.2s ease;">
+            <button id="btnAtualizarData" style="background: #247675; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+              <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
+          </div>
+        </div>
+        
+        <div style="text-align: center; padding: 60px 20px; color: #666;">
+          <div style="background-color: #f8f9fa; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <i class="fas fa-search" style="font-size: 48px; color: #247675; margin-bottom: 20px;"></i>
+            <h3 style="margin: 0 0 16px 0; color: #333; font-size: 24px; font-weight: 600;">Nenhuma nota encontrada</h3>
+            <p style="margin: 0 0 24px 0; color: #666; font-size: 16px;">Não foram encontradas notas de rastreamento para a data <strong>${formatarData(
+              dataRastreamento
+            )}</strong></p>
+            <p style="margin: 0; color: #888; font-size: 14px;">Tente selecionar uma data diferente ou verifique se há envios programados para esta data.</p>
+          </div>
         </div>
       `;
 
-      contentElement.appendChild(mensagemVazia);
+      contentElement.appendChild(containerVazio);
+
+      // Adicionar eventos ao datepicker mesmo quando não há notas
+      setTimeout(() => {
+        const dataInput = document.getElementById("dataRastreamento");
+        const btnAtualizar = document.getElementById("btnAtualizarData");
+
+        if (dataInput && btnAtualizar) {
+          btnAtualizar.addEventListener("click", async function () {
+            const novaData = dataInput.value;
+            if (novaData && novaData !== dataRastreamento) {
+              // Mostrar loading no botão
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+              this.disabled = true;
+
+              try {
+                await recarregarDadosComNovaData(novaData);
+              } finally {
+                // Restaurar botão
+                this.innerHTML = originalText;
+                this.disabled = false;
+              }
+            }
+          });
+        }
+      }, 100);
     }
 
     // Modal já foi inicializado globalmente
