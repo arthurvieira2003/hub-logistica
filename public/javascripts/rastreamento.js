@@ -112,8 +112,6 @@ function formatarData(dataString) {
 // Função para recarregar dados com nova data
 async function recarregarDadosComNovaData(novaData) {
   try {
-    console.log(`🔄 Recarregando dados para a data: ${novaData}`);
-
     // Atualizar a variável global
     dataRastreamento = novaData;
 
@@ -684,7 +682,6 @@ async function recarregarDadosComNovaData(novaData) {
           }, 100);
         }
       }
-      console.log(`✅ Dados recarregados com sucesso para ${novaData}`);
     } else {
       console.error(`❌ Erro ao recarregar dados para ${novaData}`);
     }
@@ -733,19 +730,11 @@ async function carregarDadosGenericos() {
       // Resposta tem formato {data: []}
       data = responseData.data;
     } else {
-      console.log(
-        `ℹ️ Nenhum dado genérico encontrado para a data ${dataRastreamento}: ${
-          responseData.message || "Resposta vazia"
-        }`
-      );
       return true; // Retorna true pois não é um erro, apenas não há dados
     }
 
     // Verificar se há dados para processar
     if (data.length === 0) {
-      console.log(
-        `ℹ️ Nenhum dado genérico encontrado para a data ${dataRastreamento}`
-      );
       return true;
     }
 
@@ -873,9 +862,6 @@ async function carregarDadosGenericos() {
       transportadoras[transportadoraIndex].notas.push(nota);
     });
 
-    console.log(
-      `✅ Carregados dados genéricos para a data ${dataRastreamento}`
-    );
     return true;
   } catch (error) {
     console.error("Erro ao carregar dados genéricos:", error);
@@ -905,10 +891,7 @@ async function carregarDadosOuroNegro() {
 
     // Verificar se há dados para processar
     if (!Array.isArray(data) || data.length === 0) {
-      console.log(
-        `ℹ️ Nenhum dado da Ouro Negro encontrado para a data ${dataRastreamento}`
-      );
-      return true; // Retorna true pois não é um erro, apenas não há dados
+      return true;
     }
 
     // Encontrar a transportadora Ouro Negro no array
@@ -941,9 +924,7 @@ async function carregarDadosOuroNegro() {
       // Verificar se há informações de rastreamento válidas
       if (item.rastreamento && item.rastreamento.code === "400") {
         // Caso onde não há informações de rastreamento
-        console.log(
-          `⚠️ Sem rastreamento para nota ${item.serial}: ${item.rastreamento.message}`
-        );
+
         status = "Aguardando coleta";
         ultimaCidade = item.cidadeOrigem;
         ultimaUF = item.estadoOrigem;
@@ -980,18 +961,6 @@ async function carregarDadosOuroNegro() {
             break;
           default:
             status = "Em trânsito";
-        }
-
-        // Log estratégico para debug do status (apenas para casos especiais)
-        if (
-          status === "Entregue" &&
-          !item.rastreamento.some(
-            (r) => r.CODOCORRENCIA === "108" || r.CODOCORRENCIA === "001"
-          )
-        ) {
-          console.log(
-            `⚠️ Inconsistência detectada na nota ${item.serial}: Status entregue mas sem código de entrega`
-          );
         }
 
         // Atualizar última atualização
@@ -1035,9 +1004,6 @@ async function carregarDadosOuroNegro() {
       transportadoras[ouroNegroIndex].notas.push(nota);
     });
 
-    console.log(
-      `✅ Carregadas ${transportadoras[ouroNegroIndex].notas.length} notas da Ouro Negro para a data ${dataRastreamento}`
-    );
     return true;
   } catch (error) {
     console.error("Erro ao carregar dados da Ouro Negro:", error);
@@ -2410,16 +2376,6 @@ async function initRastreamento(contentElement) {
                     (oc.ocorrencia &&
                       oc.ocorrencia.includes("MERCADORIA ENTREGUE"))
                 );
-
-                // Log estratégico para debug (apenas inconsistências)
-                if (
-                  (nota.status === "Entregue" && !foiEntregue) ||
-                  (nota.status !== "Entregue" && foiEntregue)
-                ) {
-                  console.log(
-                    `⚠️ Inconsistência na nota ${notaNumero}: Status=${nota.status}, Entregue=${foiEntregue}`
-                  );
-                }
 
                 // Se não foi entregue, adicionar o status "Entregue" no final
                 if (!foiEntregue) {
