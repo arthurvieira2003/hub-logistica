@@ -696,11 +696,27 @@ async function recarregarDadosComNovaData(novaData) {
   }
 }
 
+// Função utilitária para obter o token de autenticação
+function obterToken() {
+  return document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("token="))
+    ?.split("=")[1];
+}
+
 // Função para carregar dados do endpoint genérico (outras transportadoras)
 async function carregarDadosGenericos() {
   try {
+    const token = obterToken();
+
     const response = await fetch(
-      `http://localhost:4010/generic/track/${dataRastreamento}`
+      `http://localhost:4010/generic/track/${dataRastreamento}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
     if (!response.ok) {
       throw new Error(`Erro ao carregar dados genéricos: ${response.status}`);
@@ -870,8 +886,16 @@ async function carregarDadosGenericos() {
 // Função para carregar dados reais de rastreamento da Ouro Negro
 async function carregarDadosOuroNegro() {
   try {
+    const token = obterToken();
+
     const response = await fetch(
-      `http://localhost:4010/ouroNegro/track/${dataRastreamento}`
+      `http://localhost:4010/ouroNegro/track/${dataRastreamento}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
     if (!response.ok) {
       throw new Error(`Erro ao carregar dados: ${response.status}`);

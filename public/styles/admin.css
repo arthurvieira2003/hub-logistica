@@ -640,8 +640,8 @@ body {
   border-radius: 0 0 0.75rem 0.75rem;
 }
 
-/* Notificações */
-.notification {
+/* Notificações específicas do painel administrativo */
+.admin-notification {
   position: fixed;
   top: 1.5rem;
   right: 1.5rem;
@@ -659,18 +659,18 @@ body {
   border-left: 4px solid var(--admin-primary);
 }
 
-.notification-content {
+.admin-notification-content {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.notification-content i {
+.admin-notification-content i {
   font-size: 1.25rem;
 }
 
-.notification-close {
+.admin-notification-close {
   background: none;
   border: none;
   color: var(--admin-text-light);
@@ -684,40 +684,40 @@ body {
   transition: all 0.2s ease;
 }
 
-.notification-close:hover {
+.admin-notification-close:hover {
   background-color: rgba(0, 0, 0, 0.05);
   color: var(--admin-text);
 }
 
-.notification.success {
+.admin-notification-success {
   border-left-color: var(--admin-success);
 }
 
-.notification.error {
+.admin-notification-error {
   border-left-color: var(--admin-danger);
 }
 
-.notification.info {
+.admin-notification-info {
   border-left-color: var(--admin-primary);
 }
 
-.notification.success i {
+.admin-notification-success i {
   color: var(--admin-success);
 }
 
-.notification.error i {
+.admin-notification-error i {
   color: var(--admin-danger);
 }
 
-.notification.info i {
+.admin-notification-info i {
   color: var(--admin-primary);
 }
 
-.notification-visible {
+.admin-notification-visible {
   transform: translateX(0);
 }
 
-.notification-hiding {
+.admin-notification-hiding {
   transform: translateX(120%);
 }
 
@@ -774,9 +774,10 @@ body {
     white-space: nowrap;
   }
 
-  .notification {
-    left: 1rem;
+  .admin-notification {
+    top: 1rem;
     right: 1rem;
+    left: auto;
     max-width: calc(100% - 2rem);
   }
 
@@ -787,4 +788,28 @@ body {
   .actions-cell {
     flex-wrap: wrap;
   }
+}
+
+/* Estilos para destacar a sessão do usuário atual */
+.current-user-session {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+  border-left: 4px solid var(--admin-primary) !important;
+  position: relative;
+}
+
+.current-user-session:hover {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
+}
+
+.current-session-badge {
+  display: inline-block;
+  background: var(--admin-primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }

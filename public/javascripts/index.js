@@ -2247,11 +2247,14 @@ function initializeUserDropdown() {
       const userPhotoPreview = content.querySelector("#userPhotoPreview");
 
       // Copiar dados do perfil principal para o dropdown
-      const userName = document.getElementById("userName").textContent;
-      const userStatus = document
-        .getElementById("userStatus")
-        .classList.contains("active");
-      const userAvatar = document.getElementById("userAvatar").innerHTML;
+      const userNameElement = document.getElementById("userName");
+      const userName = userNameElement ? userNameElement.textContent : "";
+      const userStatusElement = document.getElementById("userStatus");
+      const userStatus = userStatusElement
+        ? userStatusElement.classList.contains("active")
+        : false;
+      const userAvatarElement = document.getElementById("userAvatar");
+      const userAvatar = userAvatarElement ? userAvatarElement.innerHTML : "";
 
       if (userNamePreview) userNamePreview.textContent = userName;
       if (userStatusDot) userStatusDot.classList.toggle("active", userStatus);

@@ -240,6 +240,28 @@ async function loadSessionsList() {
 
     if (!token) throw new Error("Token não encontrado");
 
+    // Obter dados do usuário atual para identificar sua sessão
+    let currentUserId = null;
+    try {
+      const userResponse = await fetch(
+        "http://localhost:4010/session/validate",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+        }
+      );
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        currentUserId = userData.id;
+      }
+    } catch (error) {
+      console.warn("Não foi possível obter dados do usuário atual:", error);
+    }
+
     const response = await fetch("http://localhost:4010/session/active", {
       method: "GET",
       headers: {
@@ -265,6 +287,21 @@ async function loadSessionsList() {
       return;
     }
 
+    // Encontrar a sessão mais recente do usuário atual
+    let currentUserSessionId = null;
+    if (currentUserId) {
+      const userSessions = sessions.filter(
+        (session) => session.userId === currentUserId
+      );
+      if (userSessions.length > 0) {
+        // Ordenar por data de criação (mais recente primeiro) e pegar a primeira
+        const mostRecentSession = userSessions.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        )[0];
+        currentUserSessionId = mostRecentSession.id;
+      }
+    }
+
     sessionsTable.innerHTML = sessions
       .map((session) => {
         // Converter as datas de string para objetos Date
@@ -274,9 +311,20 @@ async function loadSessionsList() {
         // Extrair informações do navegador/dispositivo
         const userAgentInfo = formatUserAgent(session.userAgent);
 
+        // Verificar se é a sessão mais recente do usuário atual
+        const isCurrentUserSession = session.id === currentUserSessionId;
+        const rowClass = isCurrentUserSession ? "current-user-session" : "";
+
         return `
-        <tr data-session-id="${session.id}">
-          <td>${session.id}</td>
+        <tr data-session-id="${session.id}" class="${rowClass}">
+          <td>
+            ${session.id}
+            ${
+              isCurrentUserSession
+                ? '<span class="current-session-badge">Você</span>'
+                : ""
+            }
+          </td>
           <td>${session.User ? session.User.name : "N/A"}</td>
           <td>${session.User ? session.User.email : "N/A"}</td>
           <td>${createdAt}</td>
@@ -765,7 +813,7 @@ async function terminateSession(sessionId) {
     const response = await fetch(
       `http://localhost:4010/session/${sessionId}/terminate`,
       {
-        method: "POST",
+        method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           Authorization: token,
@@ -843,16 +891,16 @@ function filterSessions(searchTerm) {
 // Função para mostrar notificações
 function showNotification(message, type = "info") {
   // Verificar se já existe uma notificação e removê-la
-  const existingNotification = document.querySelector(".notification");
+  const existingNotification = document.querySelector(".admin-notification");
   if (existingNotification) {
     existingNotification.remove();
   }
 
   // Criar elemento de notificação
   const notification = document.createElement("div");
-  notification.className = `notification ${type}`;
+  notification.className = `admin-notification admin-notification-${type}`;
   notification.innerHTML = `
-    <div class="notification-content">
+    <div class="admin-notification-content">
       <i class="fas ${
         type === "success"
           ? "fa-check-circle"
@@ -862,16 +910,16 @@ function showNotification(message, type = "info") {
       }"></i>
       <span>${message}</span>
     </div>
-    <button class="notification-close">&times;</button>
+    <button class="admin-notification-close">&times;</button>
   `;
 
   // Adicionar ao corpo do documento
   document.body.appendChild(notification);
 
   // Adicionar evento para fechar a notificação
-  const closeButton = notification.querySelector(".notification-close");
+  const closeButton = notification.querySelector(".admin-notification-close");
   closeButton.addEventListener("click", () => {
-    notification.classList.add("notification-hiding");
+    notification.classList.add("admin-notification-hiding");
     setTimeout(() => {
       notification.remove();
     }, 300);
@@ -880,7 +928,7 @@ function showNotification(message, type = "info") {
   // Remover automaticamente após 5 segundos
   setTimeout(() => {
     if (document.body.contains(notification)) {
-      notification.classList.add("notification-hiding");
+      notification.classList.add("admin-notification-hiding");
       setTimeout(() => {
         if (document.body.contains(notification)) {
           notification.remove();
@@ -891,6 +939,6 @@ function showNotification(message, type = "info") {
 
   // Animar entrada
   setTimeout(() => {
-    notification.classList.add("notification-visible");
+    notification.classList.add("admin-notification-visible");
   }, 10);
 }
