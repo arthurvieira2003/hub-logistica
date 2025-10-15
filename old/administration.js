@@ -1,8 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   // Verificar se existe um overlay de carregamento e removê-lo
-  const authLoadingOverlay = document.getElementById("auth-loading-overlay");
-  if (authLoadingOverlay) {
-    authLoadingOverlay.remove();
+  if (window.AdminAuthUI && window.AdminAuthUI.removeExistingOverlay) {
+    window.AdminAuthUI.removeExistingOverlay();
+  } else {
+    // Fallback para o método antigo
+    const authLoadingOverlay = document.getElementById("auth-loading-overlay");
+    if (authLoadingOverlay) {
+      authLoadingOverlay.remove();
+    }
   }
 
   initializeAdminPanel();

@@ -42,6 +42,20 @@ const transportadoras = [
     logo: "../assets/images/transportadoras/princesa.png",
     notas: [], // Será preenchido com dados reais da API
   },
+  {
+    id: 7,
+    nome: "Transvapt Vupt transportes de cargas LTDA",
+    cor: "2, 118, 116", // RGB para transportadora sem logo
+    logo: "../assets/images/transportadoras/transvapt.png",
+    notas: [], // Será preenchido com dados reais da API
+  },
+  {
+    id: 8,
+    nome: "A+ Transportes e Logistica Eireli",
+    cor: "2, 118, 116", // RGB para transportadora sem logo
+    logo: "../assets/images/transportadoras/a+.png",
+    notas: [], // Será preenchido com dados reais da API
+  },
 ];
 
 // Configuração para data de rastreamento da Ouro Negro (hoje)

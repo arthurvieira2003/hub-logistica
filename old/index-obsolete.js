@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Importar função de administração
-import { addAdminPanelOption } from "./admin.js";
+import { addAdminPanelOption } from "../../old/admin-obsolete.js";
 
 // Função para carregar a tela inicial (sem dashboard)
 async function loadWelcomeDashboard() {
@@ -189,11 +189,11 @@ function activateTab(tab) {
       if (!dashboardView.dataset.initialized) {
         // Aguardar um pouco para o CSS ser aplicado
         setTimeout(() => {
-          if (window.initDashboard) {
-            window.initDashboard();
+          if (window.DashboardMain && window.DashboardMain.initDashboard) {
+            window.DashboardMain.initDashboard();
             dashboardView.dataset.initialized = "true";
           } else {
-            console.error("❌ [DEBUG] initDashboard não está disponível");
+            console.error("❌ [DEBUG] DashboardMain não está disponível");
           }
         }, 100);
       }
@@ -394,13 +394,13 @@ function addDashboardTab() {
   }
 
   // Carregar script do dashboard se ainda não estiver carregado
-  if (!window.initDashboard) {
+  if (!window.DashboardMain) {
     // Carregar Chart.js primeiro
     if (typeof Chart === "undefined") {
       loadScript("https://cdn.jsdelivr.net/npm/chart.js")
         .then(() => {
-          // Agora carregar dashboard.js
-          return loadScript("/javascripts/dashboard.js");
+          // Agora carregar dashboard loader
+          return loadScript("/javascripts/dashboard/loader.js");
         })
         .then(() => {
           // Recriar a aba após o script ser carregado
@@ -410,14 +410,14 @@ function addDashboardTab() {
           console.error("❌ [DEBUG] Erro ao carregar scripts:", error);
         });
     } else {
-      // Chart.js já está carregado, carregar apenas dashboard.js
-      loadScript("/javascripts/dashboard.js")
+      // Chart.js já está carregado, carregar apenas dashboard loader
+      loadScript("/javascripts/dashboard/loader.js")
         .then(() => {
           // Recriar a aba após o script ser carregado
           createDashboardTab();
         })
         .catch((error) => {
-          console.error("❌ [DEBUG] Erro ao carregar dashboard.js:", error);
+          console.error("❌ [DEBUG] Erro ao carregar dashboard loader:", error);
         });
     }
     return; // Sair da função para evitar criar a aba antes do script
@@ -448,7 +448,12 @@ function createDashboardTab() {
   // Adicionar evento de clique
   dashboardTab.addEventListener("click", () => {
     activateTab(dashboardTab);
-    showDashboard();
+    if (
+      window.DashboardNavigation &&
+      window.DashboardNavigation.showDashboard
+    ) {
+      window.DashboardNavigation.showDashboard();
+    }
   });
 
   // Adicionar como primeira aba
@@ -992,13 +997,17 @@ function showDashboard() {
     console.error("❌ [DEBUG] welcomeScreen não encontrado");
   }
 
-  // Ativar aba do dashboard
-
-  const dashboardTab = document.querySelector('.tab[data-tool="dashboard"]');
-  if (dashboardTab) {
-    activateTab(dashboardTab);
+  // Usar o novo sistema de navegação se disponível
+  if (window.DashboardNavigation && window.DashboardNavigation.showDashboard) {
+    window.DashboardNavigation.showDashboard();
   } else {
-    console.error("❌ [DEBUG] Aba do dashboard NÃO encontrada");
+    // Ativar aba do dashboard como fallback
+    const dashboardTab = document.querySelector('.tab[data-tool="dashboard"]');
+    if (dashboardTab) {
+      activateTab(dashboardTab);
+    } else {
+      console.error("❌ [DEBUG] Aba do dashboard NÃO encontrada");
+    }
   }
 }
 
@@ -2067,7 +2076,24 @@ async function loadToolContent(tool, contentElement) {
       case "rastreamento":
         // Carregar o script de rastreamento se ainda não estiver carregado
         if (!window.initRastreamento) {
-          await loadScript("../javascripts/rastreamento.js");
+          await loadScript("../javascripts/rastreamento/loader.js");
+
+          // Aguardar um pouco para garantir que os módulos foram carregados
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
+          // Aguardar até que initRastreamento esteja disponível
+          let attempts = 0;
+          while (!window.initRastreamento && attempts < 50) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            attempts++;
+          }
+
+          if (!window.initRastreamento) {
+            console.error(
+              "❌ Timeout: initRastreamento não foi carregado após 2.5 segundos"
+            );
+            return;
+          }
         }
 
         // Carregar a biblioteca Chart.js se ainda não estiver carregada
@@ -2076,8 +2102,8 @@ async function loadToolContent(tool, contentElement) {
         }
 
         // Carregar o script do dashboard se ainda não estiver carregado
-        if (!window.initDashboard) {
-          await loadScript("../javascripts/dashboard.js");
+        if (!window.DashboardMain) {
+          await loadScript("../javascripts/dashboard/loader.js");
         }
 
         // Carregar o CSS de rastreamento se ainda não estiver carregado
@@ -2106,8 +2132,15 @@ async function loadToolContent(tool, contentElement) {
         `;
 
         // Inicializar o rastreamento
+
         if (window.initRastreamento) {
-          window.initRastreamento();
+          try {
+            await window.initRastreamento(trackingView);
+          } catch (error) {
+            console.error("❌ Erro ao executar initRastreamento:", error);
+          }
+        } else {
+          console.error("❌ window.initRastreamento não encontrado!");
         }
 
         // Adicionar eventos para todos os botões "Ver Rastreamento"
@@ -2121,7 +2154,12 @@ async function loadToolContent(tool, contentElement) {
 
               // Adicionar evento de clique
               button.addEventListener("click", () => {
-                if (window.showTracking) {
+                if (
+                  window.DashboardNavigation &&
+                  window.DashboardNavigation.showTracking
+                ) {
+                  window.DashboardNavigation.showTracking();
+                } else if (window.showTracking) {
                   window.showTracking();
                 }
               });
@@ -2137,7 +2175,12 @@ async function loadToolContent(tool, contentElement) {
 
                 // Adicionar evento de clique
                 button.addEventListener("click", () => {
-                  if (window.showTracking) {
+                  if (
+                    window.DashboardNavigation &&
+                    window.DashboardNavigation.showTracking
+                  ) {
+                    window.DashboardNavigation.showTracking();
+                  } else if (window.showTracking) {
                     window.showTracking();
                   }
                 });
