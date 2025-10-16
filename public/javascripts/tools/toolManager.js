@@ -1,44 +1,6 @@
 // Tool Manager Module - Gerenciador de ferramentas
 window.ToolManager = window.ToolManager || {};
 
-// Função de fallback para carregar scripts
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    // Verificar se o script já foi carregado
-    const existingScript = document.querySelector(`script[src="${src}"]`);
-    if (existingScript) {
-      resolve();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = (error) => {
-      console.error(`❌ [ToolManager] Erro ao carregar script: ${src}`, error);
-      reject(error);
-    };
-    document.head.appendChild(script);
-  });
-}
-
-// Função de fallback para carregar CSS
-function loadCSS(href) {
-  // Verificar se o CSS já foi carregado
-  const existingCSS = document.querySelector(`link[href="${href}"]`);
-  if (existingCSS) {
-    return;
-  }
-
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = href;
-  link.onerror = (error) => {
-    console.error(`❌ [ToolManager] Erro ao carregar CSS: ${href}`, error);
-  };
-  document.head.appendChild(link);
-}
-
 // Estado das ferramentas
 window.ToolManager.state = {
   tools: new Map(),
@@ -310,15 +272,75 @@ window.ToolManager.loadFrotaTool = async function (contentElement) {
       </button>
     </div>
     <div class="frota-container">
-      <!-- Conteúdo será carregado dinamicamente -->
+      <!-- Aba de Veículos -->
+      <div class="frota-tab-content active" id="veiculosTab">
+        <div class="frota-actions">
+          <button class="btn-primary frota-add-btn">
+            <i class="fas fa-plus"></i> Adicionar Veículo
+          </button>
+          <div class="frota-search">
+            <input type="text" id="frotaSearch" placeholder="Buscar veículo por placa ou modelo...">
+            <button><i class="fas fa-search"></i></button>
+          </div>
+          <div class="frota-filter">
+            <select id="frotaFilter">
+              <option value="todos">Todos os veículos</option>
+              <option value="Disponível">Disponíveis</option>
+              <option value="Em uso">Em uso</option>
+              <option value="Manutenção">Em manutenção</option>
+            </select>
+          </div>
+        </div>
+        <div class="frota-list" id="frotaList">
+          <div class="loader">
+            <i class="fas fa-spinner fa-spin"></i> Carregando veículos...
+          </div>
+        </div>
+        <div class="pagination" id="frotaPagination">
+          <!-- Paginação será adicionada dinamicamente -->
+        </div>
+      </div>
+      
+      <!-- Aba de Manutenções -->
+      <div class="frota-tab-content" id="manutencoesTab">
+        <div class="frota-actions">
+          <button class="btn-primary frota-add-manutencao-btn">
+            <i class="fas fa-plus"></i> Registrar Manutenção
+          </button>
+          <div class="frota-search">
+            <input type="text" id="manutencaoSearch" placeholder="Buscar por placa ou serviço...">
+            <button><i class="fas fa-search"></i></button>
+          </div>
+          <div class="frota-filter">
+            <select id="manutencaoFilter">
+              <option value="todos">Todos os veículos</option>
+            </select>
+          </div>
+        </div>
+        <div class="manutencao-list" id="manutencaoList">
+          <div class="loader">
+            <i class="fas fa-spinner fa-spin"></i> Carregando manutenções...
+          </div>
+        </div>
+        <div class="pagination" id="manutencaoPagination">
+          <!-- Paginação será adicionada dinamicamente -->
+        </div>
+      </div>
     </div>
   `;
 
   // Configurar abas da frota
   window.ToolManager.setupFrotaTabs();
 
-  // Carregar dados da frota
+  // Configurar busca e filtros
+  window.ToolManager.setupFrotaSearch();
+  window.ToolManager.setupFrotaFilters();
+  window.ToolManager.setupManutencoesSearch();
+  window.ToolManager.setupManutencoesFilters();
+
+  // Carregar dados da frota e manutenções
   await window.ToolManager.loadFrotaData();
+  await window.ToolManager.loadManutencoesData();
 };
 
 // Função para configurar abas da frota
@@ -359,52 +381,517 @@ window.ToolManager.loadFrotaData = async function () {
 
 // Função para renderizar itens da frota
 window.ToolManager.renderFrotaItems = function (veiculos) {
-  // Implementar renderização dos veículos
-  // Por enquanto, apenas um placeholder
+  const frotaList = document.getElementById("frotaList");
+  if (!frotaList) {
+    console.error("❌ Elemento frotaList não encontrado");
+    return;
+  }
+
+  // Filtrar veículos para remover os desativados
+  const veiculosAtivos = veiculos.filter(
+    (veiculo) => veiculo.situacaoativo !== "Desativado"
+  );
+
+  if (veiculosAtivos.length === 0) {
+    frotaList.innerHTML =
+      '<div class="empty-state">Nenhum veículo ativo encontrado.</div>';
+    return;
+  }
+
+  // Limpar lista atual
+  frotaList.innerHTML = "";
+
+  // Criar os cards para cada veículo
+  veiculosAtivos.forEach((veiculo) => {
+    const card = document.createElement("div");
+    card.className = "frota-card";
+    card.dataset.placa = veiculo.idobject;
+    card.dataset.situacao = veiculo.situacaoativo;
+
+    let statusClass = "disponivel";
+    if (veiculo.situacaoativo === "Em uso") {
+      statusClass = "em_uso";
+    } else if (veiculo.situacaoativo === "Manutenção") {
+      statusClass = "manutencao";
+    }
+
+    card.innerHTML = `
+      <div class="frota-card-header">
+        <h3>${veiculo.idobject}</h3>
+        <span class="status-badge ${statusClass}">${
+      veiculo.situacaoativo
+    }</span>
+      </div>
+      <div class="frota-card-body">
+        <div class="vehicle-info">
+          <p><strong>Modelo:</strong> ${veiculo.nmobject}</p>
+          <p><strong>Tipo:</strong> ${veiculo.nmobjecttype}</p>
+          <p><strong>Fabricante:</strong> ${
+            veiculo.nmcompany || "Não informado"
+          }</p>
+          <p><strong>Local:</strong> ${veiculo.nmsite}</p>
+        </div>
+      </div>
+      <div class="frota-card-footer">
+        <button class="btn-outline btn-edit" data-placa="${veiculo.idobject}">
+          <i class="fas fa-edit"></i> Editar
+        </button>
+        <button class="btn-outline btn-history" data-placa="${
+          veiculo.idobject
+        }">
+          <i class="fas fa-history"></i> Histórico
+        </button>
+        ${
+          veiculo.situacaoativo === "Manutenção"
+            ? `<button class="btn-outline btn-maintenance-complete" data-placa="${veiculo.idobject}">
+               <i class="fas fa-check"></i> Finalizar manutenção
+             </button>`
+            : `<button class="btn-outline btn-maintenance" data-placa="${veiculo.idobject}">
+               <i class="fas fa-tools"></i> Manutenção
+             </button>`
+        }
+      </div>
+    `;
+
+    frotaList.appendChild(card);
+  });
+
+  // Configurar os botões de ação
+  window.ToolManager.setupFrotaButtons();
+};
+
+// Função para carregar dados de manutenções
+window.ToolManager.loadManutencoesData = async function () {
+  try {
+    const response = await fetch("http://localhost:4010/frota/manutencoes");
+    if (!response.ok) {
+      throw new Error("Falha ao carregar dados de manutenções");
+    }
+
+    const manutencoes = await response.json();
+
+    // Armazenar dados globalmente para uso em filtros
+    window.ToolManager.manutencoesData = manutencoes;
+
+    // Processar e renderizar manutenções
+    window.ToolManager.processManutencoesData(manutencoes);
+  } catch (error) {
+    console.error("❌ Erro ao carregar dados de manutenções:", error);
+    const manutencaoList = document.getElementById("manutencaoList");
+    if (manutencaoList) {
+      manutencaoList.innerHTML = `
+        <div class="error-state">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>Falha ao carregar dados de manutenções. Tente novamente mais tarde.</p>
+          <button class="retry-button" id="retryLoadManutencoes">Tentar novamente</button>
+        </div>
+      `;
+
+      document
+        .getElementById("retryLoadManutencoes")
+        .addEventListener("click", () => {
+          window.ToolManager.loadManutencoesData();
+        });
+    }
+  }
+};
+
+// Função para processar dados de manutenções
+window.ToolManager.processManutencoesData = function (manutencoes) {
+  const manutencaoList = document.getElementById("manutencaoList");
+  if (!manutencaoList) {
+    console.error("❌ Elemento manutencaoList não encontrado");
+    return;
+  }
+
+  if (manutencoes.length === 0) {
+    manutencaoList.innerHTML =
+      '<div class="empty-state">Nenhuma manutenção encontrada.</div>';
+    return;
+  }
+
+  // Agrupar manutenções por veículo e data
+  const grupamentoManutencoes = {};
+
+  manutencoes.forEach((manutencao) => {
+    const placa = manutencao.idobject;
+    const data = manutencao.dtcheckin;
+
+    // Criar chave combinada de placa e data
+    const chave = `${placa}-${data}`;
+
+    if (!grupamentoManutencoes[chave]) {
+      grupamentoManutencoes[chave] = {
+        placa,
+        modelo: manutencao.nmobject,
+        local: manutencao.nmsite,
+        data,
+        status: manutencao.situacaoativo,
+        responsavel: manutencao.idcommercial,
+        observacao: manutencao.dsobservation,
+        servicos: [],
+      };
+    }
+
+    // Adicionar o serviço ao grupo
+    grupamentoManutencoes[chave].servicos.push({
+      descricao: manutencao.nmcostvariable,
+      origem: manutencao.origemcusto,
+      valor: manutencao.vlrealcost,
+    });
+  });
+
+  // Agrupar por veículo para exibição
+  const manutencoesVeiculos = {};
+
+  // Converter grupos para array de manutenções
+  Object.values(grupamentoManutencoes).forEach((manutencao) => {
+    const placa = manutencao.placa;
+
+    if (!manutencoesVeiculos[placa]) {
+      manutencoesVeiculos[placa] = {
+        placa,
+        modelo: manutencao.modelo,
+        local: manutencao.local,
+        status: manutencao.status,
+        manutencoes: [],
+      };
+    }
+
+    manutencoesVeiculos[placa].manutencoes.push(manutencao);
+  });
+
+  // Armazenar dados processados
+  window.ToolManager.manutencoesAgrupadas = Object.values(manutencoesVeiculos);
+
+  // Renderizar manutenções
+  window.ToolManager.renderManutencoesItems(
+    window.ToolManager.manutencoesAgrupadas
+  );
+
+  // Atualizar filtro de placas
+  window.ToolManager.updateManutencoesFilter();
+};
+
+// Função para renderizar itens de manutenções
+window.ToolManager.renderManutencoesItems = function (items) {
+  const manutencaoList = document.getElementById("manutencaoList");
+  if (!manutencaoList) {
+    console.error("❌ Elemento manutencaoList não encontrado");
+    return;
+  }
+
+  if (items.length === 0) {
+    manutencaoList.innerHTML =
+      '<div class="empty-state">Nenhuma manutenção encontrada com os filtros aplicados.</div>';
+    return;
+  }
+
+  // Limpar lista atual
+  manutencaoList.innerHTML = "";
+
+  // Criar os cards para cada veículo
+  items.forEach((veiculo) => {
+    const card = document.createElement("div");
+    card.className = "manutencao-veiculo-card";
+    card.dataset.placa = veiculo.placa;
+
+    let statusClass = "disponivel";
+    if (veiculo.status === "Em uso") {
+      statusClass = "em_uso";
+    } else if (veiculo.status === "Manutenção") {
+      statusClass = "manutencao";
+    }
+
+    // Ordenar manutenções por data - mais recentes primeiro
+    const manutencoes = veiculo.manutencoes.sort((a, b) => {
+      return new Date(b.data) - new Date(a.data);
+    });
+
+    // Contar total de serviços em todas as manutenções
+    const totalServicos = manutencoes.reduce((total, manutencao) => {
+      return total + manutencao.servicos.length;
+    }, 0);
+
+    // Obter a data da última manutenção
+    const ultimaManutencao = manutencoes[0];
+    const dataUltimaManutencao = new Date(
+      ultimaManutencao.data
+    ).toLocaleDateString("pt-BR");
+
+    // Obter serviços da última manutenção para preview
+    const servicosPreview = ultimaManutencao.servicos
+      .map((s) => s.descricao)
+      .slice(0, 2);
+    const temMaisServicos = ultimaManutencao.servicos.length > 2;
+
+    card.innerHTML = `
+      <div class="manutencao-veiculo-header">
+        <div class="manutencao-veiculo-info">
+          <h3>${veiculo.placa}</h3>
+          <p class="veiculo-modelo">${veiculo.modelo}</p>
+        </div>
+        <span class="status-badge ${statusClass}">${veiculo.status}</span>
+      </div>
+      <div class="manutencao-veiculo-body">
+        <div class="manutencao-veiculo-stats">
+          <div class="manutencao-stat">
+            <span class="stat-value">${manutencoes.length}</span>
+            <span class="stat-label">Manutenções</span>
+          </div>
+          <div class="manutencao-stat">
+            <span class="stat-value">${totalServicos}</span>
+            <span class="stat-label">Serviços</span>
+          </div>
+          <div class="manutencao-stat">
+            <span class="stat-value">${dataUltimaManutencao}</span>
+            <span class="stat-label">Última manutenção</span>
+          </div>
+        </div>
+        <div class="manutencao-veiculo-preview">
+          <h4>Últimos serviços:</h4>
+          <ul class="servicos-preview">
+            ${servicosPreview.map((servico) => `<li>${servico}</li>`).join("")}
+            ${
+              temMaisServicos
+                ? `<li class="mais-servicos">+ ${
+                    ultimaManutencao.servicos.length - 2
+                  } mais</li>`
+                : ""
+            }
+          </ul>
+        </div>
+      </div>
+      <div class="manutencao-veiculo-footer">
+        <button class="btn-outline btn-view-history" data-placa="${
+          veiculo.placa
+        }">
+          <i class="fas fa-history"></i> Ver Histórico Completo
+        </button>
+      </div>
+    `;
+
+    manutencaoList.appendChild(card);
+  });
+
+  // Configurar botões de ação
+  window.ToolManager.setupManutencoesButtons();
+};
+
+// Função para atualizar filtro de placas
+window.ToolManager.updateManutencoesFilter = function () {
+  const filterSelect = document.getElementById("manutencaoFilter");
+  if (!filterSelect || !window.ToolManager.manutencoesAgrupadas) return;
+
+  // Limpar opções existentes (exceto "Todos os veículos")
+  filterSelect.innerHTML = '<option value="todos">Todos os veículos</option>';
+
+  // Adicionar opções para cada veículo
+  window.ToolManager.manutencoesAgrupadas.forEach((veiculo) => {
+    const option = document.createElement("option");
+    option.value = veiculo.placa;
+    option.textContent = veiculo.placa;
+    filterSelect.appendChild(option);
+  });
+};
+
+// Função para configurar busca da frota
+window.ToolManager.setupFrotaSearch = function () {
+  const searchInput = document.getElementById("frotaSearch");
+  if (!searchInput) return;
+
+  let searchTimeout;
+  searchInput.addEventListener("input", (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      const searchTerm = e.target.value.toLowerCase();
+      window.ToolManager.filterFrotaItems(searchTerm);
+    }, 300);
+  });
+};
+
+// Função para configurar filtros da frota
+window.ToolManager.setupFrotaFilters = function () {
+  const filterSelect = document.getElementById("frotaFilter");
+  if (!filterSelect) return;
+
+  filterSelect.addEventListener("change", (e) => {
+    const statusFilter = e.target.value;
+    window.ToolManager.filterFrotaItems(null, statusFilter);
+  });
+};
+
+// Função para filtrar itens da frota
+window.ToolManager.filterFrotaItems = function (
+  searchTerm = "",
+  statusFilter = "todos"
+) {
+  const frotaList = document.getElementById("frotaList");
+  if (!frotaList) return;
+
+  const cards = frotaList.querySelectorAll(".frota-card");
+
+  cards.forEach((card) => {
+    const placa = card.dataset.placa.toLowerCase();
+    const situacao = card.dataset.situacao;
+
+    const matchSearch = !searchTerm || placa.includes(searchTerm);
+    const matchStatus = statusFilter === "todos" || situacao === statusFilter;
+
+    if (matchSearch && matchStatus) {
+      card.style.display = "block";
+    } else {
+      card.style.display = "none";
+    }
+  });
+};
+
+// Função para configurar botões de ação da frota
+window.ToolManager.setupFrotaButtons = function () {
+  // Botões de editar
+  document.querySelectorAll(".btn-edit").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      window.Notifications.showNotification(
+        `Editando veículo ${btn.dataset.placa}`,
+        "info"
+      );
+    });
+  });
+
+  // Botões de histórico
+  document.querySelectorAll(".btn-history").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      // Alternar para a aba de manutenções e filtrar pelo veículo
+      const manutencoesTab = document.querySelector(
+        '.frota-tab-button[data-tab="manutencoes"]'
+      );
+      if (manutencoesTab) {
+        manutencoesTab.click();
+        const manutencaoFilter = document.getElementById("manutencaoFilter");
+        if (manutencaoFilter) {
+          manutencaoFilter.value = btn.dataset.placa;
+          manutencaoFilter.dispatchEvent(new Event("change"));
+        }
+      }
+    });
+  });
+
+  // Botões de manutenção
+  document.querySelectorAll(".btn-maintenance").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      window.Notifications.showNotification(
+        `Iniciando manutenção do veículo ${btn.dataset.placa}`,
+        "info"
+      );
+    });
+  });
+
+  // Botões de finalizar manutenção
+  document.querySelectorAll(".btn-maintenance-complete").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      window.Notifications.showNotification(
+        `Finalizando manutenção do veículo ${btn.dataset.placa}`,
+        "success"
+      );
+    });
+  });
+};
+
+// Função para configurar busca de manutenções
+window.ToolManager.setupManutencoesSearch = function () {
+  const searchInput = document.getElementById("manutencaoSearch");
+  if (!searchInput) return;
+
+  let searchTimeout;
+  searchInput.addEventListener("input", (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      const searchTerm = e.target.value.toLowerCase();
+      window.ToolManager.filterManutencoesItems(searchTerm);
+    }, 300);
+  });
+};
+
+// Função para configurar filtros de manutenções
+window.ToolManager.setupManutencoesFilters = function () {
+  const filterSelect = document.getElementById("manutencaoFilter");
+  if (!filterSelect) return;
+
+  filterSelect.addEventListener("change", (e) => {
+    const placaFilter = e.target.value;
+    window.ToolManager.filterManutencoesItems(null, placaFilter);
+  });
+};
+
+// Função para filtrar itens de manutenções
+window.ToolManager.filterManutencoesItems = function (
+  searchTerm = "",
+  placaFilter = "todos"
+) {
+  if (!window.ToolManager.manutencoesAgrupadas) return;
+
+  // Aplicar filtros
+  const filteredManutencoes = window.ToolManager.manutencoesAgrupadas.filter(
+    (veiculo) => {
+      // Filtro de placa
+      const matchPlaca =
+        placaFilter === "todos" || veiculo.placa === placaFilter;
+
+      // Filtro de busca
+      const placa = veiculo.placa.toLowerCase();
+      const modelo = veiculo.modelo.toLowerCase();
+
+      // Verificar se algum serviço corresponde à busca
+      const servicosMatch = veiculo.manutencoes.some((manutencao) => {
+        return manutencao.servicos.some((servico) => {
+          return servico.descricao.toLowerCase().includes(searchTerm);
+        });
+      });
+
+      const matchSearch =
+        searchTerm === "" ||
+        placa.includes(searchTerm) ||
+        modelo.includes(searchTerm) ||
+        servicosMatch;
+
+      return matchPlaca && matchSearch;
+    }
+  );
+
+  // Renderizar resultados filtrados
+  window.ToolManager.renderManutencoesItems(filteredManutencoes);
+};
+
+// Função para configurar botões de manutenções
+window.ToolManager.setupManutencoesButtons = function () {
+  // Botões de ver histórico
+  document.querySelectorAll(".btn-view-history").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      window.Notifications.showNotification(
+        `Visualizando histórico completo do veículo ${btn.dataset.placa}`,
+        "info"
+      );
+    });
+  });
 };
 
 // Função para carregar ferramenta de rastreamento
 window.ToolManager.loadRastreamentoTool = async function (contentElement) {
-  // Carregar o script de rastreamento se ainda não estiver carregado
-  if (!window.initRastreamento) {
-    await loadScript("../javascripts/rastreamento/loader.js");
-
-    // Aguardar um pouco para garantir que os módulos foram carregados
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Aguardar até que initRastreamento esteja disponível
-    let attempts = 0;
-    while (!window.initRastreamento && attempts < 50) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      attempts++;
-    }
-
-    if (!window.initRastreamento) {
+  // Carregar módulos de rastreamento usando o ModuleLoader
+  if (!window.RastreamentoMain) {
+    try {
+      await window.ModuleLoader.loadRastreamentoPage();
+    } catch (error) {
       console.error(
-        "❌ Timeout: initRastreamento não foi carregado após 2.5 segundos"
+        "❌ [ToolManager] Erro ao carregar módulos de rastreamento:",
+        error
       );
       return;
     }
   }
 
-  // Carregar a biblioteca Chart.js se ainda não estiver carregada
-  if (typeof Chart === "undefined") {
-    await loadScript("https://cdn.jsdelivr.net/npm/chart.js");
-  }
-
-  // Carregar o script do dashboard se ainda não estiver carregado
-  if (!window.DashboardMain) {
-    await loadScript("../javascripts/dashboard/loader.js");
-  }
-
-  // Carregar CSSs necessários
-  if (!document.querySelector('link[href="../styles/rastreamento.css"]')) {
-    loadCSS("../styles/rastreamento.css");
-  }
-
-  if (!document.querySelector('link[href="../styles/dashboard.css"]')) {
-    loadCSS("../styles/dashboard.css");
-  }
+  // Chart.js já está carregado globalmente no index.html
+  // CSSs são carregados pelo ModuleLoader quando necessário
 
   // Criar a estrutura HTML para o rastreamento
   contentElement.innerHTML = `
@@ -420,15 +907,20 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
   `;
 
   // Inicializar o rastreamento
-  if (window.initRastreamento) {
+  if (window.RastreamentoMain && window.RastreamentoMain.initRastreamento) {
     try {
       const trackingView = document.getElementById("trackingView");
-      await window.initRastreamento(trackingView);
+      await window.RastreamentoMain.initRastreamento(trackingView);
     } catch (error) {
-      console.error("❌ Erro ao executar initRastreamento:", error);
+      console.error(
+        "❌ Erro ao executar RastreamentoMain.initRastreamento:",
+        error
+      );
     }
   } else {
-    console.error("❌ window.initRastreamento não encontrado!");
+    console.error(
+      "❌ window.RastreamentoMain.initRastreamento não encontrado!"
+    );
   }
 
   // Configurar eventos de rastreamento

@@ -1,8 +1,24 @@
 // Dashboard Main Module - Módulo principal do dashboard
 window.DashboardMain = window.DashboardMain || {};
 
+// Estado para evitar execução duplicada
+window.DashboardMain.state = {
+  isInitialized: false,
+  isInitializing: false,
+};
+
 // Função principal para inicializar o dashboard
-window.DashboardMain.initDashboard = function () {
+window.DashboardMain.initDashboard = async function () {
+  // Evitar execução duplicada
+  if (
+    window.DashboardMain.state.isInitialized ||
+    window.DashboardMain.state.isInitializing
+  ) {
+    return;
+  }
+
+  window.DashboardMain.state.isInitializing = true;
+
   try {
     // Inicializar UI
     if (window.DashboardUI) {
@@ -18,27 +34,64 @@ window.DashboardMain.initDashboard = function () {
       console.error("❌ DashboardNavigation não está disponível");
     }
 
-    // Inicializar animações dos cards
-    if (window.DashboardUI) {
-      window.DashboardUI.animateCards();
-    }
+    // Função para inicializar componentes do dashboard
+    const initializeDashboardComponents = () => {
+      // Inicializar animações dos cards
+      if (window.DashboardUI) {
+        window.DashboardUI.animateCards();
+      }
 
-    // Inicializar gráficos
-    if (window.DashboardCharts) {
-      window.DashboardCharts.initCharts();
-    } else {
-      console.error("❌ DashboardCharts não está disponível");
-    }
+      // Inicializar gráficos após a estrutura estar pronta
+      if (window.DashboardCharts) {
+        window.DashboardCharts.initCharts();
+      } else {
+        console.error("❌ DashboardCharts não está disponível");
+      }
 
-    // Inicializar eventos com delay para garantir que o DOM esteja renderizado
-    if (window.DashboardEvents) {
-      // Aguardar um pouco para garantir que o DOM esteja completamente renderizado
-      setTimeout(() => {
+      // Inicializar eventos após estrutura estar pronta
+      if (window.DashboardEvents) {
         window.DashboardEvents.initEvents();
         window.DashboardEvents.initAdvancedEvents();
-      }, 100);
+      } else {
+        console.error("❌ DashboardEvents não está disponível");
+      }
+    };
+
+    // Verificar se a estrutura já está pronta
+    const dashboardGrid = document.querySelector(".dashboard-grid");
+    const expectedCards = [
+      "totalEntregas",
+      "entregasNoPrazo",
+      "entregasAtrasadas",
+      "taxaEntrega",
+      "custoTotal",
+      "custoMedio",
+    ];
+    const existingCards = Array.from(
+      dashboardGrid?.querySelectorAll(".dashboard-card") || []
+    ).map((card) => card.id);
+    const hasAllCards = expectedCards.every((cardId) =>
+      existingCards.includes(cardId)
+    );
+
+    if (dashboardGrid && hasAllCards) {
+      initializeDashboardComponents();
     } else {
-      console.error("❌ DashboardEvents não está disponível");
+      // Escutar evento de estrutura pronta
+      const handleDashboardReady = (event) => {
+        initializeDashboardComponents();
+
+        // Remover o listener após usar
+        document.removeEventListener(
+          "dashboardStructureReady",
+          handleDashboardReady
+        );
+      };
+
+      document.addEventListener(
+        "dashboardStructureReady",
+        handleDashboardReady
+      );
     }
 
     // Inicializar dados
@@ -47,8 +100,12 @@ window.DashboardMain.initDashboard = function () {
     } else {
       console.error("❌ DashboardData não está disponível");
     }
+
+    window.DashboardMain.state.isInitialized = true;
+    window.DashboardMain.state.isInitializing = false;
   } catch (error) {
     console.error("❌ Erro ao inicializar Dashboard Principal:", error);
+    window.DashboardMain.state.isInitializing = false;
   }
 };
 

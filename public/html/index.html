@@ -27,39 +27,6 @@
       rel="stylesheet"
       href="https://unpkg.com/tippy.js@6/themes/light.css"
     />
-    <!-- Script para garantir que a sidebar esteja aberta antes do JavaScript ser carregado -->
-    <script>
-      // Função para garantir que a sidebar esteja aberta
-      function garantirSidebarAberta() {
-        var sidebar = document.querySelector(".sidebar");
-        var mainContent = document.querySelector(".main-content");
-        var toggleButton = document.getElementById("toggleSidebar");
-        var body = document.body;
-
-        if (sidebar) {
-          sidebar.classList.remove("collapsed");
-        }
-
-        if (mainContent) {
-          mainContent.classList.remove("expanded");
-        }
-
-        if (body) {
-          body.classList.remove("sidebar-collapsed");
-        }
-
-        if (toggleButton) {
-          toggleButton.innerHTML = '<i class="fas fa-times"></i>';
-          toggleButton.setAttribute("title", "Ocultar menu lateral");
-        }
-      }
-
-      // Executar imediatamente
-      document.addEventListener("DOMContentLoaded", garantirSidebarAberta);
-      // Executar após um pequeno atraso
-      setTimeout(garantirSidebarAberta, 0);
-      setTimeout(garantirSidebarAberta, 100);
-    </script>
   </head>
   <body>
     <!-- Toggle Sidebar Button -->
@@ -234,7 +201,7 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <script src="../javascripts/core/appLoader.js"></script>
-    <script src="../javascripts/auth/authCheckLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../javascripts/core/moduleLoader.js"></script>
   </body>
 </html>

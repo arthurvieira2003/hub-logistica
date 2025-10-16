@@ -4,6 +4,87 @@ window.DashboardCharts = window.DashboardCharts || {};
 // Instâncias dos gráficos para controle
 window.DashboardCharts.chartInstances = {};
 
+// Função para aguardar elementos estarem disponíveis usando MutationObserver
+window.DashboardCharts.waitForElements = function (
+  elementIds,
+  callback,
+  timeout = 5000
+) {
+  const startTime = Date.now();
+  const foundElements = new Set();
+
+  function checkElements() {
+    const missing = elementIds.filter(
+      (id) => !foundElements.has(id) && !document.getElementById(id)
+    );
+
+    if (missing.length === 0) {
+      callback();
+      return true;
+    }
+
+    if (Date.now() - startTime >= timeout) {
+      console.error("❌ [DashboardCharts] Timeout aguardando elementos canvas");
+      console.error(
+        `❌ [DashboardCharts] Elementos não encontrados: ${missing.join(", ")}`
+      );
+      return true;
+    }
+
+    return false;
+  }
+
+  // Verificar elementos já existentes
+  elementIds.forEach((id) => {
+    if (document.getElementById(id)) {
+      foundElements.add(id);
+    }
+  });
+
+  // Se todos já existem, executar callback imediatamente
+  if (checkElements()) {
+    return;
+  }
+
+  // Usar MutationObserver para detectar quando elementos são adicionados
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          elementIds.forEach((id) => {
+            if (!foundElements.has(id)) {
+              const element =
+                node.id === id ? node : node.querySelector(`#${id}`);
+              if (element) {
+                foundElements.add(id);
+              }
+            }
+          });
+        }
+      });
+    });
+
+    // Verificar se todos os elementos foram encontrados
+    if (checkElements()) {
+      observer.disconnect();
+    }
+  });
+
+  // Observar mudanças no documento
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  // Fallback com polling para casos onde MutationObserver não funciona
+  const pollInterval = setInterval(() => {
+    if (checkElements()) {
+      clearInterval(pollInterval);
+      observer.disconnect();
+    }
+  }, 100);
+};
+
 // Função para inicializar todos os gráficos
 window.DashboardCharts.initCharts = function () {
   // Verificar se Chart.js está disponível
@@ -14,19 +95,35 @@ window.DashboardCharts.initCharts = function () {
     return;
   }
 
-  // Inicializar cada gráfico
-  window.DashboardCharts.initStatusChart();
-  window.DashboardCharts.initTransportadorasChart();
-  window.DashboardCharts.initDailyDeliveriesChart();
-  window.DashboardCharts.initRegioesChart();
-  window.DashboardCharts.initDesempenhoChart();
-  window.DashboardCharts.initOcorrenciasChart();
+  // Lista de IDs dos elementos canvas
+  const chartElementIds = [
+    "statusChart",
+    "transportadorasChart",
+    "dailyDeliveriesChart",
+    "regioesChart",
+    "desempenhoChart",
+    "ocorrenciasChart",
+  ];
+
+  // Aguardar elementos estarem disponíveis antes de inicializar
+  window.DashboardCharts.waitForElements(chartElementIds, () => {
+    // Inicializar cada gráfico
+    window.DashboardCharts.initStatusChart();
+    window.DashboardCharts.initTransportadorasChart();
+    window.DashboardCharts.initDailyDeliveriesChart();
+    window.DashboardCharts.initRegioesChart();
+    window.DashboardCharts.initDesempenhoChart();
+    window.DashboardCharts.initOcorrenciasChart();
+  });
 };
 
 // Gráfico de distribuição de status
 window.DashboardCharts.initStatusChart = function () {
   const ctx = document.getElementById("statusChart");
-  if (!ctx) return;
+  if (!ctx) {
+    console.warn("❌ [DashboardCharts] Elemento statusChart não encontrado");
+    return;
+  }
 
   window.DashboardCharts.chartInstances.statusChart = new Chart(ctx, {
     type: "doughnut",
@@ -67,7 +164,12 @@ window.DashboardCharts.initStatusChart = function () {
 // Gráfico de entregas por transportadora
 window.DashboardCharts.initTransportadorasChart = function () {
   const ctx = document.getElementById("transportadorasChart");
-  if (!ctx) return;
+  if (!ctx) {
+    console.warn(
+      "❌ [DashboardCharts] Elemento transportadorasChart não encontrado"
+    );
+    return;
+  }
 
   window.DashboardCharts.chartInstances.transportadorasChart = new Chart(ctx, {
     type: "bar",
@@ -112,7 +214,12 @@ window.DashboardCharts.initTransportadorasChart = function () {
 // Gráfico de entregas diárias
 window.DashboardCharts.initDailyDeliveriesChart = function () {
   const ctx = document.getElementById("dailyDeliveriesChart");
-  if (!ctx) return;
+  if (!ctx) {
+    console.warn(
+      "❌ [DashboardCharts] Elemento dailyDeliveriesChart não encontrado"
+    );
+    return;
+  }
 
   window.DashboardCharts.chartInstances.dailyDeliveriesChart = new Chart(ctx, {
     type: "line",
@@ -163,7 +270,10 @@ window.DashboardCharts.initDailyDeliveriesChart = function () {
 // Gráfico de distribuição regional
 window.DashboardCharts.initRegioesChart = function () {
   const ctx = document.getElementById("regioesChart");
-  if (!ctx) return;
+  if (!ctx) {
+    console.warn("❌ [DashboardCharts] Elemento regioesChart não encontrado");
+    return;
+  }
 
   window.DashboardCharts.chartInstances.regioesChart = new Chart(ctx, {
     type: "pie",
@@ -213,7 +323,12 @@ window.DashboardCharts.initRegioesChart = function () {
 // Gráfico de desempenho de transportadoras
 window.DashboardCharts.initDesempenhoChart = function () {
   const ctx = document.getElementById("desempenhoChart");
-  if (!ctx) return;
+  if (!ctx) {
+    console.warn(
+      "❌ [DashboardCharts] Elemento desempenhoChart não encontrado"
+    );
+    return;
+  }
 
   window.DashboardCharts.chartInstances.desempenhoChart = new Chart(ctx, {
     type: "radar",
@@ -277,7 +392,12 @@ window.DashboardCharts.initDesempenhoChart = function () {
 // Gráfico de tipos de ocorrências
 window.DashboardCharts.initOcorrenciasChart = function () {
   const ctx = document.getElementById("ocorrenciasChart");
-  if (!ctx) return;
+  if (!ctx) {
+    console.warn(
+      "❌ [DashboardCharts] Elemento ocorrenciasChart não encontrado"
+    );
+    return;
+  }
 
   window.DashboardCharts.chartInstances.ocorrenciasChart = new Chart(ctx, {
     type: "bar",

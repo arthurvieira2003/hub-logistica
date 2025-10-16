@@ -129,6 +129,31 @@ window.Sidebar.isInitialized = function () {
   return window.Sidebar.state.isInitialized;
 };
 
+// Função para garantir que a sidebar esteja aberta (movida do HTML inline)
+window.Sidebar.garantirSidebarAberta = function () {
+  const sidebar = document.querySelector(".sidebar");
+  const mainContent = document.querySelector(".main-content");
+  const toggleButton = document.getElementById("toggleSidebar");
+  const body = document.body;
+
+  if (sidebar) {
+    sidebar.classList.remove("collapsed");
+  }
+
+  if (mainContent) {
+    mainContent.classList.remove("expanded");
+  }
+
+  if (body) {
+    body.classList.remove("sidebar-collapsed");
+  }
+
+  if (toggleButton) {
+    toggleButton.innerHTML = '<i class="fas fa-times"></i>';
+    toggleButton.setAttribute("title", "Ocultar menu lateral");
+  }
+};
+
 // Função para adicionar múltiplos eventos para garantir que a sidebar permaneça aberta
 window.Sidebar.addPersistentEvents = function () {
   window.addEventListener("load", window.Sidebar.forceOpen);
@@ -140,3 +165,12 @@ window.Sidebar.addPersistentEvents = function () {
   setTimeout(window.Sidebar.forceOpen, 1000);
   setTimeout(window.Sidebar.forceOpen, 2000);
 };
+
+// Executar garantia de sidebar aberta quando o DOM estiver pronto
+document.addEventListener(
+  "DOMContentLoaded",
+  window.Sidebar.garantirSidebarAberta
+);
+// Executar após um pequeno atraso
+setTimeout(window.Sidebar.garantirSidebarAberta, 0);
+setTimeout(window.Sidebar.garantirSidebarAberta, 100);

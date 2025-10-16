@@ -8,51 +8,6 @@ window.TabManager.state = {
   tabCounter: 0,
 };
 
-// Função de fallback para carregar scripts
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    // Verificar se o script já foi carregado
-    const existingScript = document.querySelector(`script[src="${src}"]`);
-    if (existingScript) {
-      resolve();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = (error) => {
-      console.error(`❌ [TabManager] Erro ao carregar script: ${src}`, error);
-      reject(error);
-    };
-    document.head.appendChild(script);
-  });
-}
-
-// Função de fallback para carregar CSS
-function loadCSS(href) {
-  // Verificar se o CSS já foi carregado
-  const existingCSS = document.querySelector(`link[href="${href}"]`);
-  if (existingCSS) {
-    return;
-  }
-
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = href;
-  link.onerror = (error) => {
-    console.error(`❌ [TabManager] Erro ao carregar CSS: ${href}`, error);
-  };
-  document.head.appendChild(link);
-}
-
-// Estado das abas
-window.TabManager.state = {
-  tabs: new Map(),
-  activeTab: null,
-  tabCounter: 0,
-};
-
 // Função para criar uma nova aba
 window.TabManager.createTab = function (tool, name, icon) {
   const tab = document.createElement("div");
@@ -194,7 +149,7 @@ window.TabManager.createToolContent = function (tool) {
 window.TabManager.handleDashboardActivation = function () {
   // Carregar CSS do dashboard se ainda não estiver carregado
   if (!document.querySelector('link[href="../styles/dashboard.css"]')) {
-    loadCSS("/styles/dashboard.css");
+    window.ScriptLoader.loadCSS("/styles/dashboard.css");
   }
 
   const dashboardView = document.getElementById("dashboardView");
@@ -217,10 +172,22 @@ window.TabManager.handleDashboardActivation = function () {
 
 // Função para criar aba do dashboard
 window.TabManager.createDashboardTab = function () {
-  const tabList = document.getElementById("tabList");
+  let tabList = document.getElementById("tabList");
+
   if (!tabList) {
-    console.error("❌ tabList não encontrado");
-    return;
+    console.warn("⚠️ tabList não encontrado, criando elemento...");
+
+    // Criar o elemento tabList se não existir
+    const tabBar = document.querySelector(".tab-bar");
+    if (tabBar) {
+      tabList = document.createElement("div");
+      tabList.className = "tab-list";
+      tabList.id = "tabList";
+      tabBar.appendChild(tabList);
+    } else {
+      console.error("❌ tab-bar não encontrado, não é possível criar tabList");
+      return;
+    }
   }
 
   // Verificar se a aba dashboard já existe
@@ -233,7 +200,7 @@ window.TabManager.createDashboardTab = function () {
 
   // Carregar CSS do dashboard se ainda não estiver carregado
   if (!document.querySelector('link[href="../styles/dashboard.css"]')) {
-    loadCSS("/styles/dashboard.css");
+    window.ScriptLoader.loadCSS("/styles/dashboard.css");
   }
 
   // Carregar script do dashboard se ainda não estiver carregado
@@ -250,10 +217,12 @@ window.TabManager.createDashboardTab = function () {
 window.TabManager.loadDashboardScripts = function () {
   // Carregar Chart.js primeiro
   if (typeof Chart === "undefined") {
-    loadScript("https://cdn.jsdelivr.net/npm/chart.js")
+    window.ScriptLoader.loadScript("https://cdn.jsdelivr.net/npm/chart.js")
       .then(() => {
         // Agora carregar dashboard loader
-        return loadScript("/javascripts/dashboard/loader.js");
+        return window.ScriptLoader.loadScript(
+          "/javascripts/dashboard/dashboardMain.js"
+        );
       })
       .then(() => {
         // Recriar a aba após o script ser carregado
@@ -264,7 +233,7 @@ window.TabManager.loadDashboardScripts = function () {
       });
   } else {
     // Chart.js já está carregado, carregar apenas dashboard loader
-    loadScript("/javascripts/dashboard/loader.js")
+    window.ScriptLoader.loadScript("/javascripts/dashboard/dashboardMain.js")
       .then(() => {
         // Recriar a aba após o script ser carregado
         window.TabManager.renderDashboardTab();

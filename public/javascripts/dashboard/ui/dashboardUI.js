@@ -2,113 +2,102 @@
 // Versão: 2025-10-15-21:15 - Adição de todos os indicadores do dashboard
 window.DashboardUI = window.DashboardUI || {};
 
-// Função para inicializar UI do dashboard
-window.DashboardUI.initUI = function () {
-  window.DashboardUI.addGlobalStyles();
-  window.DashboardUI.createDashboardStructure();
-  window.DashboardUI.animateCards();
+// Função para aplicar larguras das barras de progresso
+window.DashboardUI.applyProgressBarWidths = function () {
+  const progressBars = document.querySelectorAll(".progress-bar[data-width]");
+  progressBars.forEach((bar) => {
+    const width = bar.getAttribute("data-width");
+    bar.style.setProperty("--progress-width", `${width}%`);
+  });
 };
 
-// Função para adicionar estilos globais
-window.DashboardUI.addGlobalStyles = function () {
-  // Verificar se os estilos já foram adicionados
-  if (document.getElementById("dashboard-global-styles")) {
+// Função para inicializar UI do dashboard
+window.DashboardUI.initUI = function () {
+  // Carregar CSS primeiro
+  window.DashboardUI.loadDashboardCSS();
+
+  // Criar estrutura imediatamente após CSS ser carregado
+  window.DashboardUI.createDashboardStructure();
+  window.DashboardUI.applyProgressBarWidths();
+};
+
+// Função para carregar CSS do dashboard
+window.DashboardUI.loadDashboardCSS = function () {
+  // Verificar se o CSS já foi carregado
+  if (document.querySelector('link[href*="dashboard.css"]')) {
     return;
   }
 
-  const style = document.createElement("style");
-  style.id = "dashboard-global-styles";
-  style.textContent = `
-    .dashboard-access-simple {
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      justify-content: flex-end !important;
-      margin-left: auto !important;
-    }
-    .voltar-dashboard-button, #voltarDashboardButton {
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      background-color: #247675;
-      color: white;
-      padding: 0.6rem 1.2rem;
-      border: none;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      font-weight: 600;
-      font-size: 0.95rem;
-      margin: 0;
-      z-index: 9999;
-    }
-    .dashboard-title-row {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      width: 100% !important;
-    }
-    .rastreamento-header {
-      margin-bottom: 1.5rem !important;
-    }
-    .dashboard-card {
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-    .dashboard-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-    .animate-in {
-      animation: fadeInUp 0.6s ease-out forwards;
-    }
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #247675;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  `;
-  document.head.appendChild(style);
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "../styles/dashboard.css";
+  link.onerror = () => {
+    console.error("❌ [DashboardUI] Erro ao carregar CSS do dashboard");
+    console.error("❌ [DashboardUI] Tentando caminho alternativo...");
+
+    // Tentar caminho alternativo
+    const linkAlt = document.createElement("link");
+    linkAlt.rel = "stylesheet";
+    linkAlt.href = "/styles/dashboard.css";
+    linkAlt.onerror = () => {
+      console.error(
+        "❌ [DashboardUI] Erro ao carregar CSS com caminho alternativo"
+      );
+    };
+    document.head.appendChild(linkAlt);
+  };
+  document.head.appendChild(link);
 };
 
 // Função para criar estrutura do dashboard
 window.DashboardUI.createDashboardStructure = function () {
-  // Verificar se a estrutura do dashboard existe
+  // Verificar se a estrutura do dashboard existe e está completa
   const dashboardGrid = document.querySelector(".dashboard-grid");
+  const dashboardView =
+    document.getElementById("dashboardView") ||
+    document.querySelector(".main-content");
 
-  if (!dashboardGrid) {
-    // Criar estrutura básica do dashboard se não existir
-    const dashboardView = document.getElementById("dashboardView");
+  if (!dashboardView) {
+    console.error(
+      "❌ [DashboardUI] dashboardView ou main-content não encontrado"
+    );
+    return;
+  }
 
-    if (dashboardView) {
-      // Verificar se o dashboardView já tem conteúdo
+  // Verificar se o dashboard tem todos os cards necessários
+  const expectedCards = [
+    "totalEntregas",
+    "entregasNoPrazo",
+    "entregasAtrasadas",
+    "taxaEntrega",
+    "custoTotal",
+    "custoMedio",
+  ];
+  const existingCards = Array.from(
+    dashboardGrid?.querySelectorAll(".dashboard-card") || []
+  ).map((card) => card.id);
+  const hasAllCards = expectedCards.every((cardId) =>
+    existingCards.includes(cardId)
+  );
 
-      if (dashboardView.children.length === 0) {
-        dashboardView.innerHTML = window.DashboardUI.getDashboardHTML();
-      }
-    } else {
-      console.error("❌ [DashboardUI] dashboardView não encontrado");
-    }
+  if (!dashboardGrid || !hasAllCards) {
+    dashboardView.innerHTML = window.DashboardUI.getDashboardHTML();
+
+    // Disparar evento após inserir HTML usando requestAnimationFrame para garantir que o DOM esteja atualizado
+    requestAnimationFrame(() => {
+      const event = new CustomEvent("dashboardStructureReady", {
+        detail: { dashboardView },
+      });
+      document.dispatchEvent(event);
+    });
+  } else {
+    // Disparar evento usando requestAnimationFrame para garantir consistência
+    requestAnimationFrame(() => {
+      const event = new CustomEvent("dashboardStructureReady", {
+        detail: { dashboardView },
+      });
+      document.dispatchEvent(event);
+    });
   }
 };
 
@@ -234,7 +223,7 @@ window.DashboardUI.getDashboardHTML = function () {
             </svg>
             <div class="circular-progress-text">88%</div>
           </div>
-          <div class="stat-label" style="text-align: center; margin-top: 1rem">
+          <div class="stat-label stat-label-center">
             Taxa de entregas no prazo
           </div>
         </div>
@@ -541,7 +530,7 @@ window.DashboardUI.getDashboardHTML = function () {
                   <td>Jadlog</td>
                   <td>
                     <div class="progress-bar-container">
-                      <div class="progress-bar progress-bar-success" style="width: 92%"></div>
+                      <div class="progress-bar progress-bar-success" data-width="92"></div>
                       <span>92%</span>
                     </div>
                   </td>
@@ -550,7 +539,7 @@ window.DashboardUI.getDashboardHTML = function () {
                   <td>Correios</td>
                   <td>
                     <div class="progress-bar-container">
-                      <div class="progress-bar progress-bar-warning" style="width: 85%"></div>
+                      <div class="progress-bar progress-bar-warning" data-width="85"></div>
                       <span>85%</span>
                     </div>
                   </td>
@@ -559,7 +548,7 @@ window.DashboardUI.getDashboardHTML = function () {
                   <td>Braspress</td>
                   <td>
                     <div class="progress-bar-container">
-                      <div class="progress-bar progress-bar-success" style="width: 90%"></div>
+                      <div class="progress-bar progress-bar-success" data-width="90"></div>
                       <span>90%</span>
                     </div>
                   </td>
@@ -568,7 +557,7 @@ window.DashboardUI.getDashboardHTML = function () {
                   <td>Jamef</td>
                   <td>
                     <div class="progress-bar-container">
-                      <div class="progress-bar progress-bar-warning" style="width: 88%"></div>
+                      <div class="progress-bar progress-bar-warning" data-width="88"></div>
                       <span>88%</span>
                     </div>
                   </td>
@@ -638,25 +627,9 @@ window.DashboardUI.showNotification = function (
   const notification = document.createElement("div");
   notification.id = "dashboard-notification";
   notification.className = `dashboard-notification notification-${type}`;
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: ${
-      type === "success" ? "#22c55e" : type === "error" ? "#ef4444" : "#3b82f6"
-    };
-    color: white;
-    padding: 1rem 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 10000;
-    animation: slideInRight 0.3s ease-out;
-    max-width: 300px;
-    word-wrap: break-word;
-  `;
 
   notification.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
+    <div class="notification-content">
       <i class="fas fa-${
         type === "success"
           ? "check-circle"
@@ -673,7 +646,7 @@ window.DashboardUI.showNotification = function (
   // Remover após o tempo especificado
   setTimeout(() => {
     if (notification.parentNode) {
-      notification.style.animation = "slideOutRight 0.3s ease-out";
+      notification.classList.add("slide-out");
       setTimeout(() => {
         notification.remove();
       }, 300);
@@ -685,37 +658,14 @@ window.DashboardUI.showNotification = function (
 window.DashboardUI.createModal = function (title, content, options = {}) {
   const modal = document.createElement("div");
   modal.className = "dashboard-modal";
-  modal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    animation: fadeIn 0.3s ease-out;
-  `;
 
   const modalContent = document.createElement("div");
   modalContent.className = "dashboard-modal-content";
-  modalContent.style.cssText = `
-    background: white;
-    border-radius: 0.5rem;
-    padding: 2rem;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    animation: scaleIn 0.3s ease-out;
-  `;
 
   modalContent.innerHTML = `
-    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h3 style="margin: 0; color: #1f2937;">${title}</h3>
-      <button class="modal-close" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">
+    <div class="modal-header">
+      <h3>${title}</h3>
+      <button class="modal-close">
         <i class="fas fa-times"></i>
       </button>
     </div>
@@ -746,7 +696,7 @@ window.DashboardUI.createModal = function (title, content, options = {}) {
 // Função para fechar modal
 window.DashboardUI.closeModal = function (modal) {
   if (modal && modal.parentNode) {
-    modal.style.animation = "fadeOut 0.3s ease-out";
+    modal.classList.add("fade-out");
     setTimeout(() => {
       modal.remove();
     }, 300);
@@ -758,25 +708,15 @@ window.DashboardUI.createTooltip = function (element, text, position = "top") {
   const tooltip = document.createElement("div");
   tooltip.className = "dashboard-tooltip";
   tooltip.textContent = text;
-  tooltip.style.cssText = `
-    position: absolute;
-    background: #1f2937;
-    color: white;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    white-space: nowrap;
-  `;
 
   document.body.appendChild(tooltip);
 
-  // Posicionar tooltip
+  // Posicionar tooltip usando classes CSS
   const rect = element.getBoundingClientRect();
   const tooltipRect = tooltip.getBoundingClientRect();
+
+  // Adicionar classe de posição
+  tooltip.classList.add(`tooltip-${position}`);
 
   switch (position) {
     case "top":
@@ -807,33 +747,16 @@ window.DashboardUI.createTooltip = function (element, text, position = "top") {
 
   // Mostrar tooltip
   setTimeout(() => {
-    tooltip.style.opacity = "1";
+    tooltip.classList.add("tooltip-visible");
   }, 100);
 
   // Remover tooltip após 3 segundos
   setTimeout(() => {
-    tooltip.style.opacity = "0";
+    tooltip.classList.remove("tooltip-visible");
     setTimeout(() => {
       tooltip.remove();
     }, 300);
   }, 3000);
 
   return tooltip;
-};
-
-// Função para atualizar tema
-window.DashboardUI.updateTheme = function (theme = "light") {
-  const root = document.documentElement;
-
-  if (theme === "dark") {
-    root.style.setProperty("--bg-primary", "#1f2937");
-    root.style.setProperty("--bg-secondary", "#374151");
-    root.style.setProperty("--text-primary", "#f9fafb");
-    root.style.setProperty("--text-secondary", "#d1d5db");
-  } else {
-    root.style.setProperty("--bg-primary", "#ffffff");
-    root.style.setProperty("--bg-secondary", "#f9fafb");
-    root.style.setProperty("--text-primary", "#1f2937");
-    root.style.setProperty("--text-secondary", "#6b7280");
-  }
 };

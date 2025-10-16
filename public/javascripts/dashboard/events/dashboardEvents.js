@@ -62,9 +62,8 @@ window.DashboardEvents.initRefreshButton = function () {
         }, 500);
       }
     });
-  } else {
-    console.warn("⚠️ Botão de atualização não encontrado");
   }
+  // Removido o warning desnecessário - o sistema funciona sem o botão
 };
 
 // Função para inicializar abas do dashboard

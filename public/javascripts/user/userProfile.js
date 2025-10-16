@@ -16,9 +16,11 @@ window.UserProfile.loadUserData = async function () {
       window.UserProfile.state.isLoaded = true;
       window.UserProfile.updateUserProfile(userData);
       return userData;
+    } else {
+      console.warn("⚠️ [UserProfile] Nenhum dado de usuário encontrado");
     }
   } catch (error) {
-    console.error("❌ Erro ao carregar dados do usuário:", error);
+    console.error("❌ [UserProfile] Erro ao carregar dados do usuário:", error);
     window.location.replace("/");
   }
 };

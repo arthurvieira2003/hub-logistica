@@ -114,6 +114,7 @@ window.LoginUI.setupLoginForm = function () {
   const form = document.querySelector("form");
 
   if (!form) {
+    console.error("❌ [LoginUI] Formulário não encontrado");
     return;
   }
 
@@ -124,7 +125,11 @@ window.LoginUI.setupLoginForm = function () {
     const password = document.getElementById("password").value;
 
     // Verificar se é login ou registro (por enquanto só login)
-    window.LoginAuth.authenticateUser(email, password);
+    if (window.LoginAuth && window.LoginAuth.authenticateUser) {
+      window.LoginAuth.authenticateUser(email, password);
+    } else {
+      console.error("❌ [LoginUI] LoginAuth não está disponível");
+    }
   });
 };
 
@@ -133,6 +138,8 @@ window.LoginUI.setupLoginForm = function () {
  */
 window.LoginUI.initUI = function () {
   window.LoginUI.setupInputInteractions();
+
   window.LoginUI.setupPasswordToggle();
+
   window.LoginUI.setupLoginForm();
 };

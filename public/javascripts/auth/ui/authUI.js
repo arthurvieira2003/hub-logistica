@@ -1,4 +1,4 @@
-// Namespace para interface de autenticação
+// Namespace unificado para interface de autenticação
 window.AuthUI = window.AuthUI || {};
 
 /**
@@ -184,3 +184,10 @@ window.AuthUI.showAuthError = function (message) {
     notification.style.transform = "translateX(0)";
   }, 10);
 };
+
+// ============================================================================
+// COMPATIBILIDADE COM CÓDIGO EXISTENTE
+// ============================================================================
+
+// Manter compatibilidade com AdminAuthUI (alias para AuthUI)
+window.AdminAuthUI = window.AuthUI;

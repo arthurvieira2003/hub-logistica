@@ -50,6 +50,10 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
     // Processar os dados recebidos e adicionar às transportadoras
     const transportadoras = window.RastreamentoConfig.transportadoras;
     data.forEach((item) => {
+      // Pular dados da Princesa pois ela tem endpoint específico
+      if (item.carrierName === "Expresso Princesa Dos Campos S/A") {
+        return;
+      }
       // Determinar o status com base nos dados recebidos
       let status = "Aguardando coleta";
       let ultimaAtualizacao = "";
@@ -342,6 +346,134 @@ window.RastreamentoAPI.carregarDadosOuroNegro = async function () {
 };
 
 /**
+ * Carrega dados específicos da Expresso Princesa Dos Campos S/A
+ * @returns {Promise<boolean>} True se carregou com sucesso
+ */
+window.RastreamentoAPI.carregarDadosPrincesa = async function () {
+  try {
+    const token = window.RastreamentoUtils.obterToken();
+    const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
+
+    const response = await fetch(
+      `http://localhost:4010/princesa/track/${dataRastreamento}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`Erro ao carregar dados da Princesa: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Verificar se há dados para processar
+    if (!Array.isArray(data) || data.length === 0) {
+      return true;
+    }
+
+    // Encontrar a transportadora Princesa no array
+    const transportadoras = window.RastreamentoConfig.transportadoras;
+    const princesaIndex = transportadoras.findIndex(
+      (t) => t.nome === "Expresso Princesa Dos Campos S/A"
+    );
+    if (princesaIndex === -1) {
+      console.error("Transportadora Princesa não encontrada no array!");
+      return false;
+    }
+
+    // Limpar notas existentes
+    transportadoras[princesaIndex].notas = [];
+
+    // Processar os dados recebidos
+    data.forEach((item) => {
+      // Determinar o status com base nos dados de rastreamento
+      let status = "Aguardando coleta";
+      let ultimaAtualizacao = "";
+
+      try {
+        ultimaAtualizacao = window.RastreamentoUtils.formatarDataHora(
+          item.docDate
+        );
+      } catch (error) {
+        ultimaAtualizacao = item.docDate;
+      }
+
+      // Verificar se há dados de rastreamento
+      if (
+        item.rastreamento &&
+        item.rastreamento.data &&
+        item.rastreamento.data.length > 0
+      ) {
+        const rastreamentoData = item.rastreamento.data[0];
+        if (rastreamentoData.dados && rastreamentoData.dados.length > 0) {
+          const ultimoEvento = rastreamentoData.dados[0]; // Primeiro item é o mais recente
+
+          // Determinar status baseado na descrição do último evento
+          const descricao = ultimoEvento.descricao.toLowerCase();
+          if (descricao.includes("entrega") || descricao.includes("entregue")) {
+            status = "Entregue";
+          } else if (
+            descricao.includes("transito") ||
+            descricao.includes("transferencia")
+          ) {
+            status = "Em trânsito";
+          } else if (
+            descricao.includes("coleta") ||
+            descricao.includes("emissao")
+          ) {
+            status = "Coletado";
+          } else {
+            status = "Em trânsito";
+          }
+
+          // Usar a data do último evento como última atualização
+          try {
+            ultimaAtualizacao = window.RastreamentoUtils.formatarDataHora(
+              ultimoEvento.data
+            );
+          } catch (error) {
+            ultimaAtualizacao = ultimoEvento.data;
+          }
+        }
+      }
+
+      // Criar objeto nota com estrutura compatível
+      const nota = {
+        numero: item.serial.toString(),
+        status: status,
+        origem: `${item.cidadeOrigem}, ${item.estadoOrigem}`,
+        destino: `${item.cidadeDestino}, ${item.estadoDestino}`,
+        docDate: item.docDate.split(" ")[0],
+        dataEnvio: item.docDate.split(" ")[0],
+        previsaoEntrega: item.rastreamento?.data?.[0]?.prev_entrega
+          ? item.rastreamento.data[0].prev_entrega.split(" ")[0]
+          : item.docDate.split(" ")[0],
+        ultimaAtualizacao: ultimaAtualizacao,
+        cliente: item.cardName,
+        cte: "", // Não disponível no endpoint da Princesa
+        historico: item.rastreamento?.data?.[0]?.dados || [],
+        transportadoraNome: item.carrierName,
+        // Campos adicionais específicos da Princesa
+        rastreamento: item.rastreamento,
+        prevEntrega: item.rastreamento?.data?.[0]?.prev_entrega || null,
+        diasEntrega: item.rastreamento?.data?.[0]?.dias_entrega || null,
+      };
+
+      // Adicionar a nota ao array de notas da transportadora
+      transportadoras[princesaIndex].notas.push(nota);
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Erro ao carregar dados da Princesa:", error);
+    return false;
+  }
+};
+
+/**
  * Recarrega dados com nova data
  * @param {string} novaData - Nova data no formato YYYY-MM-DD
  * @returns {Promise<boolean>} True se recarregou com sucesso
@@ -360,9 +492,12 @@ window.RastreamentoAPI.recarregarDadosComNovaData = async function (novaData) {
       transportadora.notas = [];
     });
 
-    // Carregar novos dados de ambas as fontes
+    // Carregar novos dados de todas as fontes
     const sucessoOuroNegro =
       await window.RastreamentoAPI.carregarDadosOuroNegro();
+
+    const sucessoPrincesa =
+      await window.RastreamentoAPI.carregarDadosPrincesa();
 
     const sucessoGenericos =
       await window.RastreamentoAPI.carregarDadosGenericos();
@@ -380,7 +515,7 @@ window.RastreamentoAPI.recarregarDadosComNovaData = async function (novaData) {
       await window.RastreamentoMain.reRenderizarTabela();
     }
 
-    return sucessoOuroNegro || sucessoGenericos;
+    return sucessoOuroNegro || sucessoPrincesa || sucessoGenericos;
   } catch (error) {
     console.error("❌ Erro ao recarregar dados:", error);
     return false;

@@ -12,6 +12,20 @@ window.AuthCore.getToken = function () {
 };
 
 /**
+ * Define o token nos cookies
+ */
+window.AuthCore.setToken = function (token) {
+  document.cookie = `token=${token}; path=/`;
+};
+
+/**
+ * Remove o token dos cookies
+ */
+window.AuthCore.removeToken = function () {
+  document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+};
+
+/**
  * Verifica se o usuário está autenticado
  */
 window.AuthCore.isAuthenticated = function () {
@@ -38,3 +52,104 @@ window.AuthCore.checkAuth = function () {
   }
   return true;
 };
+
+/**
+ * Valida token no servidor
+ */
+window.AuthCore.validateToken = async function (token) {
+  try {
+    const response = await fetch("http://localhost:4010/session/validate", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Falha na validação do token");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("❌ Erro ao validar token:", error);
+    return null;
+  }
+};
+
+/**
+ * Verifica se o token está expirado
+ */
+window.AuthCore.isTokenExpired = function (userData) {
+  if (!userData || !userData.exp) {
+    return true;
+  }
+
+  const currentTime = Math.floor(Date.now() / 1000);
+  return currentTime > userData.exp;
+};
+
+/**
+ * Valida expiração do token
+ */
+window.AuthCore.validateTokenExpiration = async function () {
+  const token = window.AuthCore.getToken();
+
+  if (!token) {
+    return null;
+  }
+
+  const userData = await window.AuthCore.validateToken(token);
+
+  if (!userData) {
+    return null;
+  }
+
+  if (window.AuthCore.isTokenExpired(userData)) {
+    return null;
+  }
+
+  return userData;
+};
+
+/**
+ * Faz logout do usuário
+ */
+window.AuthCore.logout = function () {
+  // Remover o token do cookie
+  window.AuthCore.removeToken();
+
+  // Redirecionar para login
+  window.AuthCore.redirectToLogin("Logout realizado com sucesso.");
+};
+
+/**
+ * Faz requisições autenticadas
+ */
+window.AuthCore.authenticatedFetch = async function (url, options = {}) {
+  const token = window.AuthCore.getToken();
+
+  if (!token) {
+    throw new Error("Token não encontrado");
+  }
+
+  const defaultOptions = {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token,
+      ...options.headers,
+    },
+  };
+
+  return fetch(url, { ...options, ...defaultOptions });
+};
+
+// ============================================================================
+// COMPATIBILIDADE COM CÓDIGO EXISTENTE
+// ============================================================================
+
+// Manter compatibilidade com UserAuth (alias para AuthCore)
+window.UserAuth = window.AuthCore;
+
+// Manter compatibilidade com AuthUtils (alias para AuthCore)
+window.AuthUtils = window.AuthCore;

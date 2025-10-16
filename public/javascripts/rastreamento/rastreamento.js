@@ -45,9 +45,11 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
     return;
   }
 
-  // Carregar dados reais da Ouro Negro e outras transportadoras antes de processar a interface
+  // Carregar dados reais da Ouro Negro, Princesa e outras transportadoras antes de processar a interface
   try {
     await window.RastreamentoAPI.carregarDadosOuroNegro();
+
+    await window.RastreamentoAPI.carregarDadosPrincesa();
 
     await window.RastreamentoAPI.carregarDadosGenericos();
   } catch (error) {

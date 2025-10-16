@@ -30,6 +30,10 @@ window.AppInitializer.init = async function () {
 window.AppInitializer.executeInitializationSteps = async function () {
   const steps = [
     {
+      name: "Criar aba do dashboard",
+      func: window.AppInitializer.createDashboardTab,
+    },
+    {
       name: "Forçar sidebar aberta",
       func: window.AppInitializer.forceOpenSidebar,
     },
@@ -86,6 +90,46 @@ window.AppInitializer.executeInitializationSteps = async function () {
   }
 };
 
+// Função para criar aba do dashboard
+window.AppInitializer.createDashboardTab = function () {
+  // Garantir que o tab-bar existe
+  let tabBar = document.querySelector(".tab-bar");
+  if (!tabBar) {
+    console.warn("⚠️ tab-bar não encontrado, criando elemento...");
+
+    // Criar tab-bar se não existir
+    const mainContent = document.querySelector(".main-content");
+    if (mainContent) {
+      tabBar = document.createElement("div");
+      tabBar.className = "tab-bar";
+      mainContent.insertBefore(tabBar, mainContent.firstChild);
+    } else {
+      console.error(
+        "❌ main-content não encontrado, não é possível criar tab-bar"
+      );
+      return;
+    }
+  }
+
+  // Garantir que o tabList existe
+  let tabList = document.getElementById("tabList");
+  if (!tabList) {
+    console.warn("⚠️ tabList não encontrado, criando elemento...");
+
+    tabList = document.createElement("div");
+    tabList.className = "tab-list";
+    tabList.id = "tabList";
+    tabBar.appendChild(tabList);
+  }
+
+  // Criar aba do dashboard
+  if (window.TabManager && window.TabManager.createDashboardTab) {
+    window.TabManager.createDashboardTab();
+  } else {
+    console.warn("⚠️ TabManager não está disponível ainda");
+  }
+};
+
 // Função para forçar sidebar aberta
 window.AppInitializer.forceOpenSidebar = function () {
   if (window.Sidebar && window.Sidebar.forceOpen) {
@@ -100,7 +144,7 @@ window.AppInitializer.loadUserData = async function () {
   if (window.UserProfile && window.UserProfile.loadUserData) {
     await window.UserProfile.loadUserData();
   } else {
-    console.warn("⚠️ UserProfile module não está disponível");
+    console.warn("⚠️ [AppInitializer] UserProfile module não está disponível");
   }
 };
 
@@ -143,10 +187,7 @@ window.AppInitializer.initTabSystem = function () {
       window.TabDragDrop.init();
     }
 
-    // Adicionar aba do dashboard
-    if (window.TabManager.createDashboardTab) {
-      window.TabManager.createDashboardTab();
-    }
+    // A aba do dashboard já foi criada no início, não precisa criar novamente
   } else {
     console.warn("⚠️ TabManager ou TabDragDrop modules não estão disponíveis");
   }
@@ -270,3 +311,15 @@ window.AppInitializer.reinitialize = async function () {
 
   await window.AppInitializer.init();
 };
+
+// Inicialização automática apenas em páginas protegidas
+if (
+  !window.location.pathname.includes("login") &&
+  window.location.pathname !== "/"
+) {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", window.AppInitializer.init);
+  } else {
+    window.AppInitializer.init();
+  }
+}
