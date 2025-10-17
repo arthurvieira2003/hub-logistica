@@ -99,6 +99,11 @@ window.ModuleLoader.configs = {
       { name: "modal", path: "/components/modal.js", priority: 4 },
       { name: "tabela", path: "/renderers/tabela.js", priority: 5 },
       {
+        name: "dataTablesRenderer",
+        path: "/renderers/dataTablesRenderer.js",
+        priority: 5.5,
+      },
+      {
         name: "modalDetalhes",
         path: "/renderers/modalDetalhes.js",
         priority: 6,

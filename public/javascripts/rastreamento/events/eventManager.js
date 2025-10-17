@@ -7,11 +7,14 @@
 window.RastreamentoEvents = window.RastreamentoEvents || {};
 
 /**
- * Aplica filtros na tabela
+ * Aplica filtros na tabela (compatível com DataTables)
  */
 window.RastreamentoEvents.aplicarFiltros = function () {
   const searchTerm =
-    document.getElementById("searchNota")?.value.toLowerCase() || "";
+    document.getElementById("searchNota")?.value.toLowerCase() ||
+    document.getElementById("searchInput")?.value.toLowerCase() ||
+    "";
+
   const statusFiltros = Array.from(
     document.querySelectorAll(
       '.filter-options input[type="checkbox"][value^="Aguardando"], .filter-options input[type="checkbox"][value="Em trânsito"], .filter-options input[type="checkbox"][value="Entregue"], .filter-options input[type="checkbox"][value="Atrasado"]'
@@ -26,7 +29,33 @@ window.RastreamentoEvents.aplicarFiltros = function () {
     .filter((checkbox) => checkbox.checked)
     .map((checkbox) => checkbox.value);
 
-  // Filtrar cards
+  // Se DataTables está disponível, usar filtros do DataTables
+  if (window.RastreamentoDataTablesRenderer && window.dataTableInstance) {
+    // Aplicar filtro de busca
+    if (searchTerm) {
+      window.RastreamentoDataTablesRenderer.aplicarFiltro("busca", searchTerm);
+    }
+
+    // Aplicar filtros de status
+    if (statusFiltros.length > 0) {
+      window.RastreamentoDataTablesRenderer.aplicarFiltro(
+        "status",
+        statusFiltros
+      );
+    }
+
+    // Aplicar filtros de transportadora
+    if (transportadorasFiltros.length > 0) {
+      window.RastreamentoDataTablesRenderer.aplicarFiltro(
+        "transportadora",
+        transportadorasFiltros
+      );
+    }
+
+    return;
+  }
+
+  // Fallback para sistema de cards (compatibilidade)
   const notaCards = document.querySelectorAll(".nota-card");
   const transportadoraCards = document.querySelectorAll(".transportadora-card");
 
@@ -255,6 +284,13 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
   const btnFiltrarAtrasados = document.querySelector(".btn-filtrar-atrasados");
   if (btnFiltrarAtrasados) {
     btnFiltrarAtrasados.addEventListener("click", function () {
+      // Se DataTables está disponível, usar filtro específico
+      if (window.RastreamentoDataTablesRenderer && window.dataTableInstance) {
+        window.RastreamentoDataTablesRenderer.aplicarFiltro("atrasadas", true);
+        return;
+      }
+
+      // Fallback para sistema de cards
       const filtroAtrasado = document.getElementById("filtroAtrasado");
       if (filtroAtrasado) {
         filtroAtrasado.checked = true;
@@ -267,6 +303,13 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
   const btnLimparFiltros = document.querySelector(".btn-limpar-filtros");
   if (btnLimparFiltros) {
     btnLimparFiltros.addEventListener("click", function () {
+      // Se DataTables está disponível, usar limpeza específica
+      if (window.RastreamentoDataTablesRenderer && window.dataTableInstance) {
+        window.RastreamentoDataTablesRenderer.limparFiltros();
+        return;
+      }
+
+      // Fallback para sistema de cards
       document
         .querySelectorAll('.filter-options input[type="checkbox"]')
         .forEach((checkbox) => {

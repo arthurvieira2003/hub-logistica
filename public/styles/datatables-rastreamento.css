@@ -1,0 +1,1157 @@
+/* Estilos específicos para DataTables no sistema de rastreamento */
+
+/* Container principal do DataTables */
+.dataTables_wrapper {
+  font-family: "Poppins", Arial, sans-serif;
+  margin-top: 20px;
+}
+
+/* Controles superiores (length e search) */
+.dataTables_wrapper .dt-layout-row:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.dataTables_wrapper .dt-length,
+.dataTables_wrapper .dt-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dataTables_wrapper .dt-length label,
+.dataTables_wrapper .dt-search label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  margin: 0;
+}
+
+.dataTables_wrapper .dt-length select,
+.dataTables_wrapper .dt-search input {
+  border: 2px solid #247675;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 14px;
+  color: #333;
+  background: white;
+  transition: all 0.3s ease;
+  min-width: 80px;
+}
+
+.dataTables_wrapper .dt-length select:focus,
+.dataTables_wrapper .dt-search input:focus {
+  outline: none;
+  border-color: #1a5a5a;
+  box-shadow: 0 0 0 3px rgba(36, 118, 117, 0.1);
+}
+
+/* Tabela principal */
+#rastreamentoDataTable {
+  width: 100% !important;
+  border-collapse: collapse;
+  font-family: "Poppins", Arial, sans-serif;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+/* Cabeçalho da tabela */
+#rastreamentoDataTable thead th {
+  background: #f8f9fa;
+  color: #333;
+  font-weight: 500;
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 2px solid #e9ecef;
+  position: relative;
+  font-size: 13px;
+}
+
+#rastreamentoDataTable thead th:hover {
+  background: #e9ecef;
+}
+
+/* Largura específica para coluna de status */
+#rastreamentoDataTable thead th:nth-child(3) {
+  min-width: 140px;
+  width: 140px;
+}
+
+/* Indicadores de ordenação - minimalista */
+.dataTables_wrapper .dt-ordering-asc:after {
+  content: "↑";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.dataTables_wrapper .dt-ordering-desc:after {
+  content: "↓";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+/* Corpo da tabela - minimalista */
+#rastreamentoDataTable tbody td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+  font-size: 13px;
+  transition: background-color 0.15s ease;
+}
+
+/* Ícones das transportadoras - cortar em vez de espremer */
+#rastreamentoDataTable tbody td:nth-child(2) img {
+  width: 24px;
+  height: 24px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Evitar quebra de linha em status e padronizar badges */
+#rastreamentoDataTable tbody td:nth-child(3) {
+  white-space: nowrap;
+  min-width: 140px;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+/* Badges ocupando toda a largura da coluna - sempre mesmo tamanho */
+#rastreamentoDataTable tbody td:nth-child(3) span {
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-sizing: border-box !important;
+  min-height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#rastreamentoDataTable tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+#rastreamentoDataTable tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+#rastreamentoDataTable tbody tr:hover {
+  background-color: #e9ecef;
+}
+
+/* Botões de ação - apenas ícone centralizado */
+.btn-detalhes {
+  background: linear-gradient(135deg, #247675, #1a5a5a) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 8px !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(36, 118, 117, 0.2) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin: 0 auto !important;
+}
+
+/* Ocultar texto do botão, mostrar apenas ícone */
+.btn-detalhes .btn-text {
+  display: none !important;
+}
+
+.btn-detalhes:hover {
+  background: linear-gradient(135deg, #1a5a5a, #247675) !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 4px 8px rgba(36, 118, 117, 0.3) !important;
+}
+
+.btn-detalhes i {
+  font-size: 14px;
+}
+
+/* Status badges */
+#rastreamentoDataTable tbody td span[style*="background:"] {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+#rastreamentoDataTable tbody td span[style*="background:"]:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Logos de transportadoras */
+#rastreamentoDataTable tbody td img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  margin-right: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Controles inferiores (info e paginação) */
+.dataTables_wrapper .dt-layout-row:last-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.dataTables_wrapper .dt-info {
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Paginação */
+.dataTables_wrapper .dt-paging {
+  display: flex;
+  gap: 5px;
+}
+
+.dataTables_wrapper .dt-paging-button {
+  border: 2px solid #247675;
+  color: #247675 !important;
+  background: white;
+  border-radius: 8px;
+  margin: 0 2px;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-width: 40px;
+  text-align: center;
+}
+
+.dataTables_wrapper .dt-paging-button:hover {
+  background: #247675;
+  color: white !important;
+  border-color: #1a5a5a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(36, 118, 117, 0.3);
+}
+
+.dataTables_wrapper .dt-paging-button.current {
+  background: #247675;
+  color: white !important;
+  border-color: #1a5a5a;
+  box-shadow: 0 4px 8px rgba(36, 118, 117, 0.3);
+}
+
+.dataTables_wrapper .dt-paging-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f5f5f5;
+  border-color: #ddd;
+  color: #999 !important;
+}
+
+.dataTables_wrapper .dt-paging-button.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .dataTables_wrapper .dt-layout-row:first-child {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .dataTables_wrapper .dt-length,
+  .dataTables_wrapper .dt-search {
+    justify-content: center;
+  }
+
+  .dataTables_wrapper .dt-layout-row:last-child {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .dataTables_wrapper .dt-paging {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  #rastreamentoDataTable {
+    font-size: 12px;
+  }
+
+  #rastreamentoDataTable thead th,
+  #rastreamentoDataTable tbody td {
+    padding: 10px 8px;
+  }
+
+  .btn-detalhes {
+    padding: 8px 12px !important;
+    font-size: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dataTables_wrapper .dt-paging-button {
+    padding: 8px 10px;
+    font-size: 12px;
+    min-width: 35px;
+  }
+
+  #rastreamentoDataTable thead th,
+  #rastreamentoDataTable tbody td {
+    padding: 8px 6px;
+  }
+
+  #rastreamentoDataTable thead th {
+    font-size: 11px;
+  }
+}
+
+/* Animações */
+@keyframes fadeInDataTable {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dataTables_wrapper {
+  animation: fadeInDataTable 0.5s ease-out;
+}
+
+/* Estados de carregamento */
+.dataTables_processing {
+  background: rgba(36, 118, 117, 0.9) !important;
+  color: white !important;
+  border-radius: 8px !important;
+  padding: 15px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Scrollbar personalizada para tabela */
+.tabela-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.tabela-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.tabela-container::-webkit-scrollbar-thumb {
+  background: #247675;
+  border-radius: 4px;
+}
+
+.tabela-container::-webkit-scrollbar-thumb:hover {
+  background: #1a5a5a;
+}
+
+/* Estilos para filtros avançados por coluna - minimalista */
+.dt-column-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  position: relative !important;
+  flex-direction: row !important;
+}
+
+/* Garantir que o título da coluna tenha espaço suficiente e fique sempre à esquerda */
+.dt-column-title {
+  flex: 0 0 auto !important;
+  margin-right: 8px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  color: #333 !important;
+  order: 1 !important;
+  text-align: left !important;
+}
+
+/* Estilo específico para cabeçalhos que já têm estrutura do DataTables */
+thead th .dt-column-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  flex-direction: row !important;
+}
+
+/* Forçar alinhamento à esquerda para todos os cabeçalhos */
+#rastreamentoDataTable thead th .dt-column-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  flex-direction: row !important;
+}
+
+/* Garantir que o título sempre fique à esquerda */
+#rastreamentoDataTable thead th .dt-column-title {
+  flex: 0 0 auto !important;
+  margin-right: 8px !important;
+  order: 1 !important;
+  text-align: left !important;
+}
+
+/* Garantir que os botões apareçam - minimalista */
+thead th .dtcc {
+  display: flex !important;
+  gap: 2px !important;
+  margin-left: auto !important;
+  order: 2 !important;
+}
+
+/* Botão de ordenação também deve ficar à direita */
+thead th .dt-column-order {
+  order: 3 !important;
+  margin-left: 4px !important;
+}
+
+/* Regras mais específicas para garantir posicionamento correto */
+#rastreamentoDataTable thead th .dtcc {
+  display: flex !important;
+  gap: 2px !important;
+  margin-left: auto !important;
+  order: 2 !important;
+}
+
+#rastreamentoDataTable thead th .dt-column-order {
+  order: 3 !important;
+  margin-left: 4px !important;
+}
+
+/* Regra adicional para sobrescrever qualquer estilo do DataTables */
+.dataTables_wrapper #rastreamentoDataTable thead th .dt-column-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  flex-direction: row !important;
+}
+
+.dataTables_wrapper #rastreamentoDataTable thead th .dt-column-title {
+  flex: 0 0 auto !important;
+  margin-right: 8px !important;
+  order: 1 !important;
+  text-align: left !important;
+}
+
+.dataTables_wrapper #rastreamentoDataTable thead th .dtcc {
+  display: flex !important;
+  gap: 2px !important;
+  margin-left: auto !important;
+  order: 2 !important;
+}
+
+/* Estilo para o botão de filtro - minimalista */
+.dt-column-filter {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+  margin-left: 2px;
+}
+
+.dt-column-filter:hover {
+  opacity: 0.7;
+}
+
+.dt-column-filter svg {
+  width: 100%;
+  height: 100%;
+  color: inherit;
+}
+
+/* ===== ESTILOS PARA O POPUP DE FILTRO AVANÇADO ===== */
+
+/* Container principal do dropdown */
+.dtcc-dropdown {
+  background: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  min-width: 280px !important;
+  max-width: 320px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  position: absolute !important;
+  top: var(--dropdown-top, 0) !important;
+  left: var(--dropdown-left, 0) !important;
+  z-index: 1000 !important;
+}
+
+/* Liner interno */
+.dtcc-dropdown-liner {
+  padding: 16px !important;
+}
+
+/* ===== SEÇÃO DE BUSCA ===== */
+.dtcc-content.dtcc-search {
+  margin-bottom: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.dtcc-search-title {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #333 !important;
+  margin: 0 !important;
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Container da busca - layout vertical */
+.dtcc-content.dtcc-search > div {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  transition: none !important;
+}
+
+/* Linha do tipo de filtro - horizontal */
+.dtcc-search-type-icon {
+  display: none !important; /* Ocultar ícone por enquanto */
+}
+
+/* Select de tipo de filtro */
+.filtro-tipo {
+  width: 100% !important;
+  border: 1px solid #ddd !important;
+  background: #ffffff !important;
+  font-size: 13px !important;
+  color: #333 !important;
+  outline: none !important;
+  cursor: pointer !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.filtro-tipo:hover {
+  border-color: #247675 !important;
+}
+
+.filtro-tipo:focus {
+  border-color: #247675 !important;
+  box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1) !important;
+}
+
+/* Linha do input de busca - horizontal */
+.dtcc-search-icon {
+  display: none !important; /* Ocultar ícone por enquanto */
+}
+
+/* Input de valor */
+.filtro-valor {
+  width: 100% !important;
+  border: 1px solid #ddd !important;
+  background: #ffffff !important;
+  font-size: 13px !important;
+  color: #333 !important;
+  outline: none !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.filtro-valor::placeholder {
+  color: #999 !important;
+  font-style: italic !important;
+}
+
+.filtro-valor:hover {
+  border-color: #247675 !important;
+}
+
+.filtro-valor:focus {
+  border-color: #247675 !important;
+  box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1) !important;
+}
+
+/* Container do input com botão limpar */
+.dtcc-content.dtcc-search > div > div {
+  position: relative !important;
+}
+
+/* Botão limpar - posicionado à direita do input */
+.dtcc-search-clear {
+  position: absolute !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: #999 !important;
+  cursor: pointer !important;
+  border-radius: 3px !important;
+  transition: all 0.2s ease !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.dtcc-search-clear:hover {
+  color: #666 !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ===== SEPARADOR ===== */
+.dtcc-spacer {
+  height: 1px !important;
+  background: #e9ecef !important;
+  margin: 12px 0 !important;
+}
+
+/* ===== BOTÕES DE ORDENAÇÃO ===== */
+.dtcc-button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  padding: 10px 12px !important;
+  border: none !important;
+  background: transparent !important;
+  color: #333 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+  margin-bottom: 4px !important;
+}
+
+.dtcc-button:last-child {
+  margin-bottom: 0 !important;
+}
+
+.dtcc-button:hover {
+  background: #f8f9fa !important;
+  color: #247675 !important;
+}
+
+.dtcc-button:active {
+  background: #e9ecef !important;
+  transform: translateY(1px) !important;
+}
+
+/* Ícone dos botões */
+.dtcc-button-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Texto dos botões */
+.dtcc-button-text {
+  flex: 1 !important;
+  font-weight: 500 !important;
+}
+
+/* Estados dos botões */
+.dtcc-button-state,
+.dtcc-button-extra {
+  display: none !important;
+}
+
+/* Botão ativo */
+.dtcc-button_active {
+  background: #247675 !important;
+  color: #ffffff !important;
+}
+
+.dtcc-button_active:hover {
+  background: #1e5f5e !important;
+  color: #ffffff !important;
+}
+
+/* ===== ESTILOS PARA CONTROLES DO DATATABLES ===== */
+
+/* Container principal dos controles */
+.top {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 16px 0 !important;
+  margin-bottom: 16px !important;
+  border-bottom: 1px solid #e9ecef !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+}
+
+/* Seletor de resultados por página */
+.dt-length {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+.dt-length select {
+  padding: 6px 8px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  font-size: 13px !important;
+  color: #333 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  min-width: 60px !important;
+}
+
+.dt-length select:hover {
+  border-color: #247675 !important;
+}
+
+.dt-length select:focus {
+  border-color: #247675 !important;
+  box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1) !important;
+}
+
+.dt-length label {
+  font-size: 13px !important;
+  color: #666 !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Campo de busca */
+.dt-search {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+.dt-search label {
+  font-size: 13px !important;
+  color: #666 !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+.dt-search input {
+  padding: 6px 12px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  font-size: 13px !important;
+  color: #333 !important;
+  outline: none !important;
+  min-width: 200px !important;
+  max-width: 300px !important;
+}
+
+.dt-search input::placeholder {
+  color: #999 !important;
+  font-style: italic !important;
+}
+
+.dt-search input:hover {
+  border-color: #247675 !important;
+}
+
+.dt-search input:focus {
+  border-color: #247675 !important;
+  box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1) !important;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+  .top {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .dt-length,
+  .dt-search {
+    justify-content: center !important;
+  }
+
+  .dt-search input {
+    min-width: 150px !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ===== ESTILOS PARA PAGINAÇÃO E INFORMAÇÕES ===== */
+
+/* Container da paginação */
+.bottom {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 16px 0 !important;
+  margin-top: 16px !important;
+  border-top: 1px solid #e9ecef !important;
+  flex-wrap: wrap !important;
+  gap: 16px !important;
+}
+
+/* Informações de registros */
+.dt-info {
+  font-size: 13px !important;
+  color: #666 !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Container da paginação */
+.dt-paging {
+  display: flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Nav da paginação */
+.dt-paging nav {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+/* Botões de paginação */
+.dt-paging-button {
+  padding: 6px 12px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  font-size: 13px !important;
+  color: #333 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 32px !important;
+  height: 32px !important;
+}
+
+.dt-paging-button:hover:not(.disabled) {
+  background: #f8f9fa !important;
+  border-color: #247675 !important;
+  color: #247675 !important;
+}
+
+.dt-paging-button:focus {
+  border-color: #247675 !important;
+  box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1) !important;
+}
+
+/* Botão atual/página ativa */
+.dt-paging-button.current {
+  background: #247675 !important;
+  border-color: #247675 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.dt-paging-button.current:hover {
+  background: #1e5f5e !important;
+  border-color: #1e5f5e !important;
+  color: #ffffff !important;
+}
+
+/* Botões desabilitados */
+.dt-paging-button.disabled {
+  background: #f8f9fa !important;
+  border-color: #e9ecef !important;
+  color: #999 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.dt-paging-button.disabled:hover {
+  background: #f8f9fa !important;
+  border-color: #e9ecef !important;
+  color: #999 !important;
+}
+
+/* Botões especiais (Primeiro, Anterior, Próximo, Último) */
+.dt-paging-button.first,
+.dt-paging-button.previous,
+.dt-paging-button.next,
+.dt-paging-button.last {
+  padding: 6px 8px !important;
+  font-weight: 500 !important;
+}
+
+/* Responsividade para paginação */
+@media (max-width: 768px) {
+  .bottom {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .dt-info {
+    text-align: center !important;
+  }
+
+  .dt-paging nav {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 2px !important;
+  }
+
+  .dt-paging-button {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+  }
+
+  .dt-paging-button.first,
+  .dt-paging-button.previous,
+  .dt-paging-button.next,
+  .dt-paging-button.last {
+    padding: 4px 6px !important;
+  }
+}
+
+.dtcc {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.dtcc-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.dtcc-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.dtcc-button:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dtcc-button-icon {
+  display: flex;
+  align-items: center;
+}
+
+.dtcc-button-text {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.dtcc-button-state {
+  display: none;
+}
+
+.dtcc-button-active .dtcc-button-state {
+  display: block;
+}
+
+/* Dropdown de filtros avançados */
+.dtcc-dropdown {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  min-width: 280px;
+  z-index: 1000;
+}
+
+.dtcc-dropdown-liner {
+  padding: 12px;
+}
+
+.dtcc-content {
+  margin-bottom: 8px;
+}
+
+.dtcc-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.dtcc-search-type-icon {
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.dtcc-search select {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: white;
+  color: #333;
+  min-width: 100px;
+}
+
+.dtcc-search-icon {
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.dtcc-search-clear {
+  color: #999;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.dtcc-search-clear:hover {
+  color: #dc3545;
+}
+
+.dtcc-search input {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  background: white;
+  color: #333;
+}
+
+.dtcc-search input:focus {
+  outline: none;
+  border-color: #247675;
+  box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1);
+}
+
+.dtcc-spacer {
+  height: 1px;
+  background: #e9ecef;
+  margin: 8px 0;
+}
+
+.dtcc-button_orderAsc,
+.dtcc-button_orderDesc,
+.dtcc-button_orderClear {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  background: white;
+  border: 1px solid #e9ecef;
+  color: #333;
+  font-size: 12px;
+}
+
+.dtcc-button_orderAsc:hover,
+.dtcc-button_orderDesc:hover,
+.dtcc-button_orderClear:hover {
+  background: #f8f9fa;
+  border-color: #247675;
+  color: #247675;
+}
+
+.dtcc-button_orderAsc:last-child,
+.dtcc-button_orderDesc:last-child,
+.dtcc-button_orderClear:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsividade para filtros avançados */
+@media (max-width: 768px) {
+  .dtcc-button-text {
+    display: none;
+  }
+
+  .dtcc-button {
+    padding: 4px;
+  }
+
+  .dtcc-dropdown {
+    min-width: 250px;
+  }
+
+  .dtcc-search {
+    flex-wrap: wrap;
+  }
+
+  .dtcc-search select {
+    min-width: 80px;
+  }
+}

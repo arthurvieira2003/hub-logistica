@@ -1098,9 +1098,16 @@
   margin-bottom: 1rem;
 }
 
-.modal-header h3 {
+/* Estilo específico para modais do dashboard (cabeçalho branco) */
+.dashboard-container .modal-header h3 {
   margin: 0;
   color: var(--text-primary);
+}
+
+/* Estilo para modais gerais (cabeçalho verde escuro) */
+.modal-header h3 {
+  margin: 0;
+  color: #ffffff;
 }
 
 .modal-close {

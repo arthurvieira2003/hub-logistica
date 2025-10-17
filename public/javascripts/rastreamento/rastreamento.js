@@ -163,12 +163,12 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
       tabelaSimples.style.animation = "fadeIn 0.5s ease-out forwards";
 
       tabelaSimples.innerHTML =
-        window.RastreamentoRenderers.renderizarTabela(todasNotas);
+        window.RastreamentoDataTablesRenderer.renderizarTabela(todasNotas);
 
       trackingView.appendChild(tabelaSimples);
 
-      // Configurar eventos dos botões de detalhes
-      window.RastreamentoEvents.configurarEventosDetalhes(todasNotas);
+      // Inicializar DataTable
+      window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
 
       // Configurar eventos do datepicker
       window.RastreamentoEvents.configurarEventosData();
@@ -179,7 +179,7 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
       containerVazio.style.animation = "fadeIn 0.5s ease-out forwards";
 
       containerVazio.innerHTML =
-        window.RastreamentoRenderers.renderizarMensagemVazia();
+        window.RastreamentoDataTablesRenderer.renderizarMensagemVazia();
 
       contentElement.appendChild(containerVazio);
 
@@ -256,12 +256,12 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
     tabelaSimples.style.animation = "fadeIn 0.5s ease-out forwards";
 
     tabelaSimples.innerHTML =
-      window.RastreamentoRenderers.renderizarTabela(todasNotas);
+      window.RastreamentoDataTablesRenderer.renderizarTabela(todasNotas);
 
     trackingView.appendChild(tabelaSimples);
 
-    // Configurar eventos dos botões de detalhes
-    window.RastreamentoEvents.configurarEventosDetalhes(todasNotas);
+    // Inicializar DataTable
+    window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
 
     // Configurar eventos do datepicker
     window.RastreamentoEvents.configurarEventosData();
@@ -272,7 +272,7 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
     containerVazio.style.animation = "fadeIn 0.5s ease-out forwards";
 
     containerVazio.innerHTML =
-      window.RastreamentoRenderers.renderizarMensagemVazia();
+      window.RastreamentoDataTablesRenderer.renderizarMensagemVazia();
 
     trackingView.appendChild(containerVazio);
 
