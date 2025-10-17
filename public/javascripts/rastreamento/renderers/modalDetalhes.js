@@ -159,8 +159,26 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
 
   return `
     <h4 style="margin-top: 30px; margin-bottom: 20px; color: #333; font-size: 20px; font-weight: 600; border-bottom: 2px solid #247675; padding-bottom: 10px; text-align: center;">Histórico de Rastreamento</h4>
-    <div class="timeline-horizontal" style="position: relative; padding: 25px 0; margin-top: 20px; overflow-x: auto; display: flex; justify-content: center;">
-      <div class="timeline-track" style="position: relative; display: flex; min-width: max-content; gap: 15px; padding: 0 15px; justify-content: center; align-items: center;">
+    <div class="timeline-container" style="position: relative; margin-top: 20px;">
+      <!-- Controles de navegação -->
+      <div class="timeline-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <button class="timeline-nav-btn timeline-nav-left" style="background: #247675; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: all 0.3s ease; opacity: 0.7;" disabled>
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="timeline-info" style="text-align: center; color: #666; font-size: 14px;">
+          <span class="timeline-current">1</span> de <span class="timeline-total">${
+            historicoOrdenado.length
+          }</span> ocorrências
+        </div>
+        <button class="timeline-nav-btn timeline-nav-right" style="background: #247675; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: all 0.3s ease;">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+      
+      <!-- Container do timeline com scroll -->
+      <div class="timeline-scroll-container" style="position: relative; overflow: hidden; border-radius: 8px; background: #f8f9fa; padding: 10px;">
+        <div class="timeline-horizontal" style="position: relative; padding: 25px 0; overflow-x: auto; display: flex; scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #247675 #f1f1f1;">
+          <div class="timeline-track" style="position: relative; display: flex; min-width: max-content; gap: 15px; padding: 0 15px; justify-content: flex-start; align-items: center;">
         ${historicoOrdenado
           .map((ocorrencia, index) => {
             // Determinar a cor e ícone baseado no código de ocorrência ou descrição
@@ -332,24 +350,39 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                     ocorrencia.isPrevisao ? "#999" : "#666"
                   }; margin-top: auto;">
                     <i class="fas fa-map-marker-alt" style="color: ${statusColor}; font-size: 9px;"></i>
-                    <span style="text-align: center; line-height: 1.1;">${
-                      ocorrencia.CIDADE ||
-                      ocorrencia.cidade ||
-                      extrairCidadeDaObs(ocorrencia.obs) ||
-                      nota.destino?.split(", ")[0] ||
-                      "-"
-                    }, ${
-              ocorrencia.UF ||
-              ocorrencia.cidade?.split(" / ")[1] ||
-              nota.destino?.split(", ")[1] ||
-              "-"
-            }</span>
+                    <span style="text-align: center; line-height: 1.1;">${(() => {
+                      // Função para formatar localização corretamente
+                      let cidade =
+                        ocorrencia.CIDADE ||
+                        ocorrencia.cidade ||
+                        extrairCidadeDaObs(ocorrencia.obs) ||
+                        nota.destino?.split(", ")[0] ||
+                        "-";
+
+                      let estado =
+                        ocorrencia.UF || nota.destino?.split(", ")[1] || "-";
+
+                      // Se cidade já contém estado (formato "CIDADE / UF"), usar apenas a cidade
+                      if (cidade.includes(" / ")) {
+                        const partes = cidade.split(" / ");
+                        cidade = partes[0];
+                        // Se não há estado separado, usar o estado da cidade
+                        if (estado === "-" && partes[1]) {
+                          estado = partes[1];
+                        }
+                      }
+
+                      // Retornar formato "CIDADE, UF"
+                      return `${cidade}, ${estado}`;
+                    })()}</span>
                   </div>
                 </div>
               </div>
             `;
           })
           .join("")}
+          </div>
+        </div>
       </div>
     </div>
   `;

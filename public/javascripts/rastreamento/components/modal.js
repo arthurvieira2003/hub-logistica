@@ -103,17 +103,70 @@ function criarCSSModal() {
     }
     
     /* Estilos para timeline horizontal */
+    .timeline-container {
+      position: relative;
+    }
+    
+    .timeline-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .timeline-nav-btn {
+      background: #247675;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.3s ease;
+    }
+    
+    .timeline-nav-btn:hover:not(:disabled) {
+      background: #1a5a5a;
+      transform: scale(1.1);
+    }
+    
+    .timeline-nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .timeline-info {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .timeline-scroll-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #f8f9fa;
+      padding: 10px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
     .timeline-horizontal {
       scrollbar-width: thin;
       scrollbar-color: #247675 #f1f1f1;
       display: flex;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
+      scroll-behavior: smooth;
     }
     
     .timeline-track {
       display: flex;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       flex-wrap: nowrap;
     }
@@ -161,6 +214,24 @@ function criarCSSModal() {
         padding: 20px;
       }
       
+      .timeline-controls {
+        margin-bottom: 10px;
+      }
+      
+      .timeline-nav-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+      }
+      
+      .timeline-info {
+        font-size: 12px;
+      }
+      
+      .timeline-scroll-container {
+        padding: 8px;
+      }
+      
       .timeline-step {
         min-width: 160px !important;
         max-width: 180px !important;
@@ -198,6 +269,24 @@ function criarCSSModal() {
     }
     
     @media (max-width: 480px) {
+      .timeline-controls {
+        margin-bottom: 8px;
+      }
+      
+      .timeline-nav-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+      }
+      
+      .timeline-info {
+        font-size: 11px;
+      }
+      
+      .timeline-scroll-container {
+        padding: 6px;
+      }
+      
       .timeline-step {
         min-width: 140px !important;
         max-width: 160px !important;
@@ -291,6 +380,106 @@ function criarModalIndependente() {
 }
 
 /**
+ * Inicializa os controles de navegação do timeline
+ */
+window.RastreamentoComponents.inicializarControlesTimeline = function () {
+  // Aguardar um pouco para garantir que o DOM foi atualizado
+  setTimeout(() => {
+    const timelineContainer = document.querySelector(
+      ".timeline-scroll-container"
+    );
+    const timelineHorizontal = document.querySelector(".timeline-horizontal");
+    const leftBtn = document.querySelector(".timeline-nav-left");
+    const rightBtn = document.querySelector(".timeline-nav-right");
+    const currentSpan = document.querySelector(".timeline-current");
+    const totalSpan = document.querySelector(".timeline-total");
+
+    if (!timelineHorizontal || !leftBtn || !rightBtn || !timelineContainer) {
+      return; // Elementos não encontrados
+    }
+
+    const containerWidth = timelineContainer.offsetWidth;
+    const totalWidth = timelineHorizontal.scrollWidth;
+    const maxScroll = totalWidth - containerWidth;
+
+    // Função para atualizar controles
+    function updateControls() {
+      const scrollLeft = timelineHorizontal.scrollLeft;
+
+      // Contar ocorrências visíveis na tela
+      const timelineSteps = document.querySelectorAll(".timeline-step");
+      const realTotalOccurrences = timelineSteps.length;
+
+      // Calcular quantas ocorrências estão visíveis
+      let visibleCount = 0;
+      let firstVisibleIndex = 0;
+
+      timelineSteps.forEach((step, index) => {
+        const stepRect = step.getBoundingClientRect();
+        const containerRect = timelineContainer.getBoundingClientRect();
+
+        // Verificar se o step está pelo menos parcialmente visível
+        if (
+          stepRect.left < containerRect.right &&
+          stepRect.right > containerRect.left
+        ) {
+          if (visibleCount === 0) {
+            firstVisibleIndex = index + 1; // +1 porque começamos do 1
+          }
+          visibleCount++;
+        }
+      });
+
+      // Atualizar o contador
+      if (currentSpan && totalSpan) {
+        if (visibleCount > 1) {
+          // Mostrar range quando múltiplas ocorrências estão visíveis
+          const lastVisibleIndex = firstVisibleIndex + visibleCount - 1;
+          currentSpan.textContent = `${firstVisibleIndex}-${lastVisibleIndex}`;
+        } else {
+          // Mostrar apenas o número quando uma ocorrência está visível
+          currentSpan.textContent = firstVisibleIndex || 1;
+        }
+        totalSpan.textContent = realTotalOccurrences;
+      }
+
+      // Atualizar estado dos botões
+      const isAtStart = scrollLeft <= 5; // 5px de tolerância
+      const isAtEnd = scrollLeft >= maxScroll - 5; // 5px de tolerância
+
+      leftBtn.disabled = isAtStart;
+      rightBtn.disabled = isAtEnd;
+
+      leftBtn.style.opacity = isAtStart ? "0.5" : "1";
+      rightBtn.style.opacity = isAtEnd ? "0.5" : "1";
+    }
+
+    // Event listeners
+    leftBtn.addEventListener("click", function () {
+      if (this.disabled) return;
+      timelineHorizontal.scrollBy({
+        left: -containerWidth,
+        behavior: "smooth",
+      });
+    });
+
+    rightBtn.addEventListener("click", function () {
+      if (this.disabled) return;
+      timelineHorizontal.scrollBy({
+        left: containerWidth,
+        behavior: "smooth",
+      });
+    });
+
+    // Atualizar controles quando scroll mudar
+    timelineHorizontal.addEventListener("scroll", updateControls);
+
+    // Inicializar controles
+    updateControls();
+  }, 100);
+};
+
+/**
  * Abre o modal
  * @param {string} conteudo - Conteúdo HTML do modal
  * @param {string} titulo - Título do modal
@@ -320,6 +509,9 @@ window.RastreamentoComponents.abrirModal = function (
 
   // Mostrar modal
   modalOverlay.classList.add("active");
+
+  // Inicializar controles do timeline após abrir o modal
+  window.RastreamentoComponents.inicializarControlesTimeline();
 };
 
 /**

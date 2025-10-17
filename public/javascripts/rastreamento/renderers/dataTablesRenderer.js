@@ -117,7 +117,10 @@ window.RastreamentoDataTablesRenderer.converterDadosParaDataTables = function (
       origem: nota.origem,
       destino: nota.destino,
       faturamento: window.RastreamentoUtils.formatarData(nota.docDate),
-      dataEnvio: window.RastreamentoUtils.formatarData(nota.dataEnvio),
+      dataEnvio:
+        nota.status === "Aguardando coleta"
+          ? "-"
+          : window.RastreamentoUtils.formatarData(nota.dataEnvio),
       previsao:
         nota.status === "Aguardando coleta"
           ? "-"
@@ -135,7 +138,10 @@ window.RastreamentoDataTablesRenderer.converterDadosParaDataTables = function (
       _origem: nota.origem,
       _destino: nota.destino,
       _faturamento: new Date(nota.docDate),
-      _dataEnvio: new Date(nota.dataEnvio),
+      _dataEnvio:
+        nota.status === "Aguardando coleta"
+          ? new Date(0)
+          : new Date(nota.dataEnvio),
       _previsao:
         nota.status === "Aguardando coleta"
           ? new Date(0)

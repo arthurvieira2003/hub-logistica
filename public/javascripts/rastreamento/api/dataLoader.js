@@ -57,6 +57,7 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
       // Determinar o status com base nos dados recebidos
       let status = "Aguardando coleta";
       let ultimaAtualizacao = "";
+      let ultimaOcorrencia = null; // Declarar no escopo correto
 
       try {
         ultimaAtualizacao = window.RastreamentoUtils.formatarDataHora(
@@ -81,7 +82,7 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
         });
 
         // Pegar a ocorrência mais recente para determinar o status
-        const ultimaOcorrencia = ocorrencias[0];
+        ultimaOcorrencia = ocorrencias[0];
 
         // Determinar o status com base no código de ocorrência
         switch (ultimaOcorrencia.codigo_ocorrencia) {
@@ -119,6 +120,35 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
         }
       }
 
+      // Calcular previsão de entrega baseada no histórico
+      let previsaoEntrega = item.docDate.split(" ")[0]; // Data padrão (envio)
+
+      // Se há rastreamento, tentar calcular previsão mais realista
+      if (
+        item.rastreamento &&
+        item.rastreamento.tracking &&
+        item.rastreamento.tracking.length > 0
+      ) {
+        // Verificar se já foi entregue
+        const foiEntregue = item.rastreamento.tracking.some(
+          (oc) =>
+            oc.codigo_ocorrencia === "01" ||
+            (oc.descricao && oc.descricao.toLowerCase().includes("entregue"))
+        );
+
+        if (!foiEntregue) {
+          // Se não foi entregue, calcular previsão baseada na data de envio + prazo médio
+          const dataEnvio = new Date(item.docDate.split(" ")[0]);
+          const prazoMedio = 3; // 3 dias úteis como prazo médio
+          dataEnvio.setDate(dataEnvio.getDate() + prazoMedio);
+          previsaoEntrega = dataEnvio.toISOString().split("T")[0];
+        } else {
+          // Se foi entregue, usar a data real da entrega como previsão
+          const dataEntrega = new Date(ultimaOcorrencia.data_hora);
+          previsaoEntrega = dataEntrega.toISOString().split("T")[0];
+        }
+      }
+
       // Criar objeto de nota
       const nota = {
         numero: item.serial.toString(),
@@ -127,13 +157,32 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
         destino: `${item.cidadeDestino}, ${item.estadoDestino}`,
         docDate: item.docDate.split(" ")[0],
         dataEnvio: item.docDate.split(" ")[0],
-        previsaoEntrega: item.docDate.split(" ")[0], // Será atualizado se houver previsão no rastreamento
+        previsaoEntrega: previsaoEntrega,
         ultimaAtualizacao: ultimaAtualizacao,
         cliente: item.cardName,
         cte: "", // Não disponível no endpoint genérico
         historico:
           item.rastreamento && item.rastreamento.tracking
-            ? item.rastreamento.tracking
+            ? item.rastreamento.tracking.map((ocorrencia) => {
+                // Remover códigos das descrições para transportadoras genéricas
+                const ocorrenciaLimpa = { ...ocorrencia };
+
+                // Limpar descrição se existir
+                if (ocorrenciaLimpa.descricao) {
+                  ocorrenciaLimpa.descricao = ocorrenciaLimpa.descricao
+                    .replace(/\s*\(\d+\)\s*$/, "")
+                    .trim();
+                }
+
+                // Limpar ocorrencia se existir
+                if (ocorrenciaLimpa.ocorrencia) {
+                  ocorrenciaLimpa.ocorrencia = ocorrenciaLimpa.ocorrencia
+                    .replace(/\s*\(\d+\)\s*$/, "")
+                    .trim();
+                }
+
+                return ocorrenciaLimpa;
+              })
             : [],
         transportadoraNome: item.carrierName,
       };
