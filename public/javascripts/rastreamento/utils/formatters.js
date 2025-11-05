@@ -43,9 +43,12 @@ window.RastreamentoUtils.formatarDataHora = function (dataString) {
   if (!dataString) return "";
 
   const partes = dataString.split(" ");
-  if (partes.length < 2) return formatarData(dataString);
+  if (partes.length < 2)
+    return window.RastreamentoUtils.formatarData(dataString);
 
-  return `${formatarData(partes[0])} ${partes[1].substring(0, 5)}`;
+  return `${window.RastreamentoUtils.formatarData(
+    partes[0]
+  )} ${partes[1].substring(0, 5)}`;
 };
 
 /**
