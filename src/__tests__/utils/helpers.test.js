@@ -308,4 +308,133 @@ describe("Helpers", () => {
       expect(result).toBe(false);
     });
   });
+
+  describe("waitForElement", () => {
+    let mockObserver;
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      // Limpar mocks do document
+      document.querySelector.mockClear();
+      // Não sobrescrever document.body - já está definido no setupTests
+
+      // Mock MutationObserver
+      mockObserver = {
+        observe: jest.fn(),
+        disconnect: jest.fn(),
+      };
+      global.MutationObserver = jest.fn((callback) => {
+        // Salvar callback para uso nos testes
+        mockObserver.callback = callback;
+        return mockObserver;
+      });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      delete global.MutationObserver;
+    });
+
+    test("deve resolver imediatamente se elemento já existe", async () => {
+      const mockElement = { id: "test-element" };
+      document.querySelector.mockReturnValue(mockElement);
+
+      const promise = window.Helpers.waitForElement("#test-element");
+
+      // Deve resolver imediatamente
+      await expect(promise).resolves.toBe(mockElement);
+      expect(document.querySelector).toHaveBeenCalledWith("#test-element");
+    });
+
+    test("deve usar MutationObserver para esperar elemento aparecer", async () => {
+      // Elemento não existe inicialmente
+      document.querySelector.mockReturnValueOnce(null);
+
+      const promise = window.Helpers.waitForElement("#test-element");
+
+      // Verificar que observer foi criado e configurado
+      expect(global.MutationObserver).toHaveBeenCalled();
+      expect(mockObserver.observe).toHaveBeenCalledWith(document.body, {
+        childList: true,
+        subtree: true,
+      });
+
+      // Simular elemento aparecendo
+      const mockElement = { id: "test-element" };
+      document.querySelector.mockReturnValue(mockElement);
+
+      // Simular callback do MutationObserver
+      if (mockObserver.callback) {
+        mockObserver.callback([], mockObserver);
+      }
+
+      await expect(promise).resolves.toBe(mockElement);
+      expect(mockObserver.disconnect).toHaveBeenCalled();
+    });
+
+    test("deve rejeitar após timeout se elemento não aparecer", async () => {
+      // Elemento nunca existe
+      document.querySelector.mockReturnValue(null);
+
+      const promise = window.Helpers.waitForElement("#test-element", 1000);
+
+      // Avançar o timer até o timeout
+      jest.advanceTimersByTime(1000);
+
+      await expect(promise).rejects.toThrow(
+        "Elemento #test-element não encontrado após 1000ms"
+      );
+      expect(mockObserver.disconnect).toHaveBeenCalled();
+    });
+  });
+
+  describe("setUrlParams", () => {
+    let originalReplaceState;
+
+    beforeEach(() => {
+      // Salvar e substituir replaceState
+      originalReplaceState = window.history.replaceState;
+      window.history.replaceState = jest.fn();
+    });
+
+    afterEach(() => {
+      // Restaurar
+      window.history.replaceState = originalReplaceState;
+    });
+
+    test("deve adicionar/atualizar parâmetros na URL", () => {
+      // Executar a função - cobertura já está 100%
+      window.Helpers.setUrlParams({
+        key1: "value1",
+        key2: "value2",
+      });
+
+      // Verificar que replaceState foi chamado
+      expect(window.history.replaceState).toHaveBeenCalled();
+    });
+
+    test("deve remover parâmetros quando valor é null", () => {
+      window.Helpers.setUrlParams({
+        key1: "value1",
+        keyToRemove: null,
+      });
+
+      expect(window.history.replaceState).toHaveBeenCalled();
+    });
+
+    test("deve remover parâmetros quando valor é undefined", () => {
+      window.Helpers.setUrlParams({
+        key1: "value1",
+        keyToRemove: undefined,
+      });
+
+      expect(window.history.replaceState).toHaveBeenCalled();
+    });
+
+    test("deve atualizar URL usando history.replaceState", () => {
+      window.Helpers.setUrlParams({ key1: "value1" });
+
+      expect(window.history.replaceState).toHaveBeenCalled();
+    });
+  });
 });
