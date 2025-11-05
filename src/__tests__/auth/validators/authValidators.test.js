@@ -3,27 +3,20 @@
  * Testa validações de email, senha, login e registro
  */
 
-const fs = require("fs");
-const path = require("path");
+// Carregar módulos usando require() para permitir instrumentação do Jest
+const helpersPath = require.resolve(
+  "../../../../public/javascripts/utils/helpers.js"
+);
+const authValidatorsPath = require.resolve(
+  "../../../../public/javascripts/auth/validators/authValidators.js"
+);
 
 // Carregar módulos necessários antes dos testes
 beforeAll(() => {
   // Carregar helpers primeiro
-  const helpersPath = path.join(
-    __dirname,
-    "../../../../public/javascripts/utils/helpers.js"
-  );
-  const helpersCode = fs.readFileSync(helpersPath, "utf8");
-  eval(helpersCode);
+  require(helpersPath);
 
-  // Carregar AuthValidators
-  const authValidatorsPath = path.join(
-    __dirname,
-    "../../../../public/javascripts/auth/validators/authValidators.js"
-  );
-  const authValidatorsCode = fs.readFileSync(authValidatorsPath, "utf8");
-
-  // Mock das dependências necessárias
+  // Mock das dependências necessárias antes de carregar AuthValidators
   window.LoginUI = {
     showNotification: jest.fn(),
   };
@@ -42,7 +35,8 @@ beforeAll(() => {
     hideLoading: jest.fn(),
   };
 
-  eval(authValidatorsCode);
+  // Carregar AuthValidators usando require() para permitir instrumentação
+  require(authValidatorsPath);
 });
 
 describe("AuthValidators", () => {
@@ -258,6 +252,260 @@ describe("AuthValidators", () => {
       const userData = { exp: futureTime };
       const result = window.AuthValidators.isTokenExpired(userData);
       expect(result).toBe(false);
+    });
+  });
+
+  describe("advancedTokenCheck", () => {
+    beforeEach(() => {
+      // Resetar location.href
+      delete window.location;
+      window.location = { href: "" };
+      jest.clearAllMocks();
+    });
+
+    test("deve retornar false quando token não existe", async () => {
+      window.AuthCore.getToken.mockReturnValue(null);
+      const result = await window.AuthValidators.advancedTokenCheck();
+      expect(result).toBe(false);
+      expect(window.AuthUI.showLoading).not.toHaveBeenCalled();
+    });
+
+    test("deve retornar true quando token é válido e não expirado", async () => {
+      window.AuthCore.getToken.mockReturnValue("valid-token");
+      window.AuthCore.validateToken.mockResolvedValue({
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      });
+      window.AuthCore.isTokenExpired.mockReturnValue(false);
+
+      const result = await window.AuthValidators.advancedTokenCheck();
+
+      expect(result).toBe(true);
+      expect(window.AuthUI.showLoading).toHaveBeenCalledWith(
+        "Verificando sessão..."
+      );
+      expect(window.AuthUI.hideLoading).toHaveBeenCalled();
+      expect(window.location.href).toBe("/home");
+    });
+
+    test("deve retornar false quando userData é null", async () => {
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockResolvedValue(null);
+
+      const result = await window.AuthValidators.advancedTokenCheck();
+
+      expect(result).toBe(false);
+      expect(window.AuthUI.hideLoading).toHaveBeenCalled();
+    });
+
+    test("deve retornar false quando token está expirado", async () => {
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockResolvedValue({
+        exp: Math.floor(Date.now() / 1000) - 3600,
+      });
+      window.AuthCore.isTokenExpired.mockReturnValue(true);
+
+      const result = await window.AuthValidators.advancedTokenCheck();
+
+      expect(result).toBe(false);
+      expect(window.AuthUI.hideLoading).toHaveBeenCalled();
+    });
+
+    test("deve retornar false em caso de erro", async () => {
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockRejectedValue(
+        new Error("Erro de rede")
+      );
+
+      const result = await window.AuthValidators.advancedTokenCheck();
+
+      expect(result).toBe(false);
+      expect(window.AuthUI.hideLoading).toHaveBeenCalled();
+    });
+  });
+
+  describe("protectedPageCheck", () => {
+    test("deve retornar null quando token não existe", async () => {
+      window.AuthCore.getToken.mockReturnValue(null);
+      const result = await window.AuthValidators.protectedPageCheck();
+      expect(result).toBeNull();
+    });
+
+    test("deve retornar userData quando token é válido", async () => {
+      const mockUserData = {
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        user: "test",
+      };
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockResolvedValue(mockUserData);
+      window.AuthCore.isTokenExpired.mockReturnValue(false);
+
+      const result = await window.AuthValidators.protectedPageCheck();
+
+      expect(result).toEqual(mockUserData);
+    });
+
+    test("deve retornar null quando userData é null", async () => {
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockResolvedValue(null);
+
+      const result = await window.AuthValidators.protectedPageCheck();
+
+      expect(result).toBeNull();
+    });
+
+    test("deve retornar null quando token está expirado", async () => {
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockResolvedValue({
+        exp: Math.floor(Date.now() / 1000) - 3600,
+      });
+      window.AuthCore.isTokenExpired.mockReturnValue(true);
+
+      const result = await window.AuthValidators.protectedPageCheck();
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("adminCheck", () => {
+    beforeEach(() => {
+      // Resetar location.href
+      delete window.location;
+      window.location = { href: "" };
+      jest.clearAllMocks();
+    });
+
+    test("deve redirecionar quando token não existe", async () => {
+      window.AuthCore.getToken.mockReturnValue(null);
+      const result = await window.AuthValidators.adminCheck();
+
+      expect(result).toBe(false);
+      expect(window.location.href).toBe("/home");
+    });
+
+    test("deve retornar true quando usuário é admin", async () => {
+      const mockUserData = {
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        isAdmin: true,
+      };
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockResolvedValue(mockUserData);
+      window.AuthCore.isTokenExpired.mockReturnValue(false);
+
+      const result = await window.AuthValidators.adminCheck();
+
+      expect(result).toBe(true);
+      expect(window.AuthUI.showLoading).toHaveBeenCalledWith(
+        "Verificando permissões..."
+      );
+      expect(window.AuthUI.hideLoading).toHaveBeenCalled();
+    });
+
+    test("deve redirecionar quando usuário não é admin", async () => {
+      const mockUserData = {
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        isAdmin: false,
+      };
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockResolvedValue(mockUserData);
+      window.AuthCore.isTokenExpired.mockReturnValue(false);
+
+      const result = await window.AuthValidators.adminCheck();
+
+      expect(result).toBe(false);
+      expect(window.location.href).toBe("/home");
+    });
+
+    test("deve redirecionar quando userData é null", async () => {
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockResolvedValue(null);
+
+      const result = await window.AuthValidators.adminCheck();
+
+      expect(result).toBe(false);
+      expect(window.location.href).toBe("/home");
+    });
+
+    test("deve redirecionar quando token está expirado", async () => {
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockResolvedValue({
+        exp: Math.floor(Date.now() / 1000) - 3600,
+      });
+      window.AuthCore.isTokenExpired.mockReturnValue(true);
+
+      const result = await window.AuthValidators.adminCheck();
+
+      expect(result).toBe(false);
+      expect(window.location.href).toBe("/home");
+    });
+
+    test("deve redirecionar em caso de erro", async () => {
+      window.AuthCore.getToken.mockReturnValue("token");
+      window.AuthCore.validateToken.mockRejectedValue(new Error("Erro"));
+
+      const result = await window.AuthValidators.adminCheck();
+
+      expect(result).toBe(false);
+      expect(window.location.href).toBe("/home");
+    });
+  });
+
+  describe("validateToken", () => {
+    test("deve retornar userData quando token é válido", async () => {
+      const mockUserData = {
+        user: "test",
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      };
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockUserData,
+      });
+
+      const result = await window.AuthValidators.validateToken("test-token");
+
+      expect(result).toEqual(mockUserData);
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:4010/session/validate",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "test-token",
+          },
+        }
+      );
+    });
+
+    test("deve retornar null quando resposta não é ok", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+      });
+
+      const result = await window.AuthValidators.validateToken("test-token");
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("redirectToHome", () => {
+    beforeEach(() => {
+      // Resetar location.href
+      delete window.location;
+      window.location = { href: "" };
+      localStorage.clear();
+      jest.clearAllMocks();
+    });
+
+    test("deve redirecionar para home com mensagem", () => {
+      window.AuthValidators.redirectToHome("Mensagem de erro");
+
+      expect(window.location.href).toBe("/home");
+      expect(localStorage.getItem("auth_error")).toBe("Mensagem de erro");
+    });
+
+    test("deve esconder loading do AuthUI", () => {
+      window.AuthValidators.redirectToHome("Erro");
+
+      expect(window.AuthUI.hideLoading).toHaveBeenCalled();
     });
   });
 });

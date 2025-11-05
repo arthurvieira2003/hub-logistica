@@ -3,16 +3,14 @@
  * Testa configurações de transportadoras e utilitários
  */
 
-const fs = require("fs");
-const path = require("path");
+// Carregar módulo usando require() para permitir instrumentação do Jest
+const configPath = require.resolve(
+  "../../../../public/javascripts/rastreamento/config/transportadoras.js"
+);
 
 beforeAll(() => {
-  const configPath = path.join(
-    __dirname,
-    "../../../../public/javascripts/rastreamento/config/transportadoras.js"
-  );
-  const configCode = fs.readFileSync(configPath, "utf8");
-  eval(configCode);
+  // Usar require() em vez de eval() para permitir instrumentação
+  require(configPath);
 });
 
 describe("RastreamentoConfig", () => {

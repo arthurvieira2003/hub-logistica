@@ -3,16 +3,17 @@
  * Testa funções utilitárias gerais
  */
 
-const fs = require("fs");
-const path = require("path");
+// Carregar módulo usando require() para permitir instrumentação do Jest
+// O Jest precisa que o arquivo seja carregado via require() para rastrear cobertura
+const helpersPath = require.resolve(
+  "../../../public/javascripts/utils/helpers.js"
+);
 
+// Carregar o módulo - o Jest irá instrumentar automaticamente
 beforeAll(() => {
-  const helpersPath = path.join(
-    __dirname,
-    "../../../public/javascripts/utils/helpers.js"
-  );
-  const helpersCode = fs.readFileSync(helpersPath, "utf8");
-  eval(helpersCode);
+  // Usar require() em vez de eval() para permitir instrumentação
+  // O Jest transformer customizado irá processar o arquivo antes de executá-lo
+  require(helpersPath);
 });
 
 describe("Helpers", () => {

@@ -3,16 +3,14 @@
  * Testa formatação de datas, verificações de atraso e utilitários
  */
 
-const fs = require("fs");
-const path = require("path");
+// Carregar módulo usando require() para permitir instrumentação do Jest
+const formattersPath = require.resolve(
+  "../../../../public/javascripts/rastreamento/utils/formatters.js"
+);
 
 beforeAll(() => {
-  const formattersPath = path.join(
-    __dirname,
-    "../../../../public/javascripts/rastreamento/utils/formatters.js"
-  );
-  const formattersCode = fs.readFileSync(formattersPath, "utf8");
-  eval(formattersCode);
+  // Usar require() em vez de eval() para permitir instrumentação
+  require(formattersPath);
 });
 
 describe("RastreamentoUtils", () => {

@@ -13,4 +13,14 @@ module.exports = {
   setupFilesAfterEnv: ["<rootDir>/src/setupTests.js"],
   testTimeout: 10000,
   verbose: true,
+  coveragePathIgnorePatterns: [
+    "/node_modules/",
+    "/coverage/",
+    "/src/__tests__/",
+    "/.github/",
+  ],
+  // Usar transformer customizado para instrumentar arquivos
+  transform: {
+    "^.+\\.js$": "<rootDir>/jest-transformer.js",
+  },
 };
