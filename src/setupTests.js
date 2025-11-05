@@ -117,10 +117,18 @@ if (typeof global.URLSearchParams === "undefined") {
 // Simular URL
 global.URL = class URL {
   constructor(url, base) {
-    this.href = url;
+    // Se url é um objeto (como window.location), usar href
+    let urlString;
+    if (url && typeof url === "object") {
+      urlString = url.href || String(url);
+    } else {
+      urlString = String(url || "");
+    }
+
+    this.href = urlString;
     this.searchParams = new global.URLSearchParams();
-    this.pathname = url.split("?")[0];
-    this.search = url.includes("?") ? url.split("?")[1] : "";
+    this.pathname = urlString.split("?")[0];
+    this.search = urlString.includes("?") ? urlString.split("?")[1] : "";
   }
 };
 
