@@ -51,27 +51,170 @@ window.TabManager.createTab = function (tool, name, icon) {
 
 // Função para ativar uma aba
 window.TabManager.activateTab = function (tab) {
-  // Desativar todas as abas e conteúdos
-  document
-    .querySelectorAll(".tab")
-    .forEach((t) => t.classList.remove("active"));
-  document
-    .querySelectorAll(".tool-content")
-    .forEach((c) => c.classList.remove("active"));
-
-  // Ativar a aba selecionada e seu conteúdo
-  tab.classList.add("active");
   const tool = tab.dataset.tool;
   const content = document.querySelector(`.tool-content[data-tool="${tool}"]`);
 
-  if (content) {
-    content.classList.add("active");
-  } else {
-    console.error("❌ Conteúdo não encontrado para tool:", tool);
+  console.log("🔵 [TabManager] activateTab chamado:", {
+    tool,
+    tabId: tab.dataset.tabId,
+    tabHasActive: tab.classList.contains("active"),
+    contentExists: !!content,
+    contentHasActive: content?.classList.contains("active"),
+    stackTrace: new Error().stack.split("\n").slice(1, 4).join("\n"),
+  });
+
+  // Obter conteúdo ativo atual
+  const currentActiveContent = document.querySelector(".tool-content.active");
+  const currentActiveTab = document.querySelector(".tab.active");
+
+  console.log("🔵 [TabManager] Estado atual:", {
+    currentActiveContent: currentActiveContent?.dataset.tool || "nenhum",
+    currentActiveTab: currentActiveTab?.dataset.tool || "nenhum",
+    allActiveContents: Array.from(
+      document.querySelectorAll(".tool-content.active")
+    ).map((c) => c.dataset.tool),
+    allActiveTabs: Array.from(document.querySelectorAll(".tab.active")).map(
+      (t) => t.dataset.tool
+    ),
+  });
+
+  // Se já estamos na mesma aba, não fazer nada
+  if (
+    tab.classList.contains("active") &&
+    content &&
+    content.classList.contains("active")
+  ) {
+    console.log("🟡 [TabManager] Aba já está ativa, ignorando ativação");
+    return;
   }
+
+  console.log("🟢 [TabManager] Iniciando processo de ativação...");
+
+  // IMPORTANTE: Esconder conteúdo ativo atual ANTES de remover active de todas as abas
+  // Isso evita que o dashboard apareça brevemente durante a transição
+  if (currentActiveContent && currentActiveContent !== content) {
+    console.log("🟢 [TabManager] Escondendo conteúdo anterior PRIMEIRO:", {
+      tool: currentActiveContent.dataset.tool,
+      willBeReplaced: currentActiveContent !== content,
+    });
+    currentActiveContent.style.transition = "none";
+
+    // Se for o dashboard, usar display: none imediatamente para evitar flash visual
+    if (currentActiveContent.dataset.tool === "dashboard") {
+      console.log(
+        "  - Dashboard detectado, usando display: none imediatamente"
+      );
+      currentActiveContent.style.display = "none";
+      currentActiveContent.style.opacity = "0";
+      currentActiveContent.style.visibility = "hidden";
+    }
+
+    currentActiveContent.classList.remove("active");
+
+    // Restaurar transição após um pequeno delay
+    setTimeout(() => {
+      currentActiveContent.style.transition = "";
+      // NÃO restaurar display para dashboard - manter escondido
+      console.log(
+        "🟢 [TabManager] Transição restaurada para:",
+        currentActiveContent.dataset.tool
+      );
+    }, 10);
+  }
+
+  // Desativar todas as abas DEPOIS de esconder o conteúdo
+  const allTabs = document.querySelectorAll(".tab");
+  console.log("🟢 [TabManager] Desativando abas:", allTabs.length);
+  allTabs.forEach((t) => {
+    if (t.classList.contains("active")) {
+      console.log("  - Removendo active de aba:", t.dataset.tool);
+    }
+    t.classList.remove("active");
+  });
+
+  // Ativar a aba selecionada
+  console.log("🟢 [TabManager] Ativando aba:", tool);
+  tab.classList.add("active");
+
+  // Ativar o conteúdo da nova aba
+  if (content) {
+    console.log("🟢 [TabManager] Ativando conteúdo:", {
+      tool,
+      contentExists: true,
+      currentClasses: Array.from(content.classList),
+    });
+
+    // Se for o dashboard, garantir que display não seja none
+    if (content.dataset.tool === "dashboard") {
+      console.log("  - Dashboard sendo ativado, removendo display: none");
+      content.style.display = "";
+      content.style.opacity = "";
+      content.style.visibility = "";
+    }
+
+    // Garantir que a transição esteja habilitada
+    content.style.transition = "";
+    content.classList.add("active");
+    console.log(
+      "🟢 [TabManager] Conteúdo ativado, classes agora:",
+      Array.from(content.classList)
+    );
+  } else {
+    console.error("❌ [TabManager] Conteúdo não encontrado para tool:", tool);
+  }
+
+  // Desativar outros conteúdos que possam estar visíveis (sem transição)
+  const allContents = document.querySelectorAll(".tool-content");
+  console.log(
+    "🟢 [TabManager] Verificando outros conteúdos:",
+    allContents.length
+  );
+  allContents.forEach((c) => {
+    if (c !== content && c.classList.contains("active")) {
+      console.log("  - Removendo active de conteúdo:", c.dataset.tool);
+      c.style.transition = "none";
+      c.classList.remove("active");
+      setTimeout(() => {
+        c.style.transition = "";
+        console.log("  - Transição restaurada para:", c.dataset.tool);
+      }, 10);
+    }
+    // Garantir que o dashboard seja explicitamente escondido se não for o conteúdo ativo
+    if (c.dataset.tool === "dashboard" && c !== content) {
+      console.log(
+        "  - Garantindo que dashboard está escondido (display: none)"
+      );
+      c.style.transition = "none";
+      c.style.display = "none";
+      c.style.opacity = "0";
+      c.style.visibility = "hidden";
+      c.classList.remove("active");
+      setTimeout(() => {
+        c.style.transition = "";
+        // Manter display: none para dashboard
+      }, 10);
+    }
+  });
+
+  // Verificar estado final
+  setTimeout(() => {
+    const finalActiveContent = document.querySelector(".tool-content.active");
+    const finalActiveTab = document.querySelector(".tab.active");
+    console.log("🟢 [TabManager] Estado final após ativação:", {
+      activeContent: finalActiveContent?.dataset.tool || "nenhum",
+      activeTab: finalActiveTab?.dataset.tool || "nenhum",
+      allActiveContents: Array.from(
+        document.querySelectorAll(".tool-content.active")
+      ).map((c) => c.dataset.tool),
+      allActiveTabs: Array.from(document.querySelectorAll(".tab.active")).map(
+        (t) => t.dataset.tool
+      ),
+    });
+  }, 50);
 
   // Inicializar dashboard se for a aba do dashboard
   if (tool === "dashboard") {
+    console.log("🟢 [TabManager] Inicializando dashboard...");
     window.TabManager.handleDashboardActivation();
   }
 
@@ -90,6 +233,7 @@ window.TabManager.activateTab = function (tab) {
   });
 
   window.TabManager.state.activeTab = tab;
+  console.log("🟢 [TabManager] Ativação concluída para:", tool);
 };
 
 // Função para fechar uma aba
@@ -147,26 +291,65 @@ window.TabManager.createToolContent = function (tool) {
 
 // Função para lidar com ativação do dashboard
 window.TabManager.handleDashboardActivation = function () {
+  console.log("🟣 [TabManager] handleDashboardActivation chamado");
+
   // Carregar CSS do dashboard se ainda não estiver carregado
-  if (!document.querySelector('link[href="../styles/dashboard.css"]')) {
+  const cssLink =
+    document.querySelector('link[href="../styles/dashboard.css"]') ||
+    document.querySelector('link[href*="dashboard.css"]');
+  if (!cssLink) {
+    console.log("🟣 [TabManager] Carregando CSS do dashboard...");
     window.ScriptLoader.loadCSS("/styles/dashboard.css");
+  } else {
+    console.log("🟣 [TabManager] CSS do dashboard já está carregado");
   }
 
   const dashboardView = document.getElementById("dashboardView");
+  console.log("🟣 [TabManager] dashboardView encontrado:", !!dashboardView);
+
   if (dashboardView) {
-    if (!dashboardView.dataset.initialized) {
+    const isInitialized = dashboardView.dataset.initialized === "true";
+    console.log("🟣 [TabManager] Dashboard já inicializado?", isInitialized);
+
+    if (!isInitialized) {
+      console.log("🟣 [TabManager] Inicializando dashboard em 100ms...");
       // Aguardar um pouco para o CSS ser aplicado
       setTimeout(() => {
+        console.log("🟣 [TabManager] Verificando DashboardMain...");
         if (window.DashboardMain && window.DashboardMain.initDashboard) {
+          console.log("🟣 [TabManager] Chamando initDashboard...");
           window.DashboardMain.initDashboard();
           dashboardView.dataset.initialized = "true";
+          console.log("🟣 [TabManager] Dashboard inicializado com sucesso");
         } else {
-          console.error("❌ DashboardMain não está disponível");
+          console.error("❌ [TabManager] DashboardMain não está disponível", {
+            DashboardMainExists: !!window.DashboardMain,
+            initDashboardExists: !!(
+              window.DashboardMain && window.DashboardMain.initDashboard
+            ),
+          });
         }
       }, 100);
+    } else {
+      console.log(
+        "🟣 [TabManager] Dashboard já estava inicializado, pulando init"
+      );
     }
   } else {
-    console.error("❌ dashboardView não encontrado durante ativação");
+    console.error(
+      "❌ [TabManager] dashboardView não encontrado durante ativação"
+    );
+    console.error("❌ [TabManager] Elementos disponíveis:", {
+      dashboardView: !!document.getElementById("dashboardView"),
+      dashboardContainer: !!document.querySelector(".dashboard-container"),
+      allToolContents: Array.from(
+        document.querySelectorAll(".tool-content")
+      ).map((c) => ({
+        tool: c.dataset.tool,
+        hasActive: c.classList.contains("active"),
+        innerHTML: c.innerHTML.substring(0, 100),
+      })),
+    });
   }
 };
 
@@ -246,12 +429,28 @@ window.TabManager.loadDashboardScripts = function () {
 
 // Função para renderizar aba do dashboard
 window.TabManager.renderDashboardTab = function () {
+  console.log("🟠 [TabManager] renderDashboardTab chamado");
+
   const tabList = document.getElementById("tabList");
   if (!tabList) {
-    console.error("❌ tabList não encontrado em renderDashboardTab");
+    console.error(
+      "❌ [TabManager] tabList não encontrado em renderDashboardTab"
+    );
     return;
   }
 
+  // Verificar se já existe uma aba dashboard
+  const existingDashboardTab = document.querySelector(
+    '.tab[data-tool="dashboard"]'
+  );
+  if (existingDashboardTab) {
+    console.log(
+      "🟠 [TabManager] Aba dashboard já existe, não criando novamente"
+    );
+    return;
+  }
+
+  console.log("🟠 [TabManager] Criando nova aba dashboard...");
   const dashboardTab = document.createElement("div");
   dashboardTab.className = "tab active";
   dashboardTab.dataset.tool = "dashboard";
@@ -265,6 +464,7 @@ window.TabManager.renderDashboardTab = function () {
 
   // Adicionar evento de clique
   dashboardTab.addEventListener("click", () => {
+    console.log("🟠 [TabManager] Clique na aba dashboard detectado");
     window.TabManager.activateTab(dashboardTab);
     if (
       window.DashboardNavigation &&
@@ -276,9 +476,13 @@ window.TabManager.renderDashboardTab = function () {
 
   // Adicionar como primeira aba
   tabList.insertBefore(dashboardTab, tabList.firstChild);
+  console.log("🟠 [TabManager] Aba dashboard adicionada ao DOM");
 
   // Ativar a aba automaticamente após um pequeno delay
   setTimeout(() => {
+    console.log(
+      "🟠 [TabManager] Ativando aba dashboard automaticamente após 200ms"
+    );
     // Garantir que a tela de boas-vindas esteja escondida
     const welcomeScreen = document.getElementById("welcomeScreen");
     if (welcomeScreen) {
@@ -289,11 +493,30 @@ window.TabManager.renderDashboardTab = function () {
   }, 200);
 
   // Criar conteúdo do dashboard
+  console.log("🟠 [TabManager] Chamando createDashboardContent...");
   window.TabManager.createDashboardContent();
 };
 
 // Função para criar conteúdo do dashboard
 window.TabManager.createDashboardContent = function () {
+  console.log("🟠 [TabManager] createDashboardContent chamado");
+
+  // Verificar se já existe conteúdo do dashboard
+  const existingContent = document.querySelector(
+    '.tool-content[data-tool="dashboard"]'
+  );
+  if (existingContent) {
+    console.log(
+      "🟠 [TabManager] Conteúdo do dashboard já existe, não criando novamente",
+      {
+        hasActive: existingContent.classList.contains("active"),
+        isVisible: existingContent.style.display !== "none",
+      }
+    );
+    return;
+  }
+
+  console.log("🟠 [TabManager] Criando novo conteúdo do dashboard...");
   const dashboardContent = document.createElement("div");
   dashboardContent.className = "tool-content active";
   dashboardContent.dataset.tool = "dashboard";
@@ -319,28 +542,38 @@ window.TabManager.createDashboardContent = function () {
     overflow: auto;
   `;
 
+  console.log("🟠 [TabManager] Gerando HTML do dashboard...");
   dashboardContent.innerHTML = window.TabManager.getDashboardHTML();
 
   // Adicionar conteúdo à área de conteúdo
   const contentArea = document.getElementById("contentArea");
   if (contentArea) {
+    console.log(
+      "🟠 [TabManager] Adicionando conteúdo do dashboard ao contentArea"
+    );
     contentArea.appendChild(dashboardContent);
 
     // Verificar se o dashboardView foi criado
     const dashboardView = document.getElementById("dashboardView");
     if (dashboardView) {
+      console.log("🟠 [TabManager] dashboardView encontrado no DOM");
       // Verificar se há conteúdo dentro do dashboardView
       const dashboardGrid = dashboardView.querySelector(".dashboard-grid");
       if (dashboardGrid) {
+        console.log("🟠 [TabManager] dashboard-grid encontrado");
       } else {
-        console.error("❌ dashboard-grid não encontrado");
+        console.error("❌ [TabManager] dashboard-grid não encontrado");
       }
     } else {
-      console.error("❌ dashboardView não encontrado no DOM");
+      console.error("❌ [TabManager] dashboardView não encontrado no DOM");
     }
   } else {
-    console.error("❌ contentArea não encontrado");
+    console.error("❌ [TabManager] contentArea não encontrado");
   }
+
+  console.log(
+    "🟠 [TabManager] Conteúdo do dashboard criado e adicionado ao DOM"
+  );
 };
 
 // Função para obter HTML do dashboard

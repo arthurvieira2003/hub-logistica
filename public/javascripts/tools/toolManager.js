@@ -1,13 +1,10 @@
-// Tool Manager Module - Gerenciador de ferramentas
 window.ToolManager = window.ToolManager || {};
 
-// Estado das ferramentas
 window.ToolManager.state = {
   tools: new Map(),
   activeTool: null,
 };
 
-// Função para inicializar botões de ferramentas
 window.ToolManager.initToolButtons = function () {
   const toolButtons = document.querySelectorAll(".tool-button");
   const tabList = document.getElementById("tabList");
@@ -18,43 +15,35 @@ window.ToolManager.initToolButtons = function () {
     button.addEventListener("click", () => {
       const tool = button.dataset.tool;
 
-      // Verificar se a ferramenta já está aberta
       const existingTab = document.querySelector(`.tab[data-tool="${tool}"]`);
       if (existingTab) {
         window.TabManager.activateTab(existingTab);
         return;
       }
 
-      // Criar nova aba apenas para ferramentas internas
       const toolName = button.querySelector("span").textContent;
       const toolIcon = button.querySelector("i").cloneNode(true);
 
       const tab = window.TabManager.createTab(tool, toolName, toolIcon);
       tabList.appendChild(tab);
 
-      // Criar conteúdo da ferramenta
       const toolContent = window.TabManager.createToolContent(tool);
       contentArea.appendChild(toolContent);
 
-      // Esconder tela de boas-vindas
       welcomeScreen.style.display = "none";
 
-      // Ativar a nova aba
       window.TabManager.activateTab(tab);
 
-      // Carregar o conteúdo da ferramenta
       window.ToolManager.loadToolContent(tool, toolContent);
     });
   });
 };
 
-// Função para carregar conteúdo da ferramenta
 window.ToolManager.loadToolContent = async function (tool, contentElement) {
   try {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     contentElement.querySelector(".loader").remove();
 
-    // Caso especial para o painel administrativo
     if (tool === "admin") {
       window.location.href = "/administration";
       return;
@@ -89,7 +78,6 @@ window.ToolManager.loadToolContent = async function (tool, contentElement) {
   }
 };
 
-// Função para carregar ferramenta de fretes
 window.ToolManager.loadFretesTool = async function (contentElement) {
   contentElement.innerHTML = `
     <div class="tool-header">
@@ -109,16 +97,13 @@ window.ToolManager.loadFretesTool = async function (contentElement) {
         </div>
       </div>
       <div class="pagination" id="fretesPagination">
-        <!-- Paginação será adicionada dinamicamente -->
       </div>
     </div>
   `;
 
-  // Carregar dados de fretes
   await window.ToolManager.loadFretesData();
 };
 
-// Função para carregar dados de fretes
 window.ToolManager.loadFretesData = async function () {
   try {
     const response = await fetch("http://localhost:4010/cte");
@@ -140,7 +125,6 @@ window.ToolManager.loadFretesData = async function () {
   }
 };
 
-// Função para renderizar itens de fretes
 window.ToolManager.renderFretesItems = function (items) {
   const fretesListElement = document.getElementById("fretesList");
 
@@ -160,7 +144,9 @@ window.ToolManager.renderFretesItems = function (items) {
         <thead>
           <tr>
             <th>Número</th>
-            <th>Cliente</th>
+            <th>Transportadora</th>
+            <th>Remetente</th>
+            <th>Destinatário</th>
             <th>Data</th>
             <th>Valor</th>
             <th>Ações</th>
@@ -170,11 +156,9 @@ window.ToolManager.renderFretesItems = function (items) {
   `;
 
   items.forEach((item) => {
-    // Extrair a data e formatá-la
     const dateObj = new Date(item.DateAdd);
     const formattedDate = dateObj.toLocaleDateString("pt-BR");
 
-    // Formatar o valor
     const formattedValue = new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -186,14 +170,20 @@ window.ToolManager.renderFretesItems = function (items) {
           <i class="fas fa-file-invoice"></i>
           <span>${item.Serial}</span>
         </td>
-        <td class="frete-customer">${item.CardName}</td>
+        <td class="frete-customer">${item.CardName || "-"}</td>
+        <td class="frete-remetente">${item.remetenteNome || "-"}</td>
+        <td class="frete-destinatario">${item.destinatarioNome || "-"}</td>
         <td class="frete-date">${formattedDate}</td>
         <td class="frete-value">${formattedValue}</td>
         <td class="frete-actions">
-          <button class="btn-view-frete" data-serial="${item.Serial}" title="Visualizar">
+          <button class="btn-view-frete" data-serial="${
+            item.Serial
+          }" title="Visualizar">
             <i class="fas fa-eye"></i>
           </button>
-          <button class="btn-download-xml" data-serial="${item.Serial}" title="Baixar XML">
+          <button class="btn-download-xml" data-serial="${
+            item.Serial
+          }" title="Baixar XML">
             <i class="fas fa-download"></i>
           </button>
         </td>
@@ -211,32 +201,22 @@ window.ToolManager.renderFretesItems = function (items) {
   window.ToolManager.setupFretesButtons();
 };
 
-// Função para configurar botões de fretes
 window.ToolManager.setupFretesButtons = function () {
-  // Botões para visualizar detalhes
   document.querySelectorAll(".btn-view-frete").forEach((button) => {
     button.addEventListener("click", (e) => {
       const serial = e.currentTarget.dataset.serial;
-      window.Notifications.showNotification(
-        `Visualizando CT-e ${serial}`,
-        "info"
-      );
+      window.ToolManager.viewCTEDetails(serial);
     });
   });
 
-  // Botões para download do XML
   document.querySelectorAll(".btn-download-xml").forEach((button) => {
     button.addEventListener("click", (e) => {
       const serial = e.currentTarget.dataset.serial;
-      window.Notifications.showNotification(
-        `Iniciando download do XML do CT-e ${serial}`,
-        "success"
-      );
+      window.ToolManager.downloadCTEXML(serial);
     });
   });
 };
 
-// Função para configurar busca de fretes
 window.ToolManager.setupFretesSearch = function () {
   const searchInput = document.getElementById("fretesSearch");
   let searchTimeout;
@@ -250,13 +230,481 @@ window.ToolManager.setupFretesSearch = function () {
   });
 };
 
-// Função para filtrar itens de fretes
 window.ToolManager.filterFretesItems = function (searchTerm) {
-  // Esta função seria implementada com os dados carregados
-  // Por enquanto, apenas um placeholder
+  const table = document.querySelector(".fretes-table tbody");
+  if (!table) return;
+
+  const rows = table.querySelectorAll("tr");
+  rows.forEach((row) => {
+    const serial = row.dataset.serial?.toLowerCase() || "";
+    const transportadora =
+      row.querySelector(".frete-customer")?.textContent?.toLowerCase() || "";
+    const remetente =
+      row.querySelector(".frete-remetente")?.textContent?.toLowerCase() || "";
+    const destinatario =
+      row.querySelector(".frete-destinatario")?.textContent?.toLowerCase() ||
+      "";
+    const match =
+      serial.includes(searchTerm) ||
+      transportadora.includes(searchTerm) ||
+      remetente.includes(searchTerm) ||
+      destinatario.includes(searchTerm);
+    row.style.display = match ? "" : "none";
+  });
 };
 
-// Função para carregar ferramenta de frota
+window.ToolManager.viewCTEDetails = async function (serial) {
+  let modalOverlay = document.getElementById("cteModalOverlay");
+  if (!modalOverlay) {
+    modalOverlay = document.createElement("div");
+    modalOverlay.id = "cteModalOverlay";
+    modalOverlay.className = "cte-modal-overlay";
+    modalOverlay.innerHTML = `
+      <div class="cte-modal-container">
+        <div class="cte-modal-header">
+          <h3>Detalhes do CT-E</h3>
+          <button class="cte-modal-close">&times;</button>
+        </div>
+        <div class="cte-modal-body" id="cteModalBody">
+          <div class="cte-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Carregando detalhes do CT-E...</p>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modalOverlay);
+
+    const closeBtn = modalOverlay.querySelector(".cte-modal-close");
+    closeBtn.addEventListener("click", () => {
+      window.ToolManager.closeCTEModal();
+    });
+
+    modalOverlay.addEventListener("click", (e) => {
+      if (e.target === modalOverlay) {
+        window.ToolManager.closeCTEModal();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modalOverlay.classList.contains("active")) {
+        window.ToolManager.closeCTEModal();
+      }
+    });
+  }
+
+  modalOverlay.classList.add("active");
+  document.body.classList.add("cte-modal-open");
+
+  const modalBody = document.getElementById("cteModalBody");
+  try {
+    const response = await fetch(`http://localhost:4010/cte/${serial}`);
+    if (!response.ok) {
+      throw new Error("Erro ao buscar detalhes do CT-E");
+    }
+
+    const cte = await response.json();
+    window.ToolManager.renderCTEDetails(cte);
+  } catch (error) {
+    console.error("❌ Erro ao carregar detalhes do CT-E:", error);
+    modalBody.innerHTML = `
+      <div class="cte-error">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Erro ao carregar os detalhes do CT-E.</p>
+        <p style="font-size: 12px; color: var(--text-secondary);">${error.message}</p>
+      </div>
+    `;
+  }
+};
+
+window.ToolManager.renderCTEDetails = function (cte) {
+  const modalBody = document.getElementById("cteModalBody");
+  const modalHeader = document.querySelector(
+    "#cteModalOverlay .cte-modal-header h3"
+  );
+
+  if (modalHeader) {
+    modalHeader.textContent = `CT-E ${cte.numero || cte.serial}`;
+  }
+
+  const formatCurrency = (value) => {
+    if (!value) return "R$ 0,00";
+    const num = parseFloat(value);
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(num);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString("pt-BR");
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const formatCNPJ = (cnpj) => {
+    if (!cnpj) return "-";
+    const cleaned = cnpj.replace(/\D/g, "");
+    if (cleaned.length === 14) {
+      return cleaned.replace(
+        /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+        "$1.$2.$3/$4-$5"
+      );
+    } else if (cleaned.length === 11) {
+      return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+    }
+    return cnpj;
+  };
+
+  const formatCEP = (cep) => {
+    if (!cep) return "-";
+    const cleaned = cep.replace(/\D/g, "");
+    if (cleaned.length === 8) {
+      return cleaned.replace(/^(\d{5})(\d{3})$/, "$1-$2");
+    }
+    return cep;
+  };
+
+  const renderAddress = (endereco, label) => {
+    if (!endereco || !endereco.logradouro) return "";
+
+    const partesEndereco = [];
+    if (endereco.logradouro) {
+      let logradouroCompleto = endereco.logradouro;
+      if (endereco.numero) logradouroCompleto += `, ${endereco.numero}`;
+      if (endereco.complemento)
+        logradouroCompleto += ` ${endereco.complemento}`;
+      partesEndereco.push(logradouroCompleto);
+    }
+    if (endereco.bairro) partesEndereco.push(endereco.bairro);
+    if (endereco.municipio) {
+      const cidadeUF = endereco.uf
+        ? `${endereco.municipio} - ${endereco.uf}`
+        : endereco.municipio;
+      partesEndereco.push(cidadeUF);
+    }
+    if (endereco.cep) partesEndereco.push(`CEP: ${formatCEP(endereco.cep)}`);
+
+    const enderecoCompleto = partesEndereco.filter((p) => p.trim()).join(" - ");
+
+    return `
+        <div class="cte-detail-item" style="grid-column: 1 / -1;">
+          <span class="cte-detail-label">${label}</span>
+          <span class="cte-detail-value cte-address-value">${enderecoCompleto}</span>
+        </div>
+    `;
+  };
+
+  modalBody.innerHTML = `
+    <div class="cte-details-section">
+      <h4><i class="fas fa-info-circle"></i> Informações Básicas</h4>
+      <div class="cte-details-grid">
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Número</span>
+          <span class="cte-detail-value">${cte.numero || "-"}</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Série</span>
+          <span class="cte-detail-value">${cte.serie || "-"}</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Chave de Acesso</span>
+          <span class="cte-detail-value" style="font-family: monospace; font-size: 12px;">${
+            cte.chave || cte.serial || "-"
+          }</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Data de Emissão</span>
+          <span class="cte-detail-value">${formatDate(cte.dataEmissao)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cte-details-section">
+      <h4><i class="fas fa-building"></i> Emitente</h4>
+      <div class="cte-details-grid">
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">CNPJ</span>
+          <span class="cte-detail-value">${
+            formatCNPJ(cte.emitente?.cnpj) || "-"
+          }</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Nome</span>
+          <span class="cte-detail-value">${cte.emitente?.nome || "-"}</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Inscrição Estadual</span>
+          <span class="cte-detail-value">${cte.emitente?.ie || "-"}</span>
+        </div>
+        ${renderAddress(cte.emitente?.endereco, "Endereço")}
+      </div>
+    </div>
+
+    <div class="cte-details-section">
+      <h4><i class="fas fa-truck-loading"></i> Remetente</h4>
+      <div class="cte-details-grid">
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">CNPJ/CPF</span>
+          <span class="cte-detail-value">${
+            formatCNPJ(cte.remetente?.cnpj) || "-"
+          }</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Nome</span>
+          <span class="cte-detail-value">${cte.remetente?.nome || "-"}</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Inscrição Estadual</span>
+          <span class="cte-detail-value">${cte.remetente?.ie || "-"}</span>
+        </div>
+        ${renderAddress(cte.remetente?.endereco, "Endereço")}
+      </div>
+    </div>
+
+    <div class="cte-details-section">
+      <h4><i class="fas fa-truck"></i> Destinatário</h4>
+      <div class="cte-details-grid">
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">CNPJ/CPF</span>
+          <span class="cte-detail-value">${
+            formatCNPJ(cte.destinatario?.cnpj) || "-"
+          }</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Nome</span>
+          <span class="cte-detail-value">${cte.destinatario?.nome || "-"}</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Inscrição Estadual</span>
+          <span class="cte-detail-value">${cte.destinatario?.ie || "-"}</span>
+        </div>
+        ${renderAddress(cte.destinatario?.endereco, "Endereço")}
+      </div>
+    </div>
+
+    <div class="cte-details-section">
+      <h4><i class="fas fa-user-tag"></i> Tomador</h4>
+      <div class="cte-details-grid">
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Tipo</span>
+          <span class="cte-detail-value">${cte.tomador?.tipo || "-"}</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">CNPJ/CPF</span>
+          <span class="cte-detail-value">${
+            formatCNPJ(cte.tomador?.cnpj) || "-"
+          }</span>
+        </div>
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Nome</span>
+          <span class="cte-detail-value">${cte.tomador?.nome || "-"}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cte-details-section">
+      <h4><i class="fas fa-dollar-sign"></i> Valores</h4>
+      <div class="cte-values-grid">
+        <div class="cte-value-item">
+          <span class="cte-detail-label">Valor do Serviço</span>
+          <span class="cte-detail-value">${formatCurrency(
+            cte.valores?.valorServico
+          )}</span>
+        </div>
+        <div class="cte-value-item">
+          <span class="cte-detail-label">Valor a Receber</span>
+          <span class="cte-detail-value">${formatCurrency(
+            cte.valores?.valorReceber
+          )}</span>
+        </div>
+        <div class="cte-value-item">
+          <span class="cte-detail-label">Valor Total</span>
+          <span class="cte-detail-value">${formatCurrency(
+            cte.valores?.valorTotal || cte.docTotal
+          )}</span>
+        </div>
+        ${
+          cte.valores?.icms?.valor
+            ? `
+        <div class="cte-value-item">
+          <span class="cte-detail-label">ICMS</span>
+          <span class="cte-detail-value">${formatCurrency(
+            cte.valores.icms.valor
+          )}</span>
+        </div>
+        `
+            : ""
+        }
+      </div>
+      
+      ${
+        cte.valores?.componentes && cte.valores.componentes.length > 0
+          ? (() => {
+              const componentesComValor = cte.valores.componentes.filter(
+                (comp) => comp.valor && parseFloat(comp.valor) > 0
+              );
+
+              return componentesComValor.length > 0
+                ? `
+      <div style="margin-top: 24px;">
+        <h5 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: var(--text-secondary);">Componentes da Prestação</h5>
+        <div class="cte-components-list">
+          ${componentesComValor
+            .map(
+              (comp) => `
+            <div class="cte-component-item">
+              <span class="cte-component-name">${comp.nome || "-"}</span>
+              <span class="cte-component-value">${formatCurrency(
+                comp.valor
+              )}</span>
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+      </div>
+      `
+                : "";
+            })()
+          : ""
+      }
+      
+      ${
+        cte.valores?.icms?.baseCalculo ||
+        cte.valores?.icms?.aliquota ||
+        cte.valores?.icms?.cst
+          ? `
+      <div class="cte-values-grid" style="margin-top: 16px;">
+        ${
+          cte.valores.icms.baseCalculo
+            ? `
+        <div class="cte-value-item">
+          <span class="cte-detail-label">Base de Cálculo ICMS</span>
+          <span class="cte-detail-value">${formatCurrency(
+            cte.valores.icms.baseCalculo
+          )}</span>
+        </div>
+        `
+            : ""
+        }
+        ${
+          cte.valores.icms.aliquota
+            ? `
+        <div class="cte-value-item">
+          <span class="cte-detail-label">Alíquota ICMS</span>
+          <span class="cte-detail-value">${
+            parseFloat(cte.valores.icms.aliquota).toFixed(2) + "%"
+          }</span>
+        </div>
+        `
+            : ""
+        }
+        ${
+          cte.valores.icms.cst
+            ? `
+        <div class="cte-value-item">
+          <span class="cte-detail-label">CST ICMS</span>
+          <span class="cte-detail-value">${cte.valores.icms.cst}</span>
+        </div>
+        `
+            : ""
+        }
+      </div>
+      `
+          : ""
+      }
+    </div>
+
+    ${
+      cte.carga?.quantidade || cte.carga?.valorCarga
+        ? `
+    <div class="cte-details-section">
+      <h4><i class="fas fa-weight"></i> Informações de Carga</h4>
+      <div class="cte-details-grid">
+        ${
+          cte.carga?.quantidade
+            ? `
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Quantidade</span>
+          <span class="cte-detail-value">${cte.carga.quantidade} ${
+                cte.carga.especie || ""
+              }</span>
+        </div>
+        `
+            : ""
+        }
+        ${
+          cte.carga?.valorCarga
+            ? `
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Valor da Carga</span>
+          <span class="cte-detail-value">${formatCurrency(
+            cte.carga.valorCarga
+          )}</span>
+        </div>
+        `
+            : ""
+        }
+        ${
+          cte.carga?.valorCargaAverb
+            ? `
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Valor da Carga Averbado</span>
+          <span class="cte-detail-value">${formatCurrency(
+            cte.carga.valorCargaAverb
+          )}</span>
+        </div>
+        `
+            : ""
+        }
+        ${
+          cte.carga?.lacres && cte.carga.lacres.length > 0
+            ? `
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Lacres</span>
+          <span class="cte-detail-value">${cte.carga.lacres.join(", ")}</span>
+        </div>
+        `
+            : ""
+        }
+      </div>
+    </div>
+    `
+        : ""
+    }
+
+    ${
+      cte.informacoesComplementares
+        ? `
+    <div class="cte-details-section">
+      <h4><i class="fas fa-sticky-note"></i> Informações Complementares</h4>
+      <div class="cte-detail-item">
+        <span class="cte-detail-value" style="white-space: pre-wrap;">${cte.informacoesComplementares}</span>
+      </div>
+    </div>
+    `
+        : ""
+    }
+  `;
+};
+
+window.ToolManager.closeCTEModal = function () {
+  const modalOverlay = document.getElementById("cteModalOverlay");
+  if (modalOverlay) {
+    modalOverlay.classList.remove("active");
+    document.body.classList.remove("cte-modal-open");
+  }
+};
+
+window.ToolManager.downloadCTEXML = function (serial) {
+  window.open(`http://localhost:4010/cte/${serial}/xml`, "_blank");
+};
+
 window.ToolManager.loadFrotaTool = async function (contentElement) {
   contentElement.innerHTML = `
     <div class="tool-header">
@@ -272,7 +720,6 @@ window.ToolManager.loadFrotaTool = async function (contentElement) {
       </button>
     </div>
     <div class="frota-container">
-      <!-- Aba de Veículos -->
       <div class="frota-tab-content active" id="veiculosTab">
         <div class="frota-actions">
           <button class="btn-primary frota-add-btn">
@@ -297,11 +744,9 @@ window.ToolManager.loadFrotaTool = async function (contentElement) {
           </div>
         </div>
         <div class="pagination" id="frotaPagination">
-          <!-- Paginação será adicionada dinamicamente -->
         </div>
       </div>
       
-      <!-- Aba de Manutenções -->
       <div class="frota-tab-content" id="manutencoesTab">
         <div class="frota-actions">
           <button class="btn-primary frota-add-manutencao-btn">
@@ -323,27 +768,22 @@ window.ToolManager.loadFrotaTool = async function (contentElement) {
           </div>
         </div>
         <div class="pagination" id="manutencaoPagination">
-          <!-- Paginação será adicionada dinamicamente -->
         </div>
       </div>
     </div>
   `;
 
-  // Configurar abas da frota
   window.ToolManager.setupFrotaTabs();
 
-  // Configurar busca e filtros
   window.ToolManager.setupFrotaSearch();
   window.ToolManager.setupFrotaFilters();
   window.ToolManager.setupManutencoesSearch();
   window.ToolManager.setupManutencoesFilters();
 
-  // Carregar dados da frota e manutenções
   await window.ToolManager.loadFrotaData();
   await window.ToolManager.loadManutencoesData();
 };
 
-// Função para configurar abas da frota
 window.ToolManager.setupFrotaTabs = function () {
   const tabButtons = document.querySelectorAll(".frota-tab-button");
   const tabContents = document.querySelectorAll(".frota-tab-content");
@@ -352,18 +792,15 @@ window.ToolManager.setupFrotaTabs = function () {
     button.addEventListener("click", () => {
       const tabName = button.dataset.tab;
 
-      // Desativar todas as abas
       tabButtons.forEach((btn) => btn.classList.remove("active"));
       tabContents.forEach((content) => content.classList.remove("active"));
 
-      // Ativar a aba selecionada
       button.classList.add("active");
       document.getElementById(`${tabName}Tab`).classList.add("active");
     });
   });
 };
 
-// Função para carregar dados da frota
 window.ToolManager.loadFrotaData = async function () {
   try {
     const response = await fetch("http://localhost:4010/frota");
@@ -375,11 +812,9 @@ window.ToolManager.loadFrotaData = async function () {
     window.ToolManager.renderFrotaItems(veiculos);
   } catch (error) {
     console.error("❌ Erro ao carregar dados da frota:", error);
-    // Implementar tratamento de erro
   }
 };
 
-// Função para renderizar itens da frota
 window.ToolManager.renderFrotaItems = function (veiculos) {
   const frotaList = document.getElementById("frotaList");
   if (!frotaList) {
@@ -387,7 +822,6 @@ window.ToolManager.renderFrotaItems = function (veiculos) {
     return;
   }
 
-  // Filtrar veículos para remover os desativados
   const veiculosAtivos = veiculos.filter(
     (veiculo) => veiculo.situacaoativo !== "Desativado"
   );
@@ -398,10 +832,8 @@ window.ToolManager.renderFrotaItems = function (veiculos) {
     return;
   }
 
-  // Limpar lista atual
   frotaList.innerHTML = "";
 
-  // Criar os cards para cada veículo
   veiculosAtivos.forEach((veiculo) => {
     const card = document.createElement("div");
     card.className = "frota-card";
@@ -456,11 +888,9 @@ window.ToolManager.renderFrotaItems = function (veiculos) {
     frotaList.appendChild(card);
   });
 
-  // Configurar os botões de ação
   window.ToolManager.setupFrotaButtons();
 };
 
-// Função para carregar dados de manutenções
 window.ToolManager.loadManutencoesData = async function () {
   try {
     const response = await fetch("http://localhost:4010/frota/manutencoes");
@@ -470,10 +900,8 @@ window.ToolManager.loadManutencoesData = async function () {
 
     const manutencoes = await response.json();
 
-    // Armazenar dados globalmente para uso em filtros
     window.ToolManager.manutencoesData = manutencoes;
 
-    // Processar e renderizar manutenções
     window.ToolManager.processManutencoesData(manutencoes);
   } catch (error) {
     console.error("❌ Erro ao carregar dados de manutenções:", error);
@@ -496,7 +924,6 @@ window.ToolManager.loadManutencoesData = async function () {
   }
 };
 
-// Função para processar dados de manutenções
 window.ToolManager.processManutencoesData = function (manutencoes) {
   const manutencaoList = document.getElementById("manutencaoList");
   if (!manutencaoList) {
@@ -510,14 +937,12 @@ window.ToolManager.processManutencoesData = function (manutencoes) {
     return;
   }
 
-  // Agrupar manutenções por veículo e data
   const grupamentoManutencoes = {};
 
   manutencoes.forEach((manutencao) => {
     const placa = manutencao.idobject;
     const data = manutencao.dtcheckin;
 
-    // Criar chave combinada de placa e data
     const chave = `${placa}-${data}`;
 
     if (!grupamentoManutencoes[chave]) {
@@ -533,7 +958,6 @@ window.ToolManager.processManutencoesData = function (manutencoes) {
       };
     }
 
-    // Adicionar o serviço ao grupo
     grupamentoManutencoes[chave].servicos.push({
       descricao: manutencao.nmcostvariable,
       origem: manutencao.origemcusto,
@@ -541,10 +965,8 @@ window.ToolManager.processManutencoesData = function (manutencoes) {
     });
   });
 
-  // Agrupar por veículo para exibição
   const manutencoesVeiculos = {};
 
-  // Converter grupos para array de manutenções
   Object.values(grupamentoManutencoes).forEach((manutencao) => {
     const placa = manutencao.placa;
 
@@ -561,19 +983,15 @@ window.ToolManager.processManutencoesData = function (manutencoes) {
     manutencoesVeiculos[placa].manutencoes.push(manutencao);
   });
 
-  // Armazenar dados processados
   window.ToolManager.manutencoesAgrupadas = Object.values(manutencoesVeiculos);
 
-  // Renderizar manutenções
   window.ToolManager.renderManutencoesItems(
     window.ToolManager.manutencoesAgrupadas
   );
 
-  // Atualizar filtro de placas
   window.ToolManager.updateManutencoesFilter();
 };
 
-// Função para renderizar itens de manutenções
 window.ToolManager.renderManutencoesItems = function (items) {
   const manutencaoList = document.getElementById("manutencaoList");
   if (!manutencaoList) {
@@ -587,10 +1005,8 @@ window.ToolManager.renderManutencoesItems = function (items) {
     return;
   }
 
-  // Limpar lista atual
   manutencaoList.innerHTML = "";
 
-  // Criar os cards para cada veículo
   items.forEach((veiculo) => {
     const card = document.createElement("div");
     card.className = "manutencao-veiculo-card";
@@ -603,23 +1019,19 @@ window.ToolManager.renderManutencoesItems = function (items) {
       statusClass = "manutencao";
     }
 
-    // Ordenar manutenções por data - mais recentes primeiro
     const manutencoes = veiculo.manutencoes.sort((a, b) => {
       return new Date(b.data) - new Date(a.data);
     });
 
-    // Contar total de serviços em todas as manutenções
     const totalServicos = manutencoes.reduce((total, manutencao) => {
       return total + manutencao.servicos.length;
     }, 0);
 
-    // Obter a data da última manutenção
     const ultimaManutencao = manutencoes[0];
     const dataUltimaManutencao = new Date(
       ultimaManutencao.data
     ).toLocaleDateString("pt-BR");
 
-    // Obter serviços da última manutenção para preview
     const servicosPreview = ultimaManutencao.servicos
       .map((s) => s.descricao)
       .slice(0, 2);
@@ -674,19 +1086,15 @@ window.ToolManager.renderManutencoesItems = function (items) {
     manutencaoList.appendChild(card);
   });
 
-  // Configurar botões de ação
   window.ToolManager.setupManutencoesButtons();
 };
 
-// Função para atualizar filtro de placas
 window.ToolManager.updateManutencoesFilter = function () {
   const filterSelect = document.getElementById("manutencaoFilter");
   if (!filterSelect || !window.ToolManager.manutencoesAgrupadas) return;
 
-  // Limpar opções existentes (exceto "Todos os veículos")
   filterSelect.innerHTML = '<option value="todos">Todos os veículos</option>';
 
-  // Adicionar opções para cada veículo
   window.ToolManager.manutencoesAgrupadas.forEach((veiculo) => {
     const option = document.createElement("option");
     option.value = veiculo.placa;
@@ -695,7 +1103,6 @@ window.ToolManager.updateManutencoesFilter = function () {
   });
 };
 
-// Função para configurar busca da frota
 window.ToolManager.setupFrotaSearch = function () {
   const searchInput = document.getElementById("frotaSearch");
   if (!searchInput) return;
@@ -710,7 +1117,6 @@ window.ToolManager.setupFrotaSearch = function () {
   });
 };
 
-// Função para configurar filtros da frota
 window.ToolManager.setupFrotaFilters = function () {
   const filterSelect = document.getElementById("frotaFilter");
   if (!filterSelect) return;
@@ -721,7 +1127,6 @@ window.ToolManager.setupFrotaFilters = function () {
   });
 };
 
-// Função para filtrar itens da frota
 window.ToolManager.filterFrotaItems = function (
   searchTerm = "",
   statusFilter = "todos"
@@ -746,9 +1151,7 @@ window.ToolManager.filterFrotaItems = function (
   });
 };
 
-// Função para configurar botões de ação da frota
 window.ToolManager.setupFrotaButtons = function () {
-  // Botões de editar
   document.querySelectorAll(".btn-edit").forEach((btn) => {
     btn.addEventListener("click", () => {
       window.Notifications.showNotification(
@@ -758,10 +1161,8 @@ window.ToolManager.setupFrotaButtons = function () {
     });
   });
 
-  // Botões de histórico
   document.querySelectorAll(".btn-history").forEach((btn) => {
     btn.addEventListener("click", () => {
-      // Alternar para a aba de manutenções e filtrar pelo veículo
       const manutencoesTab = document.querySelector(
         '.frota-tab-button[data-tab="manutencoes"]'
       );
@@ -776,7 +1177,6 @@ window.ToolManager.setupFrotaButtons = function () {
     });
   });
 
-  // Botões de manutenção
   document.querySelectorAll(".btn-maintenance").forEach((btn) => {
     btn.addEventListener("click", () => {
       window.Notifications.showNotification(
@@ -786,7 +1186,6 @@ window.ToolManager.setupFrotaButtons = function () {
     });
   });
 
-  // Botões de finalizar manutenção
   document.querySelectorAll(".btn-maintenance-complete").forEach((btn) => {
     btn.addEventListener("click", () => {
       window.Notifications.showNotification(
@@ -797,7 +1196,6 @@ window.ToolManager.setupFrotaButtons = function () {
   });
 };
 
-// Função para configurar busca de manutenções
 window.ToolManager.setupManutencoesSearch = function () {
   const searchInput = document.getElementById("manutencaoSearch");
   if (!searchInput) return;
@@ -812,7 +1210,6 @@ window.ToolManager.setupManutencoesSearch = function () {
   });
 };
 
-// Função para configurar filtros de manutenções
 window.ToolManager.setupManutencoesFilters = function () {
   const filterSelect = document.getElementById("manutencaoFilter");
   if (!filterSelect) return;
@@ -823,25 +1220,20 @@ window.ToolManager.setupManutencoesFilters = function () {
   });
 };
 
-// Função para filtrar itens de manutenções
 window.ToolManager.filterManutencoesItems = function (
   searchTerm = "",
   placaFilter = "todos"
 ) {
   if (!window.ToolManager.manutencoesAgrupadas) return;
 
-  // Aplicar filtros
   const filteredManutencoes = window.ToolManager.manutencoesAgrupadas.filter(
     (veiculo) => {
-      // Filtro de placa
       const matchPlaca =
         placaFilter === "todos" || veiculo.placa === placaFilter;
 
-      // Filtro de busca
       const placa = veiculo.placa.toLowerCase();
       const modelo = veiculo.modelo.toLowerCase();
 
-      // Verificar se algum serviço corresponde à busca
       const servicosMatch = veiculo.manutencoes.some((manutencao) => {
         return manutencao.servicos.some((servico) => {
           return servico.descricao.toLowerCase().includes(searchTerm);
@@ -858,13 +1250,10 @@ window.ToolManager.filterManutencoesItems = function (
     }
   );
 
-  // Renderizar resultados filtrados
   window.ToolManager.renderManutencoesItems(filteredManutencoes);
 };
 
-// Função para configurar botões de manutenções
 window.ToolManager.setupManutencoesButtons = function () {
-  // Botões de ver histórico
   document.querySelectorAll(".btn-view-history").forEach((btn) => {
     btn.addEventListener("click", () => {
       window.Notifications.showNotification(
@@ -875,9 +1264,7 @@ window.ToolManager.setupManutencoesButtons = function () {
   });
 };
 
-// Função para carregar ferramenta de rastreamento
 window.ToolManager.loadRastreamentoTool = async function (contentElement) {
-  // Carregar módulos de rastreamento usando o ModuleLoader
   if (!window.RastreamentoMain) {
     try {
       await window.ModuleLoader.loadRastreamentoPage();
@@ -890,12 +1277,7 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     }
   }
 
-  // Chart.js já está carregado globalmente no index.html
-  // CSSs são carregados pelo ModuleLoader quando necessário
-
-  // Criar a estrutura HTML para o rastreamento
   contentElement.innerHTML = `
-    <!-- Tracking View -->
     <div id="trackingView" class="tracking-container">
       <div class="rastreamento-header" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
         <div class="dashboard-title-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -906,7 +1288,6 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     </div>
   `;
 
-  // Inicializar o rastreamento
   if (window.RastreamentoMain && window.RastreamentoMain.initRastreamento) {
     try {
       const trackingView = document.getElementById("trackingView");
@@ -923,21 +1304,16 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     );
   }
 
-  // Configurar eventos de rastreamento
   window.ToolManager.setupRastreamentoEvents();
 };
 
-// Função para configurar eventos de rastreamento
 window.ToolManager.setupRastreamentoEvents = function () {
   setTimeout(() => {
-    // Selecionar todos os botões com onclick="showTracking()"
     document
       .querySelectorAll('[onclick="showTracking()"]')
       .forEach((button) => {
-        // Remover o atributo onclick para evitar duplicação
         button.removeAttribute("onclick");
 
-        // Adicionar evento de clique
         button.addEventListener("click", () => {
           if (
             window.DashboardNavigation &&
@@ -950,13 +1326,10 @@ window.ToolManager.setupRastreamentoEvents = function () {
         });
       });
 
-    // Selecionar todos os botões com a classe view-tracking-button
     document.querySelectorAll(".view-tracking-button").forEach((button) => {
       if (!button.getAttribute("data-event-attached")) {
-        // Marcar o botão como tendo um evento já anexado
         button.setAttribute("data-event-attached", "true");
 
-        // Adicionar evento de clique
         button.addEventListener("click", () => {
           if (
             window.DashboardNavigation &&

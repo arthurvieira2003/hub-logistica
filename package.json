@@ -4,10 +4,11 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon --legacy-watch app.js",
+    "start": "node app.js",
     "test": "jest --coverage --watchAll=false",
     "test:watch": "jest --watch",
-    "test:ci": "jest --coverage --watchAll=false --ci"
+    "test:ci": "jest --coverage --watchAll=false --ci",
+    "dev": "nodemon --legacy-watch app.js"
   },
   "keywords": [],
   "author": "",

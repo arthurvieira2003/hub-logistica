@@ -467,7 +467,9 @@ window.DashboardCharts.updateCharts = function (data) {
   // Atualizar dados específicos para cada gráfico
   window.DashboardCharts.updateTransportadorasChart(data.transportadoras);
   window.DashboardCharts.updateRegioesChart(data.regioes);
+  window.DashboardCharts.updateDailyDeliveriesChart(data.dailyDeliveries);
   window.DashboardCharts.updateOcorrenciasChartData(data.ocorrencias);
+  window.DashboardCharts.updateDesempenhoChart(data.desempenhoTransportadoras);
 };
 
 // Função para atualizar gráfico de transportadoras
@@ -496,10 +498,66 @@ window.DashboardCharts.updateRegioesChart = function (data) {
   chart.update();
 };
 
+// Função para atualizar gráfico de entregas diárias
+window.DashboardCharts.updateDailyDeliveriesChart = function (data) {
+  const chart = window.DashboardCharts.chartInstances.dailyDeliveriesChart;
+  if (!chart || !data || !Array.isArray(data)) return;
+
+  // Gerar labels baseado no tamanho do array
+  let labels = [];
+  if (data.length === 7) {
+    // Semana
+    labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  } else if (data.length === 30) {
+    // Mês - usar números dos dias
+    labels = data.map((_, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (data.length - 1 - index));
+      return date.getDate();
+    });
+  } else if (data.length === 12) {
+    // Ano - usar meses
+    labels = [
+      "Jan",
+      "Fev",
+      "Mar",
+      "Abr",
+      "Mai",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Set",
+      "Out",
+      "Nov",
+      "Dez",
+    ];
+  } else {
+    // Fallback - usar índices
+    labels = data.map((_, index) => index + 1);
+  }
+
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
+};
+
+// Função para atualizar gráfico de desempenho de transportadoras
+window.DashboardCharts.updateDesempenhoChart = function (data) {
+  const chart = window.DashboardCharts.chartInstances.desempenhoChart;
+  if (!chart || !data || !Array.isArray(data)) return;
+
+  const labels = data.map((item) => item.nome);
+  const pontualidade = data.map((item) => item.pontualidade || 0);
+
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = pontualidade;
+  chart.update();
+};
+
 // Função para atualizar gráfico de ocorrências
 window.DashboardCharts.updateOcorrenciasChartData = function (data) {
   const chart = window.DashboardCharts.chartInstances.ocorrenciasChart;
-  if (!chart) return;
+  if (!chart || !data || !Array.isArray(data)) return;
 
   const labels = data.map((item) => item.tipo);
   const values = data.map((item) => item.quantidade);

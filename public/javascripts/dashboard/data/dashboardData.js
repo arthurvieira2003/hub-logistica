@@ -149,26 +149,68 @@ window.DashboardData.mockData = {
 };
 
 // Função para carregar dados do dashboard
-window.DashboardData.loadDashboardData = function (period = "week") {
-  // Simular carregamento
+window.DashboardData.loadDashboardData = async function (period = "week") {
+  // Mostrar loading
   const loadingSpinner = document.createElement("div");
   loadingSpinner.className = "loading-spinner";
 
   const dashboardContainer = document.querySelector(".dashboard-container");
   if (dashboardContainer) {
     dashboardContainer.appendChild(loadingSpinner);
+  }
 
-    // Simular tempo de carregamento
-    setTimeout(() => {
+  try {
+    // Buscar dados reais da API
+    const token = window.AuthCore?.getToken?.() || 
+                  document.cookie.split("; ").find((row) => row.startsWith("token="))?.split("=")[1];
+    
+    if (!token) {
+      throw new Error("Token de autenticação não encontrado");
+    }
+
+    const response = await fetch(
+      `http://localhost:4010/dashboard/stats?period=${period}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar dados: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Remover loading
+    if (dashboardContainer && loadingSpinner.parentNode) {
       dashboardContainer.removeChild(loadingSpinner);
-      window.DashboardData.updateDashboardData(period);
-    }, 800);
+    }
+
+    // Atualizar dados do dashboard
+    window.DashboardData.updateDashboardData(data, period);
+  } catch (error) {
+    console.error("❌ Erro ao carregar dados do dashboard:", error);
+    
+    // Remover loading
+    if (dashboardContainer && loadingSpinner.parentNode) {
+      dashboardContainer.removeChild(loadingSpinner);
+    }
+
+    // Em caso de erro, usar dados mock como fallback
+    console.warn("⚠️ Usando dados mock como fallback");
+    const fallbackData = window.DashboardData.mockData[period];
+    if (fallbackData) {
+      window.DashboardData.updateDashboardData(fallbackData, period);
+    }
   }
 };
 
 // Função para atualizar dados do dashboard
-window.DashboardData.updateDashboardData = function (period) {
-  const data = window.DashboardData.mockData[period];
+window.DashboardData.updateDashboardData = function (data, period) {
   if (!data) {
     console.error(`❌ Dados não encontrados para período: ${period}`);
     return;
