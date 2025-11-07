@@ -79,6 +79,13 @@ window.ToolManager.loadToolContent = async function (tool, contentElement) {
 };
 
 window.ToolManager.loadFretesTool = async function (contentElement) {
+  // Obter data atual no formato YYYY-MM-DD
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+  const dataAtual = `${ano}-${mes}-${dia}`;
+
   contentElement.innerHTML = `
     <div class="tool-header">
       <h2>Conhecimentos de Transporte Eletrônicos (CT-e)</h2>
@@ -86,6 +93,13 @@ window.ToolManager.loadFretesTool = async function (contentElement) {
     </div>
     <div class="fretes-container">
       <div class="fretes-actions">
+        <div class="fretes-date-selector" style="display: flex; align-items: center; gap: 12px;">
+          <label for="fretesData" style="font-size: 14px; font-weight: 600; color: #333;">Data:</label>
+          <input type="date" id="fretesData" value="${dataAtual}" style="padding: 8px 12px; border: 2px solid var(--primary-color); border-radius: 6px; font-size: 14px; color: #333; background: white; cursor: pointer; transition: all 0.2s ease;">
+          <button id="btnAtualizarFretesData" style="background: var(--primary-color); color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <i class="fas fa-sync-alt"></i> Atualizar
+          </button>
+        </div>
         <div class="fretes-search">
           <input type="text" id="fretesSearch" placeholder="Buscar por número ou cliente...">
           <button><i class="fas fa-search"></i></button>
@@ -101,12 +115,26 @@ window.ToolManager.loadFretesTool = async function (contentElement) {
     </div>
   `;
 
+  // Configurar eventos do seletor de data
+  window.ToolManager.setupFretesDateSelector();
   await window.ToolManager.loadFretesData();
 };
 
-window.ToolManager.loadFretesData = async function () {
+window.ToolManager.loadFretesData = async function (dataFiltro = null) {
   try {
-    const response = await fetch("http://localhost:4010/cte");
+    // Se não fornecida, usar data do input ou data atual
+    if (!dataFiltro) {
+      const dataInput = document.getElementById("fretesData");
+      dataFiltro = dataInput ? dataInput.value : null;
+    }
+
+    // Construir URL com parâmetro de data
+    let url = "http://localhost:4010/cte";
+    if (dataFiltro) {
+      url += `?data=${dataFiltro}`;
+    }
+
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error("Erro ao buscar dados de CT-e");
     }
@@ -125,7 +153,45 @@ window.ToolManager.loadFretesData = async function () {
   }
 };
 
-window.ToolManager.renderFretesItems = function (items) {
+window.ToolManager.setupFretesDateSelector = function () {
+  const dataInput = document.getElementById("fretesData");
+  const btnAtualizar = document.getElementById("btnAtualizarFretesData");
+
+  if (dataInput && btnAtualizar) {
+    // Event listener para o botão Atualizar
+    btnAtualizar.addEventListener("click", async function () {
+      const novaData = dataInput.value;
+      
+      if (novaData) {
+        // Mostrar loading no botão
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+        this.disabled = true;
+
+        try {
+          await window.ToolManager.loadFretesData(novaData);
+        } catch (error) {
+          console.error("❌ Erro ao recarregar fretes:", error);
+        } finally {
+          // Restaurar botão
+          this.innerHTML = originalText;
+          this.disabled = false;
+        }
+      }
+    });
+
+    // Event listener para Enter no input de data
+    dataInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        btnAtualizar.click();
+      }
+    });
+  } else {
+    console.error("❌ Elementos do datepicker de fretes não encontrados!");
+  }
+};
+
+window.ToolManager.renderFretesItems = async function (items) {
   const fretesListElement = document.getElementById("fretesList");
 
   if (items.length === 0) {
@@ -148,13 +214,15 @@ window.ToolManager.renderFretesItems = function (items) {
             <th>Remetente</th>
             <th>Destinatário</th>
             <th>Data</th>
-            <th>Valor</th>
+            <th>Valor CT-e</th>
+            <th>Validação de Preço</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody>
   `;
 
+  // Renderizar linhas inicialmente com loading
   items.forEach((item) => {
     const dateObj = new Date(item.DateAdd);
     const formattedDate = dateObj.toLocaleDateString("pt-BR");
@@ -175,6 +243,12 @@ window.ToolManager.renderFretesItems = function (items) {
         <td class="frete-destinatario">${item.destinatarioNome || "-"}</td>
         <td class="frete-date">${formattedDate}</td>
         <td class="frete-value">${formattedValue}</td>
+        <td class="frete-validation" data-serial="${item.Serial}">
+          <div class="validation-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Validando...</span>
+          </div>
+        </td>
         <td class="frete-actions">
           <button class="btn-view-frete" data-serial="${
             item.Serial
@@ -199,6 +273,163 @@ window.ToolManager.renderFretesItems = function (items) {
 
   fretesListElement.innerHTML = html;
   window.ToolManager.setupFretesButtons();
+  
+  // Validar preços de todos os CT-e's
+  await window.ToolManager.validarPrecosFretes(items);
+};
+
+window.ToolManager.validarPrecosFretes = async function (items) {
+  const validacoes = await Promise.allSettled(
+    items.map(async (item) => {
+      try {
+        const response = await fetch(
+          `http://localhost:4010/cte/${item.Serial}/validar-preco`
+        );
+        if (!response.ok) {
+          throw new Error("Erro ao validar preço");
+        }
+        const validacao = await response.json();
+        return { serial: item.Serial, validacao };
+      } catch (error) {
+        console.error(`Erro ao validar preço do CT-e ${item.Serial}:`, error);
+        return {
+          serial: item.Serial,
+          validacao: {
+            valido: false,
+            motivo: "Erro ao validar",
+            precoTabela: null,
+            precoCTE: item.DocTotal,
+          },
+        };
+      }
+    })
+  );
+
+  // Atualizar cada linha com o resultado da validação
+  validacoes.forEach((result) => {
+    if (result.status === "fulfilled") {
+      const { serial, validacao } = result.value;
+      window.ToolManager.renderValidacaoPreco(serial, validacao);
+    }
+  });
+};
+
+window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
+  const validationCell = document.querySelector(
+    `.frete-validation[data-serial="${serial}"]`
+  );
+  if (!validationCell) return;
+
+  // Encontrar a linha da tabela para aplicar estilo
+  const tableRow = validationCell.closest("tr");
+  
+  const { valido, status, motivo, precoTabela, precoCTE, diferenca, percentualDiferenca } = validacao;
+
+  // Remover todas as classes de validação da linha
+  if (tableRow) {
+    tableRow.classList.remove(
+      "validation-row-ok", 
+      "validation-row-acima", 
+      "validation-row-abaixo",
+      "validation-row-error",
+      "validation-row-error-cidade",
+      "validation-row-error-transportadora",
+      "validation-row-error-rota",
+      "validation-row-error-faixa",
+      "validation-row-error-preco",
+      "validation-row-error-dados"
+    );
+  }
+
+  if (!valido) {
+    // Identificar o tipo de erro baseado no motivo
+    let errorType = "error";
+    let errorIcon = "fa-exclamation-circle";
+    
+    if (motivo) {
+      if (motivo.includes("Cidade de origem") || motivo.includes("Cidade de destino")) {
+        errorType = "error-cidade";
+        errorIcon = "fa-map-marker-alt";
+      } else if (motivo.includes("Transportadora")) {
+        errorType = "error-transportadora";
+        errorIcon = "fa-truck";
+      } else if (motivo.includes("Rota")) {
+        errorType = "error-rota";
+        errorIcon = "fa-route";
+      } else if (motivo.includes("Faixa de peso") || motivo.includes("peso")) {
+        errorType = "error-faixa";
+        errorIcon = "fa-weight";
+      } else if (motivo.includes("Preço não encontrado") || motivo.includes("tabela")) {
+        errorType = "error-preco";
+        errorIcon = "fa-dollar-sign";
+      } else if (motivo.includes("Dados insuficientes")) {
+        errorType = "error-dados";
+        errorIcon = "fa-info-circle";
+      }
+    }
+
+    // Aplicar classe na linha da tabela
+    if (tableRow) {
+      tableRow.classList.add(`validation-row-${errorType}`);
+    }
+
+    validationCell.innerHTML = `
+      <div class="validation-error ${errorType}">
+        <i class="fas ${errorIcon}"></i>
+        <span>${motivo || "Não foi possível validar"}</span>
+      </div>
+    `;
+    return;
+  }
+
+  const precoTabelaFormatado = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(precoTabela || 0);
+
+  // Formatar diferença em R$
+  const diferencaFormatada = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(Math.abs(diferenca || 0));
+
+  let statusClass = "validation-ok";
+  let rowClass = "validation-row-ok";
+  let statusIcon = "fa-check-circle";
+  let statusText = "OK";
+
+  if (status === "acima") {
+    statusClass = "validation-acima";
+    rowClass = "validation-row-acima";
+    statusIcon = "fa-exclamation-triangle";
+    statusText = "Acima";
+  } else if (status === "abaixo") {
+    statusClass = "validation-abaixo";
+    rowClass = "validation-row-abaixo";
+    statusIcon = "fa-info-circle";
+    statusText = "Abaixo";
+  }
+
+  // Aplicar classe na linha da tabela
+  if (tableRow) {
+    tableRow.classList.remove("validation-row-ok", "validation-row-acima", "validation-row-abaixo");
+    tableRow.classList.add(rowClass);
+  }
+
+  // Se não houver diferença, mostrar apenas o valor da tabela
+  const temDiferenca = diferenca !== null && diferenca !== 0 && Math.abs(diferenca) > 0.01;
+
+  validationCell.innerHTML = `
+    <div class="validation-result ${statusClass}">
+      <div class="validation-content-horizontal">
+        <span class="validation-price">${precoTabelaFormatado}</span>
+        ${temDiferenca ? `
+          <span class="validation-diff-amount">${diferenca > 0 ? "+" : "-"}${diferencaFormatada}</span>
+          <span class="validation-diff-percent">${diferenca > 0 ? "+" : ""}${percentualDiferenca.toFixed(2)}%</span>
+        ` : ""}
+      </div>
+    </div>
+  `;
 };
 
 window.ToolManager.setupFretesButtons = function () {

@@ -40,6 +40,24 @@
           <div class="admin-tab" data-tab="sessions">
             <i class="fas fa-clock"></i> Sessões Ativas
           </div>
+          <div class="admin-tab" data-tab="estados">
+            <i class="fas fa-map"></i> Estados
+          </div>
+          <div class="admin-tab" data-tab="cidades">
+            <i class="fas fa-city"></i> Cidades
+          </div>
+          <div class="admin-tab" data-tab="transportadoras">
+            <i class="fas fa-truck"></i> Transportadoras
+          </div>
+          <div class="admin-tab" data-tab="faixas-peso">
+            <i class="fas fa-weight"></i> Faixas de Peso
+          </div>
+          <div class="admin-tab" data-tab="rotas">
+            <i class="fas fa-route"></i> Rotas
+          </div>
+          <div class="admin-tab" data-tab="precos-faixas">
+            <i class="fas fa-dollar-sign"></i> Preços de Faixas
+          </div>
         </nav>
 
         <div class="admin-content">
@@ -81,6 +99,7 @@
                 </tbody>
               </table>
             </div>
+            <div id="usersPagination"></div>
           </div>
 
           <!-- Aba de Sessões Ativas -->
@@ -122,6 +141,245 @@
                 </tbody>
               </table>
             </div>
+            <div id="sessionsPagination"></div>
+          </div>
+
+          <!-- Aba de Estados -->
+          <div class="admin-content-tab" id="estadosTab">
+            <div class="admin-toolbar">
+              <button id="createEstadoBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Novo Estado
+              </button>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="estadoSearchInput"
+                  placeholder="Buscar estados..."
+                />
+                <i class="fas fa-search"></i>
+              </div>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table" id="estadosTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>UF</th>
+                    <th>Nome</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="4" class="loading-data">
+                      <i class="fas fa-spinner fa-spin"></i> Carregando
+                      estados...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="estadosPagination"></div>
+          </div>
+
+          <!-- Aba de Cidades -->
+          <div class="admin-content-tab" id="cidadesTab">
+            <div class="admin-toolbar">
+              <button id="createCidadeBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nova Cidade
+              </button>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="cidadeSearchInput"
+                  placeholder="Buscar cidades..."
+                />
+                <i class="fas fa-search"></i>
+              </div>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table" id="cidadesTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Estado</th>
+                    <th>Código IBGE</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="5" class="loading-data">
+                      <i class="fas fa-spinner fa-spin"></i> Carregando
+                      cidades...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="cidadesPagination"></div>
+          </div>
+
+          <!-- Aba de Transportadoras -->
+          <div class="admin-content-tab" id="transportadorasTab">
+            <div class="admin-toolbar">
+              <button id="createTransportadoraBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nova Transportadora
+              </button>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="transportadoraSearchInput"
+                  placeholder="Buscar transportadoras..."
+                />
+                <i class="fas fa-search"></i>
+              </div>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table" id="transportadorasTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Razão Social</th>
+                    <th>CNPJ</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="6" class="loading-data">
+                      <i class="fas fa-spinner fa-spin"></i> Carregando
+                      transportadoras...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="transportadorasPagination"></div>
+          </div>
+
+          <!-- Aba de Faixas de Peso -->
+          <div class="admin-content-tab" id="faixas-pesoTab">
+            <div class="admin-toolbar">
+              <button id="createFaixaPesoBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nova Faixa
+              </button>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="faixaPesoSearchInput"
+                  placeholder="Buscar faixas..."
+                />
+                <i class="fas fa-search"></i>
+              </div>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table" id="faixasPesoTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Peso Mínimo</th>
+                    <th>Peso Máximo</th>
+                    <th>Descrição</th>
+                    <th>Ordem</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="7" class="loading-data">
+                      <i class="fas fa-spinner fa-spin"></i> Carregando
+                      faixas...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="faixasPesoPagination"></div>
+          </div>
+
+          <!-- Aba de Rotas -->
+          <div class="admin-content-tab" id="rotasTab">
+            <div class="admin-toolbar">
+              <button id="createRotaBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nova Rota
+              </button>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="rotaSearchInput"
+                  placeholder="Buscar rotas..."
+                />
+                <i class="fas fa-search"></i>
+              </div>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table" id="rotasTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Cidade Origem</th>
+                    <th>Cidade Destino</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="5" class="loading-data">
+                      <i class="fas fa-spinner fa-spin"></i> Carregando rotas...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="rotasPagination"></div>
+          </div>
+
+          <!-- Aba de Preços de Faixas -->
+          <div class="admin-content-tab" id="precos-faixasTab">
+            <div class="admin-toolbar">
+              <button id="createPrecoFaixaBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Novo Preço
+              </button>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="precoFaixaSearchInput"
+                  placeholder="Buscar preços..."
+                />
+                <i class="fas fa-search"></i>
+              </div>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table" id="precosFaixasTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Rota</th>
+                    <th>Faixa</th>
+                    <th>Transportadora</th>
+                    <th>Preço</th>
+                    <th>Vigência Início</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="8" class="loading-data">
+                      <i class="fas fa-spinner fa-spin"></i> Carregando
+                      preços...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="precosFaixasPagination"></div>
           </div>
         </div>
       </div>
@@ -184,10 +442,446 @@
       </div>
     </div>
 
+    <!-- Modal para Estados -->
+    <div id="estadoModal" class="admin-modal">
+      <div class="admin-modal-content">
+        <div class="admin-modal-header">
+          <h3 id="estadoModalTitle">Novo Estado</h3>
+          <button class="admin-modal-close" id="closeEstadoModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="estadoForm">
+            <input type="hidden" id="estadoId" value="" />
+            <div class="form-group">
+              <label for="estadoUf">UF</label>
+              <input
+                type="text"
+                id="estadoUf"
+                class="form-control"
+                maxlength="2"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="estadoNome">Nome do Estado</label>
+              <input
+                type="text"
+                id="estadoNome"
+                class="form-control"
+                required
+              />
+            </div>
+          </form>
+        </div>
+        <div class="admin-modal-footer">
+          <button id="cancelEstadoBtn" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" form="estadoForm" class="btn btn-primary">
+            <i class="fas fa-save"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Cidades -->
+    <div id="cidadeModal" class="admin-modal">
+      <div class="admin-modal-content">
+        <div class="admin-modal-header">
+          <h3 id="cidadeModalTitle">Nova Cidade</h3>
+          <button class="admin-modal-close" id="closeCidadeModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="cidadeForm">
+            <input type="hidden" id="cidadeId" value="" />
+            <div class="form-group">
+              <label for="cidadeNome">Nome da Cidade</label>
+              <input
+                type="text"
+                id="cidadeNome"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="cidadeEstado">Estado</label>
+              <select id="cidadeEstado" class="form-control" required>
+                <option value="">Selecione um estado</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cidadeIbge">Código IBGE</label>
+              <input type="number" id="cidadeIbge" class="form-control" />
+            </div>
+          </form>
+        </div>
+        <div class="admin-modal-footer">
+          <button id="cancelCidadeBtn" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" form="cidadeForm" class="btn btn-primary">
+            <i class="fas fa-save"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Transportadoras -->
+    <div id="transportadoraModal" class="admin-modal">
+      <div class="admin-modal-content">
+        <div class="admin-modal-header">
+          <h3 id="transportadoraModalTitle">Nova Transportadora</h3>
+          <button class="admin-modal-close" id="closeTransportadoraModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="transportadoraForm">
+            <input type="hidden" id="transportadoraId" value="" />
+            <div class="form-group">
+              <label for="transportadoraNome">Nome</label>
+              <input
+                type="text"
+                id="transportadoraNome"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="transportadoraRazao">Razão Social</label>
+              <input
+                type="text"
+                id="transportadoraRazao"
+                class="form-control"
+              />
+            </div>
+            <div class="form-group">
+              <label for="transportadoraCnpj">CNPJ</label>
+              <input type="text" id="transportadoraCnpj" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label for="transportadoraTelefone">Telefone</label>
+              <input
+                type="text"
+                id="transportadoraTelefone"
+                class="form-control"
+              />
+            </div>
+            <div class="form-group">
+              <label for="transportadoraEmail">Email</label>
+              <input
+                type="email"
+                id="transportadoraEmail"
+                class="form-control"
+              />
+            </div>
+          </form>
+        </div>
+        <div class="admin-modal-footer">
+          <button id="cancelTransportadoraBtn" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button
+            type="submit"
+            form="transportadoraForm"
+            class="btn btn-primary"
+          >
+            <i class="fas fa-save"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Faixas de Peso -->
+    <div id="faixaPesoModal" class="admin-modal">
+      <div class="admin-modal-content">
+        <div class="admin-modal-header">
+          <h3 id="faixaPesoModalTitle">Nova Faixa de Peso</h3>
+          <button class="admin-modal-close" id="closeFaixaPesoModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="faixaPesoForm">
+            <input type="hidden" id="faixaPesoId" value="" />
+            <div class="form-group">
+              <label for="faixaPesoMinimo">Peso Mínimo (kg)</label>
+              <input
+                type="number"
+                step="0.01"
+                id="faixaPesoMinimo"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="faixaPesoMaximo">Peso Máximo (kg)</label>
+              <input
+                type="number"
+                step="0.01"
+                id="faixaPesoMaximo"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="faixaPesoDescricao">Descrição</label>
+              <input
+                type="text"
+                id="faixaPesoDescricao"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="faixaPesoOrdem">Ordem</label>
+              <input
+                type="number"
+                id="faixaPesoOrdem"
+                class="form-control"
+                required
+              />
+            </div>
+          </form>
+        </div>
+        <div class="admin-modal-footer">
+          <button id="cancelFaixaPesoBtn" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" form="faixaPesoForm" class="btn btn-primary">
+            <i class="fas fa-save"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Rotas -->
+    <div id="rotaModal" class="admin-modal">
+      <div class="admin-modal-content">
+        <div class="admin-modal-header">
+          <h3 id="rotaModalTitle">Nova Rota</h3>
+          <button class="admin-modal-close" id="closeRotaModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="rotaForm">
+            <input type="hidden" id="rotaId" value="" />
+            <div class="form-group">
+              <label for="rotaOrigem">Cidade de Origem</label>
+              <select id="rotaOrigem" class="form-control" required>
+                <option value="">Selecione a cidade de origem</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="rotaDestino">Cidade de Destino</label>
+              <select id="rotaDestino" class="form-control" required>
+                <option value="">Selecione a cidade de destino</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="rotaObservacoes">Observações</label>
+              <textarea
+                id="rotaObservacoes"
+                class="form-control"
+                rows="3"
+              ></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="admin-modal-footer">
+          <button id="cancelRotaBtn" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" form="rotaForm" class="btn btn-primary">
+            <i class="fas fa-save"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Preços de Faixas -->
+    <div id="precoFaixaModal" class="admin-modal">
+      <div class="admin-modal-content" style="max-width: 800px">
+        <div class="admin-modal-header">
+          <h3 id="precoFaixaModalTitle">Novo Preço de Faixa</h3>
+          <button class="admin-modal-close" id="closePrecoFaixaModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="precoFaixaForm">
+            <input type="hidden" id="precoFaixaId" value="" />
+            <div class="form-row">
+              <div class="form-group">
+                <label for="precoFaixaRota">Rota</label>
+                <select id="precoFaixaRota" class="form-control" required>
+                  <option value="">Selecione uma rota</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="precoFaixaFaixa">Faixa de Peso</label>
+                <select id="precoFaixaFaixa" class="form-control" required>
+                  <option value="">Selecione uma faixa</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="precoFaixaTransportadora">Transportadora</label>
+                <select
+                  id="precoFaixaTransportadora"
+                  class="form-control"
+                  required
+                >
+                  <option value="">Selecione uma transportadora</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="precoFaixaPreco">Preço Base</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="precoFaixaPreco"
+                  class="form-control"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="precoFaixaVigenciaInicio">Vigência Início</label>
+                <input
+                  type="date"
+                  id="precoFaixaVigenciaInicio"
+                  class="form-control"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="precoFaixaVigenciaFim">Vigência Fim</label>
+                <input
+                  type="date"
+                  id="precoFaixaVigenciaFim"
+                  class="form-control"
+                />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="precoFaixaTxEmbarque">Taxa de Embarque</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="precoFaixaTxEmbarque"
+                  class="form-control"
+                />
+              </div>
+              <div class="form-group">
+                <label for="precoFaixaFretePeso">Frete por Peso</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="precoFaixaFretePeso"
+                  class="form-control"
+                />
+              </div>
+              <div class="form-group">
+                <label for="precoFaixaTxAdm">Taxa Administrativa</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="precoFaixaTxAdm"
+                  class="form-control"
+                />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="precoFaixaGris">GRIS</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="precoFaixaGris"
+                  class="form-control"
+                />
+              </div>
+              <div class="form-group">
+                <label for="precoFaixaTde">TDE</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="precoFaixaTde"
+                  class="form-control"
+                />
+              </div>
+              <div class="form-group">
+                <label for="precoFaixaTaxaQuimico">Taxa Químico</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="precoFaixaTaxaQuimico"
+                  class="form-control"
+                />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="precoFaixaPedagio">Pedágio</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="precoFaixaPedagio"
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="admin-modal-footer">
+          <button id="cancelPrecoFaixaBtn" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button type="submit" form="precoFaixaForm" class="btn btn-primary">
+            <i class="fas fa-save"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de confirmação de exclusão -->
+    <div id="deleteConfirmModal" class="admin-modal">
+      <div class="admin-modal-content delete-confirm-modal">
+        <div class="admin-modal-header">
+          <h3 id="deleteConfirmTitle">Confirmar Exclusão</h3>
+          <button class="admin-modal-close" id="closeDeleteConfirmModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <div class="delete-confirm-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <p id="deleteConfirmMessage" class="delete-confirm-message"></p>
+          <div id="deleteConfirmDetails" class="delete-confirm-details"></div>
+        </div>
+        <div class="admin-modal-footer">
+          <button id="cancelDeleteBtn" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button id="confirmDeleteBtn" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Sistema de notificações -->
     <div id="notificationContainer"></div>
 
     <!-- Scripts -->
-    <script src="../javascripts/administration.js"></script>
+    <!-- O ModuleLoader carrega automaticamente os módulos admin, incluindo administration.js -->
   </body>
 </html>

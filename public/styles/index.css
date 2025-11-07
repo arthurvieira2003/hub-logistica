@@ -1630,6 +1630,42 @@ body.sidebar-collapsed .toggle-sidebar-button {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.fretes-date-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fretes-date-selector input[type="date"]:focus {
+  outline: none;
+  border-color: var(--primary-color-dark);
+  box-shadow: 0 0 0 3px rgba(36, 118, 117, 0.1);
+}
+
+.fretes-date-selector button:hover {
+  background-color: var(--primary-color-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(36, 118, 117, 0.2);
+}
+
+.fretes-date-selector button:active {
+  transform: translateY(0);
+}
+
+.fretes-date-selector button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fretes-date-selector button i {
+  transition: transform 0.2s ease;
+}
+
+.fretes-date-selector button:hover i {
+  transform: rotate(180deg);
 }
 
 .fretes-search {
@@ -1739,6 +1775,216 @@ body.sidebar-collapsed .toggle-sidebar-button {
   font-weight: 600;
   color: var(--primary-color);
   white-space: nowrap;
+}
+
+.frete-validation {
+  min-width: 250px;
+  max-width: 400px;
+}
+
+.validation-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.validation-loading i {
+  font-size: 0.875rem;
+}
+
+/* Estilos para linhas com erro */
+.fretes-table tbody tr.validation-row-error {
+  background-color: #fff5f5;
+  border-left: 4px solid #f44336;
+}
+
+.fretes-table tbody tr.validation-row-error-cidade {
+  background-color: #fff5f5;
+  border-left: 4px solid #ff6b6b;
+}
+
+.fretes-table tbody tr.validation-row-error-transportadora {
+  background-color: #fff5f5;
+  border-left: 4px solid #ff8c42;
+}
+
+.fretes-table tbody tr.validation-row-error-rota {
+  background-color: #fff5f5;
+  border-left: 4px solid #ff6b9d;
+}
+
+.fretes-table tbody tr.validation-row-error-faixa {
+  background-color: #fff5f5;
+  border-left: 4px solid #ff9f43;
+}
+
+.fretes-table tbody tr.validation-row-error-preco {
+  background-color: #fff5f5;
+  border-left: 4px solid #ee5a6f;
+}
+
+.fretes-table tbody tr.validation-row-error-dados {
+  background-color: #fff5f5;
+  border-left: 4px solid #c44569;
+}
+
+.validation-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #c62828;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  background-color: transparent;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+}
+
+.validation-error i {
+  font-size: 0.875rem;
+}
+
+.validation-error.error {
+  color: #c62828;
+}
+
+.validation-error.error-cidade {
+  color: #d32f2f;
+}
+
+.validation-error.error-transportadora {
+  color: #e64a19;
+}
+
+.validation-error.error-rota {
+  color: #c2185b;
+}
+
+.validation-error.error-faixa {
+  color: #f57c00;
+}
+
+.validation-error.error-preco {
+  color: #d81b60;
+}
+
+.validation-error.error-dados {
+  color: #880e4f;
+}
+
+/* Estilos para a linha da tabela com validação */
+.fretes-table tbody tr.validation-row-ok {
+  background-color: #f1f8f4;
+  border-left: 4px solid #4caf50;
+}
+
+.fretes-table tbody tr.validation-row-abaixo {
+  background-color: #fff8f0;
+  border-left: 4px solid #ff9800;
+}
+
+.fretes-table tbody tr.validation-row-acima {
+  background-color: #fff5f5;
+  border-left: 4px solid #f44336;
+}
+
+.validation-result {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.validation-result.validation-ok {
+  background-color: transparent;
+}
+
+.validation-result.validation-abaixo {
+  background-color: transparent;
+}
+
+.validation-result.validation-acima {
+  background-color: transparent;
+}
+
+.validation-content-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+}
+
+.validation-price {
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.validation-result.validation-ok .validation-price {
+  color: #2e7d32;
+}
+
+.validation-result.validation-abaixo .validation-price {
+  color: #e65100;
+}
+
+.validation-result.validation-acima .validation-price {
+  color: #c62828;
+}
+
+.validation-diff-amount {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+}
+
+.validation-result.validation-ok .validation-diff-amount {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+.validation-result.validation-abaixo .validation-diff-amount {
+  background-color: #ffe0b2;
+  color: #e65100;
+}
+
+.validation-result.validation-acima .validation-diff-amount {
+  background-color: #ffcdd2;
+  color: #c62828;
+}
+
+.validation-diff-percent {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+}
+
+.validation-result.validation-ok .validation-diff-percent {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+.validation-result.validation-abaixo .validation-diff-percent {
+  background-color: #ffe0b2;
+  color: #e65100;
+}
+
+.validation-result.validation-acima .validation-diff-percent {
+  background-color: #ffcdd2;
+  color: #c62828;
+}
+
+.validation-message {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .frete-actions {

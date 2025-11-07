@@ -62,7 +62,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1400px;
+  max-width: 1800px;
   margin: 0 auto;
   width: 100%;
 }
@@ -143,7 +143,7 @@ body {
 }
 
 .admin-main {
-  max-width: 1400px;
+  max-width: 1800px;
   margin: 2rem auto;
   padding: 0 2rem;
   flex: 1;
@@ -179,6 +179,7 @@ body {
 /* Tabs do painel administrativo */
 .admin-tabs {
   display: flex;
+  justify-content: center;
   border-bottom: 1px solid var(--admin-border);
   background-color: #f9fafb;
   padding: 0 1.5rem;
@@ -191,6 +192,10 @@ body {
   cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
 }
 
 .admin-tab:hover {
@@ -418,9 +423,49 @@ body {
   color: var(--admin-danger);
 }
 
+.status-badge.admin {
+  background-color: rgba(36, 118, 117, 0.1);
+  color: var(--admin-primary);
+}
+
 .admin-badge.is-admin {
   background-color: rgba(36, 118, 117, 0.1);
   color: var(--admin-primary);
+}
+
+/* Botões de ação na tabela */
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin: 0 0.25rem;
+  border-radius: 0.25rem;
+  color: var(--admin-text-light);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--admin-text);
+}
+
+.btn-icon.edit-user:hover {
+  color: var(--admin-primary);
+  background-color: rgba(36, 118, 117, 0.1);
+}
+
+.btn-icon.delete-user:hover {
+  color: var(--admin-danger);
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.btn-icon.terminate-session:hover {
+  color: var(--admin-warning);
+  background-color: rgba(245, 158, 11, 0.1);
 }
 
 .admin-badge.not-admin {
@@ -580,6 +625,13 @@ body {
 }
 
 .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
   margin-bottom: 1.25rem;
 }
 
@@ -812,4 +864,189 @@ body {
   margin-left: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Paginação */
+.admin-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: var(--admin-surface);
+  border-top: 1px solid var(--admin-border);
+  margin-top: 1rem;
+}
+
+.pagination-info {
+  color: var(--admin-text-light);
+  font-size: 0.9rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-btn,
+.pagination-page {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--admin-border);
+  background-color: var(--admin-surface);
+  color: var(--admin-text);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.pagination-btn:hover:not(:disabled),
+.pagination-page:hover:not(.active) {
+  background-color: var(--admin-primary);
+  color: white;
+  border-color: var(--admin-primary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-page.active {
+  background-color: var(--admin-primary);
+  color: white;
+  border-color: var(--admin-primary);
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pagination-ellipsis {
+  padding: 0 0.5rem;
+  color: var(--admin-text-light);
+}
+
+/* Modal de confirmação de exclusão */
+.delete-confirm-modal {
+  max-width: 500px;
+}
+
+.delete-confirm-icon {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.delete-confirm-icon i {
+  font-size: 4rem;
+  color: #f59e0b;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.delete-confirm-message {
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--admin-text);
+}
+
+.delete-confirm-details {
+  background-color: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.delete-confirm-details h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.delete-confirm-details h4 i {
+  font-size: 1.1rem;
+}
+
+.delete-confirm-details ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+.delete-confirm-details ul li {
+  margin-bottom: 0.5rem;
+  color: #78350f;
+  font-size: 0.95rem;
+  position: relative;
+}
+
+.delete-confirm-details ul li:before {
+  content: "•";
+  position: absolute;
+  left: -1.25rem;
+  font-weight: bold;
+  color: #f59e0b;
+}
+
+.delete-confirm-details .no-records {
+  color: #78350f;
+  font-style: italic;
+  margin: 0;
+}
+
+.delete-confirm-details ul li strong {
+  font-weight: 700;
+  color: #92400e;
+}
+
+.delete-confirm-note {
+  margin: 1rem 0 0 0;
+  padding: 0.75rem;
+  background-color: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+  color: #78350f;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.delete-confirm-note i {
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.btn-danger {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background-color: #b91c1c;
 }

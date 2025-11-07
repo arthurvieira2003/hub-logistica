@@ -6,7 +6,9 @@ window.AdminAuthMain = window.AdminAuthMain || {};
  */
 window.AdminAuthMain.initAdminAuth = async function () {
   // Mostrar carregamento
-  window.AdminAuthUI.showLoading();
+  if (window.AdminAuthUI && window.AdminAuthUI.showLoading) {
+    window.AdminAuthUI.showLoading();
+  }
 
   try {
     // Validar acesso administrativo
@@ -14,16 +16,26 @@ window.AdminAuthMain.initAdminAuth = async function () {
 
     if (hasAccess) {
       // Se chegou até aqui, o usuário está autenticado e é admin
-      window.AdminAuthUI.hideLoading();
+      if (window.AdminAuthUI && window.AdminAuthUI.hideLoading) {
+        window.AdminAuthUI.hideLoading();
+      }
+
+      // Inicializar a página de administração após validação bem-sucedida
+      if (window.AdminMain && window.AdminMain.initAdministrationPage) {
+        await window.AdminMain.initAdministrationPage();
+      }
     }
   } catch (error) {
     console.error("❌ Erro crítico na autenticação administrativa:", error);
-    window.AdminAuthUI.hideLoading();
-    window.AdminAuthValidator.redirectToHome(
-      "Erro ao verificar suas permissões. Tente novamente."
-    );
+    if (window.AdminAuthUI && window.AdminAuthUI.hideLoading) {
+      window.AdminAuthUI.hideLoading();
+    }
+    if (window.AdminAuthValidator && window.AdminAuthValidator.redirectToHome) {
+      window.AdminAuthValidator.redirectToHome(
+        "Erro ao verificar suas permissões. Tente novamente."
+      );
+    }
   }
 };
 
-// Executar automaticamente quando o script for carregado
-window.AdminAuthMain.initAdminAuth();
+// Não executar automaticamente - será chamado pelo adminMain.js após carregar todos os módulos

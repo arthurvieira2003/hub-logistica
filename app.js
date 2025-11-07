@@ -9,7 +9,7 @@ app.use("/javascripts", (req, res, next) => {
 
   if (req.path.endsWith(".js")) {
     const filePath = path.join(__dirname, "public", "javascripts", req.path);
-    console.log(`🔍 [Servidor] Verificando arquivo: ${filePath}`);
+    console.log(`[Servidor] Verificando arquivo: ${filePath}`);
 
     if (fs.existsSync(filePath)) {
       console.log(`✅ [Servidor] Arquivo encontrado: ${req.path}`);

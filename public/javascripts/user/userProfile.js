@@ -139,16 +139,34 @@ window.UserProfile.addAdminPanelOption = function () {
     return;
   }
 
-  // Importar função de administração
-  try {
-    // Verificar se a função está disponível
-    if (typeof addAdminPanelOption === "function") {
-      addAdminPanelOption();
-    } else {
-      console.warn("⚠️ Função addAdminPanelOption não está disponível");
-    }
-  } catch (error) {
-    console.error("❌ Erro ao adicionar painel administrativo:", error);
+  // Buscar a navegação da sidebar
+  const sidebarNav = document.querySelector(".sidebar-nav");
+  if (!sidebarNav) {
+    console.error("❌ Sidebar nav não encontrada");
+    return;
+  }
+
+  // Criar o botão de administração
+  const adminButton = document.createElement("div");
+  adminButton.className = "tool-button admin-button";
+  adminButton.setAttribute("data-tool", "admin");
+  adminButton.innerHTML = `
+    <i class="fas fa-user-shield"></i>
+    <span>Administração</span>
+  `;
+
+  // Adicionar o botão na sidebar (antes do footer)
+  sidebarNav.appendChild(adminButton);
+
+  // Inicializar o evento de clique se ToolManager estiver disponível
+  if (window.ToolManager && window.ToolManager.initToolButtons) {
+    // Re-inicializar os botões para incluir o novo botão de admin
+    window.ToolManager.initToolButtons();
+  } else {
+    // Adicionar evento de clique manualmente
+    adminButton.addEventListener("click", () => {
+      window.location.href = "/administration";
+    });
   }
 };
 
