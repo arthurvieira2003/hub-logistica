@@ -94,6 +94,17 @@ window.DashboardMain.initDashboard = async function () {
       );
     }
 
+    // Inicializar display de datas para semana
+    if (window.DashboardEvents && window.DashboardEvents.updateDateDisplay) {
+      const today = new Date();
+      const lastWeek = new Date();
+      lastWeek.setDate(today.getDate() - 7);
+      window.DashboardEvents.updateDateDisplay(
+        lastWeek.toISOString().split("T")[0],
+        today.toISOString().split("T")[0]
+      );
+    }
+
     // Inicializar dados
     if (window.DashboardData) {
       window.DashboardData.loadDashboardData();
@@ -199,7 +210,7 @@ window.DashboardMain.getStatus = function () {
     chartsLoaded:
       window.DashboardCharts &&
       Object.keys(window.DashboardCharts.chartInstances).length > 0,
-    dataLoaded: window.DashboardData && window.DashboardData.mockData,
+    dataLoaded: window.DashboardData && window.DashboardData.validateData,
     eventsInitialized:
       window.DashboardEvents &&
       document.querySelectorAll(".period-btn").length > 0,

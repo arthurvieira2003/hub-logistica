@@ -1,211 +1,173 @@
 // Dashboard Data Module - Sistema de dados e estatísticas
 window.DashboardData = window.DashboardData || {};
 
-// Dados simulados para diferentes períodos
-window.DashboardData.mockData = {
-  week: {
-    totalEntregas: 247,
-    entregasNoPrazo: 218,
-    entregasAtrasadas: 29,
-    taxaEntrega: 88,
-    crescimento: 12,
-    custoTotal: 28450.75,
-    custoMedio: 115.18,
-    tempoMedioEntrega: 3.2,
-    volumeTotal: 1850,
-    pesoTotal: 4320,
-    transportadoras: {
-      Jadlog: 87,
-      Correios: 65,
-      Braspress: 52,
-      Jamef: 43,
-    },
-    desempenhoTransportadoras: [
-      { nome: "Jadlog", pontualidade: 92, avarias: 2, extravio: 1 },
-      { nome: "Correios", pontualidade: 85, avarias: 5, extravio: 3 },
-      { nome: "Braspress", pontualidade: 90, avarias: 1, extravio: 0 },
-      { nome: "Jamef", pontualidade: 88, avarias: 3, extravio: 1 },
-    ],
-    regioes: {
-      Sudeste: 120,
-      Sul: 45,
-      Nordeste: 38,
-      "Centro-Oeste": 28,
-      Norte: 16,
-    },
-    statusDistribution: [218, 29, 124, 76],
-    dailyDeliveries: [32, 38, 41, 35, 37, 42, 22],
-    ocorrencias: [
-      { tipo: "Atraso", quantidade: 29 },
-      { tipo: "Avaria", quantidade: 11 },
-      { tipo: "Extravio", quantidade: 5 },
-      { tipo: "Endereço incorreto", quantidade: 8 },
-      { tipo: "Destinatário ausente", quantidade: 14 },
-    ],
-    slaTransportadoras: [
-      { nome: "Jadlog", cumprimento: 92 },
-      { nome: "Correios", cumprimento: 85 },
-      { nome: "Braspress", cumprimento: 90 },
-      { nome: "Jamef", cumprimento: 88 },
-    ],
-  },
-  month: {
-    totalEntregas: 1023,
-    entregasNoPrazo: 912,
-    entregasAtrasadas: 111,
-    taxaEntrega: 89,
-    crescimento: 8,
-    custoTotal: 118450.5,
-    custoMedio: 115.79,
-    tempoMedioEntrega: 3.4,
-    volumeTotal: 7650,
-    pesoTotal: 18250,
-    transportadoras: {
-      Jadlog: 342,
-      Correios: 287,
-      Braspress: 214,
-      Jamef: 180,
-    },
-    desempenhoTransportadoras: [
-      { nome: "Jadlog", pontualidade: 91, avarias: 8, extravio: 4 },
-      { nome: "Correios", pontualidade: 84, avarias: 18, extravio: 12 },
-      { nome: "Braspress", pontualidade: 89, avarias: 6, extravio: 2 },
-      { nome: "Jamef", pontualidade: 87, avarias: 10, extravio: 5 },
-    ],
-    regioes: {
-      Sudeste: 495,
-      Sul: 186,
-      Nordeste: 157,
-      "Centro-Oeste": 116,
-      Norte: 69,
-    },
-    statusDistribution: [912, 111, 487, 425],
-    dailyDeliveries: [
-      32, 38, 41, 35, 37, 42, 22, 36, 39, 41, 38, 35, 32, 30, 33, 36, 39, 42,
-      45, 40, 38, 35, 33, 30, 28, 32, 35, 38, 40, 42,
-    ],
-    ocorrencias: [
-      { tipo: "Atraso", quantidade: 111 },
-      { tipo: "Avaria", quantidade: 42 },
-      { tipo: "Extravio", quantidade: 23 },
-      { tipo: "Endereço incorreto", quantidade: 35 },
-      { tipo: "Destinatário ausente", quantidade: 58 },
-    ],
-    slaTransportadoras: [
-      { nome: "Jadlog", cumprimento: 91 },
-      { nome: "Correios", cumprimento: 84 },
-      { nome: "Braspress", cumprimento: 89 },
-      { nome: "Jamef", cumprimento: 87 },
-    ],
-  },
-  year: {
-    totalEntregas: 12458,
-    entregasNoPrazo: 11234,
-    entregasAtrasadas: 1224,
-    taxaEntrega: 90,
-    crescimento: 15,
-    custoTotal: 1425680.25,
-    custoMedio: 114.44,
-    tempoMedioEntrega: 3.3,
-    volumeTotal: 92450,
-    pesoTotal: 215680,
-    transportadoras: {
-      Jadlog: 4235,
-      Correios: 3542,
-      Braspress: 2687,
-      Jamef: 1994,
-    },
-    desempenhoTransportadoras: [
-      { nome: "Jadlog", pontualidade: 92, avarias: 85, extravio: 42 },
-      { nome: "Correios", pontualidade: 86, avarias: 120, extravio: 95 },
-      { nome: "Braspress", pontualidade: 91, avarias: 65, extravio: 28 },
-      { nome: "Jamef", pontualidade: 89, avarias: 72, extravio: 35 },
-    ],
-    regioes: {
-      Sudeste: 6025,
-      Sul: 2268,
-      Nordeste: 1912,
-      "Centro-Oeste": 1412,
-      Norte: 841,
-    },
-    statusDistribution: [11234, 1224, 5876, 5358],
-    dailyDeliveries: [
-      980, 1050, 1120, 1080, 1150, 1200, 1180, 1100, 1050, 1020, 1080, 1150,
-    ],
-    ocorrencias: [
-      { tipo: "Atraso", quantidade: 1224 },
-      { tipo: "Avaria", quantidade: 342 },
-      { tipo: "Extravio", quantidade: 200 },
-      { tipo: "Endereço incorreto", quantidade: 425 },
-      { tipo: "Destinatário ausente", quantidade: 685 },
-    ],
-    slaTransportadoras: [
-      { nome: "Jadlog", cumprimento: 92 },
-      { nome: "Correios", cumprimento: 86 },
-      { nome: "Braspress", cumprimento: 91 },
-      { nome: "Jamef", cumprimento: 89 },
-    ],
-  },
-};
+// Função para mostrar overlay de loading
+window.DashboardData.showLoadingOverlay = function () {
+  // Remover overlay existente se houver
+  const existingOverlay = document.getElementById("dashboard-loading-overlay");
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
 
-// Função para carregar dados do dashboard
-window.DashboardData.loadDashboardData = async function (period = "week") {
-  // Mostrar loading
-  const loadingSpinner = document.createElement("div");
-  loadingSpinner.className = "loading-spinner";
+  const overlay = document.createElement("div");
+  overlay.id = "dashboard-loading-overlay";
+  overlay.className = "dashboard-loading-overlay";
+  overlay.innerHTML = `
+    <div class="dashboard-loading-content">
+      <div class="dashboard-loading-spinner"></div>
+      <div class="dashboard-loading-text">Carregando dados do dashboard...</div>
+    </div>
+  `;
 
   const dashboardContainer = document.querySelector(".dashboard-container");
   if (dashboardContainer) {
-    dashboardContainer.appendChild(loadingSpinner);
+    dashboardContainer.appendChild(overlay);
+  } else {
+    document.body.appendChild(overlay);
   }
+};
+
+// Função para remover overlay de loading
+window.DashboardData.hideLoadingOverlay = function () {
+  const overlay = document.getElementById("dashboard-loading-overlay");
+  if (overlay) {
+    overlay.remove();
+  }
+};
+
+// Função para mostrar erro no dashboard
+window.DashboardData.showError = function (message) {
+  const dashboardContainer = document.querySelector(".dashboard-container");
+  if (!dashboardContainer) return;
+
+  // Remover overlay de loading se existir
+  window.DashboardData.hideLoadingOverlay();
+
+  // Remover erro existente se houver
+  const existingError = document.getElementById("dashboard-error");
+  if (existingError) {
+    existingError.remove();
+  }
+
+  const errorDiv = document.createElement("div");
+  errorDiv.id = "dashboard-error";
+  errorDiv.className = "dashboard-error";
+  errorDiv.innerHTML = `
+    <div class="dashboard-error-content">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h3>Erro ao carregar dados</h3>
+      <p>${message}</p>
+      <button class="dashboard-error-retry" onclick="window.DashboardData.loadDashboardData()">
+        <i class="fas fa-redo"></i> Tentar novamente
+      </button>
+    </div>
+  `;
+
+  dashboardContainer.appendChild(errorDiv);
+};
+
+// Função para validar dados recebidos
+window.DashboardData.validateData = function (data) {
+  if (!data) {
+    return { valid: false, missing: ["Todos os dados"] };
+  }
+
+  const required = [
+    "totalEntregas",
+    "entregasNoPrazo",
+    "entregasAtrasadas",
+    "taxaEntrega",
+    "custoTotal",
+    "custoMedio",
+    "statusDistribution",
+  ];
+
+  const missing = [];
+  required.forEach((field) => {
+    if (data[field] === undefined || data[field] === null) {
+      missing.push(field);
+    }
+  });
+
+  return {
+    valid: missing.length === 0,
+    missing: missing,
+  };
+};
+
+// Função para carregar dados do dashboard
+window.DashboardData.loadDashboardData = async function (
+  period = "week",
+  startDate = null,
+  endDate = null
+) {
+  // Mostrar overlay de loading
+  window.DashboardData.showLoadingOverlay();
 
   try {
     // Buscar dados reais da API
-    const token = window.AuthCore?.getToken?.() || 
-                  document.cookie.split("; ").find((row) => row.startsWith("token="))?.split("=")[1];
-    
+    const token =
+      window.AuthCore?.getToken?.() ||
+      document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+
     if (!token) {
       throw new Error("Token de autenticação não encontrado");
     }
 
-    const response = await fetch(
-      `http://localhost:4010/dashboard/stats?period=${period}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-      }
-    );
+    // Construir URL com parâmetros
+    let url = `http://localhost:4010/dashboard/stats?period=${period}`;
+    if (period === "custom" && startDate && endDate) {
+      url += `&startDate=${startDate}&endDate=${endDate}`;
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+    });
 
     if (!response.ok) {
-      throw new Error(`Erro ao buscar dados: ${response.status}`);
+      throw new Error(
+        `Erro ao buscar dados: ${response.status} ${response.statusText}`
+      );
     }
 
     const data = await response.json();
 
-    // Remover loading
-    if (dashboardContainer && loadingSpinner.parentNode) {
-      dashboardContainer.removeChild(loadingSpinner);
+    // Validar dados
+    const validation = window.DashboardData.validateData(data);
+    if (!validation.valid) {
+      throw new Error(
+        `Dados incompletos. Campos faltando: ${validation.missing.join(", ")}`
+      );
+    }
+
+    // Remover overlay de loading
+    window.DashboardData.hideLoadingOverlay();
+
+    // Remover erro se existir
+    const existingError = document.getElementById("dashboard-error");
+    if (existingError) {
+      existingError.remove();
     }
 
     // Atualizar dados do dashboard
     window.DashboardData.updateDashboardData(data, period);
   } catch (error) {
     console.error("❌ Erro ao carregar dados do dashboard:", error);
-    
-    // Remover loading
-    if (dashboardContainer && loadingSpinner.parentNode) {
-      dashboardContainer.removeChild(loadingSpinner);
-    }
 
-    // Em caso de erro, usar dados mock como fallback
-    console.warn("⚠️ Usando dados mock como fallback");
-    const fallbackData = window.DashboardData.mockData[period];
-    if (fallbackData) {
-      window.DashboardData.updateDashboardData(fallbackData, period);
-    }
+    // Remover overlay de loading
+    window.DashboardData.hideLoadingOverlay();
+
+    // Mostrar erro
+    window.DashboardData.showError(
+      error.message || "Não foi possível carregar os dados do dashboard."
+    );
   }
 };
 
@@ -225,6 +187,22 @@ window.DashboardData.updateDashboardData = function (data, period) {
   }
 };
 
+// Função para mostrar erro em um card específico
+window.DashboardData.showCardError = function (cardId, message) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+
+  const content = card.querySelector(".dashboard-card-content");
+  if (!content) return;
+
+  content.innerHTML = `
+    <div class="dashboard-card-error">
+      <i class="fas fa-exclamation-circle"></i>
+      <p>${message || "Dados não disponíveis"}</p>
+    </div>
+  `;
+};
+
 // Função para atualizar estatísticas
 window.DashboardData.updateStatistics = function (data) {
   // Total de entregas
@@ -232,7 +210,14 @@ window.DashboardData.updateStatistics = function (data) {
     "#totalEntregas .stat-value"
   );
   if (totalEntregasElement) {
-    totalEntregasElement.textContent = data.totalEntregas;
+    if (data.totalEntregas !== undefined && data.totalEntregas !== null) {
+      totalEntregasElement.textContent = data.totalEntregas;
+    } else {
+      window.DashboardData.showCardError(
+        "totalEntregas",
+        "Dados não disponíveis"
+      );
+    }
   }
 
   // Entregas no prazo
@@ -240,7 +225,14 @@ window.DashboardData.updateStatistics = function (data) {
     "#entregasNoPrazo .stat-value"
   );
   if (entregasNoPrazoElement) {
-    entregasNoPrazoElement.textContent = data.entregasNoPrazo;
+    if (data.entregasNoPrazo !== undefined && data.entregasNoPrazo !== null) {
+      entregasNoPrazoElement.textContent = data.entregasNoPrazo;
+    } else {
+      window.DashboardData.showCardError(
+        "entregasNoPrazo",
+        "Dados não disponíveis"
+      );
+    }
   }
 
   // Entregas atrasadas
@@ -248,74 +240,127 @@ window.DashboardData.updateStatistics = function (data) {
     "#entregasAtrasadas .stat-value"
   );
   if (entregasAtrasadasElement) {
-    entregasAtrasadasElement.textContent = data.entregasAtrasadas;
+    if (
+      data.entregasAtrasadas !== undefined &&
+      data.entregasAtrasadas !== null
+    ) {
+      entregasAtrasadasElement.textContent = data.entregasAtrasadas;
+    } else {
+      window.DashboardData.showCardError(
+        "entregasAtrasadas",
+        "Dados não disponíveis"
+      );
+    }
   }
 
   // Taxa de entrega
   const taxaEntregaElement = document.querySelector(".circular-progress-text");
   if (taxaEntregaElement) {
-    taxaEntregaElement.textContent = data.taxaEntrega + "%";
+    if (data.taxaEntrega !== undefined && data.taxaEntrega !== null) {
+      taxaEntregaElement.textContent = data.taxaEntrega + "%";
+      window.DashboardData.updateCircularProgress(data.taxaEntrega);
+    } else {
+      window.DashboardData.showCardError(
+        "taxaEntrega",
+        "Dados não disponíveis"
+      );
+    }
   }
 
   // Custo total
   const custoTotalElement = document.querySelector("#custoTotal .stat-value");
   if (custoTotalElement) {
-    custoTotalElement.textContent =
-      "R$ " +
-      data.custoTotal.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+    if (data.custoTotal !== undefined && data.custoTotal !== null) {
+      custoTotalElement.textContent =
+        "R$ " +
+        data.custoTotal.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+    } else {
+      window.DashboardData.showCardError("custoTotal", "Dados não disponíveis");
+    }
   }
 
   // Custo médio
   const custoMedioElement = document.querySelector("#custoMedio .stat-value");
   if (custoMedioElement) {
-    custoMedioElement.textContent =
-      "R$ " +
-      data.custoMedio.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+    if (data.custoMedio !== undefined && data.custoMedio !== null) {
+      custoMedioElement.textContent =
+        "R$ " +
+        data.custoMedio.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+    } else {
+      window.DashboardData.showCardError("custoMedio", "Dados não disponíveis");
+    }
   }
 
   // Tempo médio de entrega
   const tempoMedioElement = document.querySelector("#tempoMedio .stat-value");
   if (tempoMedioElement) {
-    tempoMedioElement.textContent = data.tempoMedioEntrega.toFixed(1) + " dias";
+    if (
+      data.tempoMedioEntrega !== undefined &&
+      data.tempoMedioEntrega !== null
+    ) {
+      tempoMedioElement.textContent =
+        data.tempoMedioEntrega.toFixed(1) + " dias";
+    } else {
+      window.DashboardData.showCardError("tempoMedio", "Dados não disponíveis");
+    }
   }
 
   // Volume total
   const volumeTotalElement = document.querySelector("#volumeTotal .stat-value");
   if (volumeTotalElement) {
-    volumeTotalElement.textContent =
-      data.volumeTotal.toLocaleString("pt-BR") + " m³";
+    if (
+      data.volumeTotal !== undefined &&
+      data.volumeTotal !== null &&
+      data.volumeTotal > 0
+    ) {
+      volumeTotalElement.textContent =
+        data.volumeTotal.toLocaleString("pt-BR") + " m³";
+    } else {
+      window.DashboardData.showCardError(
+        "volumeTotal",
+        "Dados não disponíveis"
+      );
+    }
   }
 
   // Peso total
   const pesoTotalElement = document.querySelector("#pesoTotal .stat-value");
   if (pesoTotalElement) {
-    pesoTotalElement.textContent =
-      data.pesoTotal.toLocaleString("pt-BR") + " kg";
+    if (
+      data.pesoTotal !== undefined &&
+      data.pesoTotal !== null &&
+      data.pesoTotal > 0
+    ) {
+      pesoTotalElement.textContent =
+        data.pesoTotal.toLocaleString("pt-BR") + " kg";
+    } else {
+      window.DashboardData.showCardError("pesoTotal", "Dados não disponíveis");
+    }
   }
 
   // Crescimento
   const crescimentoElement = document.querySelector("#crescimento .stat-value");
   if (crescimentoElement) {
-    crescimentoElement.textContent = "+" + data.crescimento + "%";
+    if (data.crescimento !== undefined && data.crescimento !== null) {
+      crescimentoElement.textContent = "+" + data.crescimento + "%";
+    } else {
+      window.DashboardData.showCardError(
+        "crescimento",
+        "Dados não disponíveis"
+      );
+    }
   }
 
-  // Atualizar progresso circular
-  window.DashboardData.updateCircularProgress(data.taxaEntrega);
-
   // Atualizar indicadores de status
-  window.DashboardData.updateStatusIndicators(data.statusDistribution);
-
-  // Atualizar tabela de ocorrências
-  window.DashboardData.updateOcorrenciasTable(data.ocorrencias);
-
-  // Atualizar tabela de SLA das transportadoras
-  window.DashboardData.updateSLATable(data.slaTransportadoras);
+  if (data.statusDistribution && Array.isArray(data.statusDistribution)) {
+    window.DashboardData.updateStatusIndicators(data.statusDistribution);
+  }
 };
 
 // Função para atualizar progresso circular
@@ -357,49 +402,6 @@ window.DashboardData.updateStatusIndicators = function (statusData) {
   if (atrasadoElement) atrasadoElement.textContent = atrasado;
   if (transitoElement) transitoElement.textContent = transito;
   if (aguardandoElement) aguardandoElement.textContent = aguardando;
-};
-
-// Função para atualizar tabela de ocorrências
-window.DashboardData.updateOcorrenciasTable = function (ocorrencias) {
-  const ocorrenciasTableBody = document.querySelector(
-    "#ocorrenciasTable tbody"
-  );
-  if (ocorrenciasTableBody) {
-    ocorrenciasTableBody.innerHTML = ocorrencias
-      .map(
-        (ocorrencia) => `
-      <tr>
-        <td>${ocorrencia.tipo}</td>
-        <td>${ocorrencia.quantidade}</td>
-      </tr>
-    `
-      )
-      .join("");
-  }
-};
-
-// Função para atualizar tabela de SLA das transportadoras
-window.DashboardData.updateSLATable = function (slaData) {
-  const slaTableBody = document.querySelector("#slaTable tbody");
-  if (slaTableBody) {
-    slaTableBody.innerHTML = slaData
-      .map(
-        (item) => `
-      <tr>
-        <td>${item.nome}</td>
-        <td>
-          <div class="progress-bar-container">
-            <div class="progress-bar ${window.DashboardData.getProgressBarClass(
-              item.cumprimento
-            )}" style="width: ${item.cumprimento}%"></div>
-            <span>${item.cumprimento}%</span>
-          </div>
-        </td>
-      </tr>
-    `
-      )
-      .join("");
-  }
 };
 
 // Função para obter classe da barra de progresso

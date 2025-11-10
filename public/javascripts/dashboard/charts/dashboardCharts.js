@@ -1,10 +1,7 @@
-// Dashboard Charts Module - Sistema de gráficos Chart.js
 window.DashboardCharts = window.DashboardCharts || {};
 
-// Instâncias dos gráficos para controle
 window.DashboardCharts.chartInstances = {};
 
-// Função para aguardar elementos estarem disponíveis usando MutationObserver
 window.DashboardCharts.waitForElements = function (
   elementIds,
   callback,
@@ -34,19 +31,16 @@ window.DashboardCharts.waitForElements = function (
     return false;
   }
 
-  // Verificar elementos já existentes
   elementIds.forEach((id) => {
     if (document.getElementById(id)) {
       foundElements.add(id);
     }
   });
 
-  // Se todos já existem, executar callback imediatamente
   if (checkElements()) {
     return;
   }
 
-  // Usar MutationObserver para detectar quando elementos são adicionados
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
@@ -64,19 +58,16 @@ window.DashboardCharts.waitForElements = function (
       });
     });
 
-    // Verificar se todos os elementos foram encontrados
     if (checkElements()) {
       observer.disconnect();
     }
   });
 
-  // Observar mudanças no documento
   observer.observe(document.body, {
     childList: true,
     subtree: true,
   });
 
-  // Fallback com polling para casos onde MutationObserver não funciona
   const pollInterval = setInterval(() => {
     if (checkElements()) {
       clearInterval(pollInterval);
@@ -85,7 +76,6 @@ window.DashboardCharts.waitForElements = function (
   }, 100);
 };
 
-// Função para inicializar todos os gráficos
 window.DashboardCharts.initCharts = function () {
   // Verificar se Chart.js está disponível
   if (typeof Chart === "undefined") {
@@ -102,22 +92,17 @@ window.DashboardCharts.initCharts = function () {
     "dailyDeliveriesChart",
     "regioesChart",
     "desempenhoChart",
-    "ocorrenciasChart",
   ];
 
-  // Aguardar elementos estarem disponíveis antes de inicializar
   window.DashboardCharts.waitForElements(chartElementIds, () => {
-    // Inicializar cada gráfico
     window.DashboardCharts.initStatusChart();
     window.DashboardCharts.initTransportadorasChart();
     window.DashboardCharts.initDailyDeliveriesChart();
     window.DashboardCharts.initRegioesChart();
     window.DashboardCharts.initDesempenhoChart();
-    window.DashboardCharts.initOcorrenciasChart();
   });
 };
 
-// Gráfico de distribuição de status
 window.DashboardCharts.initStatusChart = function () {
   const ctx = document.getElementById("statusChart");
   if (!ctx) {
@@ -131,7 +116,7 @@ window.DashboardCharts.initStatusChart = function () {
       labels: ["Entregue", "Atrasado", "Em Trânsito", "Aguardando Coleta"],
       datasets: [
         {
-          data: [218, 29, 124, 76],
+          data: [0, 0, 0, 0],
           backgroundColor: ["#22c55e", "#ef4444", "#3b82f6", "#f59e0b"],
           borderWidth: 0,
         },
@@ -161,7 +146,6 @@ window.DashboardCharts.initStatusChart = function () {
   });
 };
 
-// Gráfico de entregas por transportadora
 window.DashboardCharts.initTransportadorasChart = function () {
   const ctx = document.getElementById("transportadorasChart");
   if (!ctx) {
@@ -174,11 +158,11 @@ window.DashboardCharts.initTransportadorasChart = function () {
   window.DashboardCharts.chartInstances.transportadorasChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: ["Jadlog", "Correios", "Braspress", "Jamef"],
+      labels: [],
       datasets: [
         {
           label: "Entregas",
-          data: [87, 65, 52, 43],
+          data: [],
           backgroundColor: "#247675",
           borderRadius: 4,
         },
@@ -211,7 +195,6 @@ window.DashboardCharts.initTransportadorasChart = function () {
   });
 };
 
-// Gráfico de entregas diárias
 window.DashboardCharts.initDailyDeliveriesChart = function () {
   const ctx = document.getElementById("dailyDeliveriesChart");
   if (!ctx) {
@@ -224,11 +207,11 @@ window.DashboardCharts.initDailyDeliveriesChart = function () {
   window.DashboardCharts.chartInstances.dailyDeliveriesChart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
+      labels: [],
       datasets: [
         {
           label: "Entregas",
-          data: [32, 38, 41, 35, 37, 42, 22],
+          data: [],
           borderColor: "#247675",
           backgroundColor: "rgba(36, 118, 117, 0.1)",
           borderWidth: 2,
@@ -267,7 +250,6 @@ window.DashboardCharts.initDailyDeliveriesChart = function () {
   });
 };
 
-// Gráfico de distribuição regional
 window.DashboardCharts.initRegioesChart = function () {
   const ctx = document.getElementById("regioesChart");
   if (!ctx) {
@@ -278,10 +260,10 @@ window.DashboardCharts.initRegioesChart = function () {
   window.DashboardCharts.chartInstances.regioesChart = new Chart(ctx, {
     type: "pie",
     data: {
-      labels: ["Sudeste", "Sul", "Nordeste", "Centro-Oeste", "Norte"],
+      labels: [],
       datasets: [
         {
-          data: [120, 45, 38, 28, 16],
+          data: [],
           backgroundColor: [
             "#3b82f6",
             "#22c55e",
@@ -320,7 +302,6 @@ window.DashboardCharts.initRegioesChart = function () {
   });
 };
 
-// Gráfico de desempenho de transportadoras
 window.DashboardCharts.initDesempenhoChart = function () {
   const ctx = document.getElementById("desempenhoChart");
   if (!ctx) {
@@ -331,97 +312,30 @@ window.DashboardCharts.initDesempenhoChart = function () {
   }
 
   window.DashboardCharts.chartInstances.desempenhoChart = new Chart(ctx, {
-    type: "radar",
-    data: {
-      labels: [
-        "Pontualidade",
-        "Integridade",
-        "Rastreabilidade",
-        "Atendimento",
-        "Custo-benefício",
-      ],
-      datasets: [
-        {
-          label: "Jadlog",
-          data: [92, 90, 85, 88, 82],
-          backgroundColor: "rgba(59, 130, 246, 0.2)",
-          borderColor: "rgba(59, 130, 246, 1)",
-          pointBackgroundColor: "rgba(59, 130, 246, 1)",
-          pointBorderColor: "#fff",
-          pointHoverBackgroundColor: "#fff",
-          pointHoverBorderColor: "rgba(59, 130, 246, 1)",
-        },
-        {
-          label: "Correios",
-          data: [85, 82, 90, 80, 88],
-          backgroundColor: "rgba(34, 197, 94, 0.2)",
-          borderColor: "rgba(34, 197, 94, 1)",
-          pointBackgroundColor: "rgba(34, 197, 94, 1)",
-          pointBorderColor: "#fff",
-          pointHoverBackgroundColor: "#fff",
-          pointHoverBorderColor: "rgba(34, 197, 94, 1)",
-        },
-        {
-          label: "Braspress",
-          data: [90, 92, 82, 85, 78],
-          backgroundColor: "rgba(245, 158, 11, 0.2)",
-          borderColor: "rgba(245, 158, 11, 1)",
-          pointBackgroundColor: "rgba(245, 158, 11, 1)",
-          pointBorderColor: "#fff",
-          pointHoverBackgroundColor: "#fff",
-          pointHoverBorderColor: "rgba(245, 158, 11, 1)",
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        r: {
-          angleLines: {
-            display: true,
-          },
-          suggestedMin: 50,
-          suggestedMax: 100,
-        },
-      },
-    },
-  });
-};
-
-// Gráfico de tipos de ocorrências
-window.DashboardCharts.initOcorrenciasChart = function () {
-  const ctx = document.getElementById("ocorrenciasChart");
-  if (!ctx) {
-    console.warn(
-      "❌ [DashboardCharts] Elemento ocorrenciasChart não encontrado"
-    );
-    return;
-  }
-
-  window.DashboardCharts.chartInstances.ocorrenciasChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: [
-        "Atraso",
-        "Avaria",
-        "Extravio",
-        "Endereço incorreto",
-        "Destinatário ausente",
-      ],
+      labels: [],
       datasets: [
         {
-          label: "Ocorrências",
-          data: [29, 11, 5, 8, 14],
-          backgroundColor: [
-            "rgba(239, 68, 68, 0.7)",
-            "rgba(245, 158, 11, 0.7)",
-            "rgba(139, 92, 246, 0.7)",
-            "rgba(59, 130, 246, 0.7)",
-            "rgba(236, 72, 153, 0.7)",
-          ],
-          borderWidth: 0,
+          label: "Prazo Esperado (5 dias)",
+          data: [],
+          backgroundColor: "rgba(156, 163, 175, 0.3)",
+          borderColor: "rgba(156, 163, 175, 1)",
+          borderWidth: 2,
+          borderDash: [5, 5],
+          type: "line",
+          fill: false,
+          pointRadius: 0,
+          order: 2,
+        },
+        {
+          label: "Dia Real de Entrega",
+          data: [],
+          backgroundColor: "rgba(36, 118, 117, 0.7)",
+          borderColor: "rgba(36, 118, 117, 1)",
+          borderWidth: 2,
           borderRadius: 4,
+          order: 1,
         },
       ],
     },
@@ -430,18 +344,54 @@ window.DashboardCharts.initOcorrenciasChart = function () {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          display: false,
+          display: true,
+          position: "top",
+          labels: {
+            usePointStyle: true,
+            padding: 15,
+            font: {
+              size: 12,
+            },
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const label = context.dataset.label || "";
+              const value = context.raw || 0;
+              if (context.datasetIndex === 0) {
+                return `${label}: ${value} dias (referência)`;
+              }
+              return `${label}: ${value.toFixed(1)} dias`;
+            },
+          },
         },
       },
       scales: {
         y: {
           beginAtZero: true,
+          title: {
+            display: true,
+            text: "Dias",
+            font: {
+              size: 12,
+              weight: "bold",
+            },
+          },
           grid: {
             display: true,
             drawBorder: false,
           },
         },
         x: {
+          title: {
+            display: true,
+            text: "Transportadoras",
+            font: {
+              size: 12,
+              weight: "bold",
+            },
+          },
           grid: {
             display: false,
             drawBorder: false,
@@ -452,30 +402,68 @@ window.DashboardCharts.initOcorrenciasChart = function () {
   });
 };
 
-// Função para atualizar todos os gráficos
 window.DashboardCharts.updateCharts = function (data) {
-  // Destruir gráficos existentes
+  if (!data) {
+    console.warn(
+      "⚠️ [DashboardCharts] Dados não fornecidos para atualizar gráficos"
+    );
+    return;
+  }
+
   Object.values(window.DashboardCharts.chartInstances).forEach((instance) => {
     if (instance) {
       instance.destroy();
     }
   });
 
-  // Reinicializar gráficos com novos dados
   window.DashboardCharts.initCharts();
 
-  // Atualizar dados específicos para cada gráfico
-  window.DashboardCharts.updateTransportadorasChart(data.transportadoras);
-  window.DashboardCharts.updateRegioesChart(data.regioes);
-  window.DashboardCharts.updateDailyDeliveriesChart(data.dailyDeliveries);
-  window.DashboardCharts.updateOcorrenciasChartData(data.ocorrencias);
-  window.DashboardCharts.updateDesempenhoChart(data.desempenhoTransportadoras);
+  if (data.transportadoras && Object.keys(data.transportadoras).length > 0) {
+    window.DashboardCharts.updateTransportadorasChart(data.transportadoras);
+  }
+
+  if (data.regioes && Object.keys(data.regioes).length > 0) {
+    window.DashboardCharts.updateRegioesChart(data.regioes);
+  }
+
+  if (
+    data.dailyDeliveries &&
+    Array.isArray(data.dailyDeliveries) &&
+    data.dailyDeliveries.length > 0
+  ) {
+    window.DashboardCharts.updateDailyDeliveriesChart(data.dailyDeliveries);
+  }
+
+  if (
+    data.desempenhoTransportadoras &&
+    Array.isArray(data.desempenhoTransportadoras) &&
+    data.desempenhoTransportadoras.length > 0
+  ) {
+    window.DashboardCharts.updateDesempenhoChart(
+      data.desempenhoTransportadoras
+    );
+  }
+
+  if (
+    data.statusDistribution &&
+    Array.isArray(data.statusDistribution) &&
+    data.statusDistribution.length === 4
+  ) {
+    window.DashboardCharts.updateStatusChart(data.statusDistribution);
+  }
 };
 
-// Função para atualizar gráfico de transportadoras
+window.DashboardCharts.updateStatusChart = function (data) {
+  const chart = window.DashboardCharts.chartInstances.statusChart;
+  if (!chart || !data || !Array.isArray(data) || data.length !== 4) return;
+
+  chart.data.datasets[0].data = data;
+  chart.update();
+};
+
 window.DashboardCharts.updateTransportadorasChart = function (data) {
   const chart = window.DashboardCharts.chartInstances.transportadorasChart;
-  if (!chart) return;
+  if (!chart || !data || typeof data !== "object") return;
 
   const labels = Object.keys(data);
   const values = Object.values(data);
@@ -485,10 +473,15 @@ window.DashboardCharts.updateTransportadorasChart = function (data) {
   chart.update();
 };
 
-// Função para atualizar gráfico de regiões
 window.DashboardCharts.updateRegioesChart = function (data) {
   const chart = window.DashboardCharts.chartInstances.regioesChart;
-  if (!chart) return;
+  if (
+    !chart ||
+    !data ||
+    typeof data !== "object" ||
+    Object.keys(data).length === 0
+  )
+    return;
 
   const labels = Object.keys(data);
   const values = Object.values(data);
@@ -498,25 +491,20 @@ window.DashboardCharts.updateRegioesChart = function (data) {
   chart.update();
 };
 
-// Função para atualizar gráfico de entregas diárias
 window.DashboardCharts.updateDailyDeliveriesChart = function (data) {
   const chart = window.DashboardCharts.chartInstances.dailyDeliveriesChart;
   if (!chart || !data || !Array.isArray(data)) return;
 
-  // Gerar labels baseado no tamanho do array
   let labels = [];
   if (data.length === 7) {
-    // Semana
     labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
   } else if (data.length === 30) {
-    // Mês - usar números dos dias
     labels = data.map((_, index) => {
       const date = new Date();
       date.setDate(date.getDate() - (data.length - 1 - index));
       return date.getDate();
     });
   } else if (data.length === 12) {
-    // Ano - usar meses
     labels = [
       "Jan",
       "Fev",
@@ -532,7 +520,6 @@ window.DashboardCharts.updateDailyDeliveriesChart = function (data) {
       "Dez",
     ];
   } else {
-    // Fallback - usar índices
     labels = data.map((_, index) => index + 1);
   }
 
@@ -541,28 +528,59 @@ window.DashboardCharts.updateDailyDeliveriesChart = function (data) {
   chart.update();
 };
 
-// Função para atualizar gráfico de desempenho de transportadoras
 window.DashboardCharts.updateDesempenhoChart = function (data) {
   const chart = window.DashboardCharts.chartInstances.desempenhoChart;
-  if (!chart || !data || !Array.isArray(data)) return;
+  if (!chart || !data || !Array.isArray(data) || data.length === 0) return;
 
-  const labels = data.map((item) => item.nome);
-  const pontualidade = data.map((item) => item.pontualidade || 0);
+  // Os dados já vêm ordenados do backend (por pontualidade e tempo médio)
+  // Mas vamos garantir a ordenação aqui também
+  const sortedData = [...data].sort((a, b) => {
+    // Primeiro por pontualidade (maior primeiro)
+    if (b.pontualidade !== a.pontualidade) {
+      return b.pontualidade - a.pontualidade;
+    }
+    // Depois por tempo médio (menor primeiro)
+    return (a.tempoMedioEntrega || 0) - (b.tempoMedioEntrega || 0);
+  });
 
+  // Extrair labels (nomes das transportadoras)
+  const labels = sortedData.map((item) => item.nome);
+
+  // Extrair tempos médios de entrega
+  const temposMedios = sortedData.map((item) => item.tempoMedioEntrega || 0);
+
+  // Prazo esperado (5 dias) para todas as transportadoras
+  const prazoEsperado = sortedData.map(() => 5);
+
+  // Atualizar gráfico
   chart.data.labels = labels;
-  chart.data.datasets[0].data = pontualidade;
-  chart.update();
-};
+  chart.data.datasets[0].data = prazoEsperado; // Linha de referência
+  chart.data.datasets[1].data = temposMedios; // Barras de tempo real
 
-// Função para atualizar gráfico de ocorrências
-window.DashboardCharts.updateOcorrenciasChartData = function (data) {
-  const chart = window.DashboardCharts.chartInstances.ocorrenciasChart;
-  if (!chart || !data || !Array.isArray(data)) return;
+  // Colorir barras baseado no desempenho
+  const backgroundColors = sortedData.map((item) => {
+    const tempoMedio = item.tempoMedioEntrega || 0;
+    const pontualidade = item.pontualidade || 0;
 
-  const labels = data.map((item) => item.tipo);
-  const values = data.map((item) => item.quantidade);
+    // Verde se está no prazo (<= 5 dias) e pontualidade alta (>= 80%)
+    if (tempoMedio <= 5 && pontualidade >= 80) {
+      return "rgba(34, 197, 94, 0.7)"; // Verde
+    }
+    // Amarelo se está próximo do prazo (5-7 dias) ou pontualidade média (60-80%)
+    if (
+      (tempoMedio > 5 && tempoMedio <= 7) ||
+      (pontualidade >= 60 && pontualidade < 80)
+    ) {
+      return "rgba(245, 158, 11, 0.7)"; // Amarelo
+    }
+    // Vermelho se está atrasado (> 7 dias) ou pontualidade baixa (< 60%)
+    return "rgba(239, 68, 68, 0.7)"; // Vermelho
+  });
 
-  chart.data.labels = labels;
-  chart.data.datasets[0].data = values;
+  chart.data.datasets[1].backgroundColor = backgroundColors;
+  chart.data.datasets[1].borderColor = backgroundColors.map((color) =>
+    color.replace("0.7", "1")
+  );
+
   chart.update();
 };

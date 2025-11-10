@@ -35,16 +35,13 @@ body {
 
 /* Estilo do botão de administrador na barra lateral */
 .admin-button {
-  border-left: 3px solid var(--admin-primary);
-  background-color: rgba(36, 118, 117, 0.05);
+  /* Estilos diferenciados removidos */
 }
 
-.admin-button i {
-  color: var(--admin-primary) !important;
-}
-
-.admin-button:hover {
-  background-color: rgba(36, 118, 117, 0.1);
+.admin-button .fa-external-link-alt {
+  font-size: 0.875rem;
+  margin-left: auto;
+  opacity: 0.6;
 }
 
 /* Cabeçalho da página de administração */

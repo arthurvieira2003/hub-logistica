@@ -116,13 +116,15 @@ window.DashboardUI.getDashboardHTML = function () {
         <div class="dashboard-filters">
           <div class="period-selector">
             <button class="period-btn active" data-period="week">Semana</button>
-            <button class="period-btn" data-period="month">Mês</button>
-            <button class="period-btn" data-period="year">Ano</button>
+            <button class="period-btn" data-period="custom" id="customDateBtn">
+              <i class="fas fa-calendar-alt"></i>
+              Dias específicos
+            </button>
           </div>
 
-          <div class="dashboard-date">
+          <div class="dashboard-date" id="dashboardDateDisplay">
             <i class="fas fa-calendar-alt"></i>
-            <span>01/06/2023 - 30/06/2023</span>
+            <span id="dateRangeText">Últimos 7 dias</span>
           </div>
         </div>
 
@@ -450,120 +452,23 @@ window.DashboardUI.getDashboardHTML = function () {
       <div class="dashboard-card card-col-6">
         <div class="dashboard-card-header">
           <h3 class="dashboard-card-title">
-            <i class="fas fa-star"></i>
-            Desempenho de Transportadoras
+            <i class="fas fa-clock"></i>
+            Prazo vs Dia Real de Entrega
           </h3>
         </div>
         <div class="dashboard-card-content">
           <div class="chart-container">
             <canvas id="desempenhoChart"></canvas>
           </div>
-        </div>
-      </div>
-      
-      <!-- Card de ocorrências -->
-      <div class="dashboard-card card-col-6">
-        <div class="dashboard-card-header">
-          <h3 class="dashboard-card-title">
-            <i class="fas fa-exclamation-circle"></i>
-            Ocorrências
-          </h3>
-        </div>
-        <div class="dashboard-card-content">
-          <div class="chart-container">
-            <canvas id="ocorrenciasChart"></canvas>
-          </div>
-          <div class="table-container">
-            <table class="summary-table" id="ocorrenciasTable">
-              <thead>
-                <tr>
-                  <th>Tipo</th>
-                  <th>Quantidade</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Atraso</td>
-                  <td>29</td>
-                </tr>
-                <tr>
-                  <td>Avaria</td>
-                  <td>11</td>
-                </tr>
-                <tr>
-                  <td>Extravio</td>
-                  <td>5</td>
-                </tr>
-                <tr>
-                  <td>Endereço incorreto</td>
-                  <td>8</td>
-                </tr>
-                <tr>
-                  <td>Destinatário ausente</td>
-                  <td>14</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Card de SLA das transportadoras -->
-      <div class="dashboard-card card-col-6">
-        <div class="dashboard-card-header">
-          <h3 class="dashboard-card-title">
-            <i class="fas fa-handshake"></i>
-            SLA das Transportadoras
-          </h3>
-        </div>
-        <div class="dashboard-card-content">
-          <div class="table-container">
-            <table class="summary-table" id="slaTable">
-              <thead>
-                <tr>
-                  <th>Transportadora</th>
-                  <th>Cumprimento do SLA</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Jadlog</td>
-                  <td>
-                    <div class="progress-bar-container">
-                      <div class="progress-bar progress-bar-success" data-width="92"></div>
-                      <span>92%</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Correios</td>
-                  <td>
-                    <div class="progress-bar-container">
-                      <div class="progress-bar progress-bar-warning" data-width="85"></div>
-                      <span>85%</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Braspress</td>
-                  <td>
-                    <div class="progress-bar-container">
-                      <div class="progress-bar progress-bar-success" data-width="90"></div>
-                      <span>90%</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Jamef</td>
-                  <td>
-                    <div class="progress-bar-container">
-                      <div class="progress-bar progress-bar-warning" data-width="88"></div>
-                      <span>88%</span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="chart-legend" style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-secondary);">
+            <p style="margin: 0; text-align: center;">
+              <span style="color: rgba(34, 197, 94, 1);">●</span> No prazo | 
+              <span style="color: rgba(245, 158, 11, 1);">●</span> Próximo do prazo | 
+              <span style="color: rgba(239, 68, 68, 1);">●</span> Atrasado
+            </p>
+            <p style="margin: 0.5rem 0 0 0; text-align: center; font-style: italic;">
+              Transportadoras ordenadas por taxa de cumprimento de prazo
+            </p>
           </div>
         </div>
       </div>

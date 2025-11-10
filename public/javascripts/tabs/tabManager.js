@@ -462,13 +462,15 @@ window.TabManager.getDashboardHTML = function () {
           <div class="dashboard-filters">
             <div class="period-selector">
               <button class="period-btn active" data-period="week">Semana</button>
-              <button class="period-btn" data-period="month">Mês</button>
-              <button class="period-btn" data-period="year">Ano</button>
+              <button class="period-btn" data-period="custom" id="customDateBtn">
+                <i class="fas fa-calendar-alt"></i>
+                Dias específicos
+              </button>
             </div>
 
-            <div class="dashboard-date">
+            <div class="dashboard-date" id="dashboardDateDisplay">
               <i class="fas fa-calendar-alt"></i>
-              <span>01/06/2023 - 30/06/2023</span>
+              <span id="dateRangeText">Últimos 7 dias</span>
             </div>
           </div>
 

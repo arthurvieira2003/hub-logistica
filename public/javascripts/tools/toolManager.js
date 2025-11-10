@@ -15,6 +15,12 @@ window.ToolManager.initToolButtons = function () {
     button.addEventListener("click", () => {
       const tool = button.dataset.tool;
 
+      // Se for o botão de admin, abrir em nova guia sem criar aba
+      if (tool === "admin") {
+        window.open("/administration", "_blank");
+        return;
+      }
+
       const existingTab = document.querySelector(`.tab[data-tool="${tool}"]`);
       if (existingTab) {
         window.TabManager.activateTab(existingTab);
@@ -45,7 +51,7 @@ window.ToolManager.loadToolContent = async function (tool, contentElement) {
     contentElement.querySelector(".loader").remove();
 
     if (tool === "admin") {
-      window.location.href = "/administration";
+      window.open("/administration", "_blank");
       return;
     }
 
@@ -161,7 +167,7 @@ window.ToolManager.setupFretesDateSelector = function () {
     // Event listener para o botão Atualizar
     btnAtualizar.addEventListener("click", async function () {
       const novaData = dataInput.value;
-      
+
       if (novaData) {
         // Mostrar loading no botão
         const originalText = this.innerHTML;
@@ -273,7 +279,7 @@ window.ToolManager.renderFretesItems = async function (items) {
 
   fretesListElement.innerHTML = html;
   window.ToolManager.setupFretesButtons();
-  
+
   // Validar preços de todos os CT-e's
   await window.ToolManager.validarPrecosFretes(items);
 };
@@ -322,14 +328,22 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
 
   // Encontrar a linha da tabela para aplicar estilo
   const tableRow = validationCell.closest("tr");
-  
-  const { valido, status, motivo, precoTabela, precoCTE, diferenca, percentualDiferenca } = validacao;
+
+  const {
+    valido,
+    status,
+    motivo,
+    precoTabela,
+    precoCTE,
+    diferenca,
+    percentualDiferenca,
+  } = validacao;
 
   // Remover todas as classes de validação da linha
   if (tableRow) {
     tableRow.classList.remove(
-      "validation-row-ok", 
-      "validation-row-acima", 
+      "validation-row-ok",
+      "validation-row-acima",
       "validation-row-abaixo",
       "validation-row-error",
       "validation-row-error-cidade",
@@ -345,9 +359,12 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
     // Identificar o tipo de erro baseado no motivo
     let errorType = "error";
     let errorIcon = "fa-exclamation-circle";
-    
+
     if (motivo) {
-      if (motivo.includes("Cidade de origem") || motivo.includes("Cidade de destino")) {
+      if (
+        motivo.includes("Cidade de origem") ||
+        motivo.includes("Cidade de destino")
+      ) {
         errorType = "error-cidade";
         errorIcon = "fa-map-marker-alt";
       } else if (motivo.includes("Transportadora")) {
@@ -359,7 +376,10 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
       } else if (motivo.includes("Faixa de peso") || motivo.includes("peso")) {
         errorType = "error-faixa";
         errorIcon = "fa-weight";
-      } else if (motivo.includes("Preço não encontrado") || motivo.includes("tabela")) {
+      } else if (
+        motivo.includes("Preço não encontrado") ||
+        motivo.includes("tabela")
+      ) {
         errorType = "error-preco";
         errorIcon = "fa-dollar-sign";
       } else if (motivo.includes("Dados insuficientes")) {
@@ -412,21 +432,34 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
 
   // Aplicar classe na linha da tabela
   if (tableRow) {
-    tableRow.classList.remove("validation-row-ok", "validation-row-acima", "validation-row-abaixo");
+    tableRow.classList.remove(
+      "validation-row-ok",
+      "validation-row-acima",
+      "validation-row-abaixo"
+    );
     tableRow.classList.add(rowClass);
   }
 
   // Se não houver diferença, mostrar apenas o valor da tabela
-  const temDiferenca = diferenca !== null && diferenca !== 0 && Math.abs(diferenca) > 0.01;
+  const temDiferenca =
+    diferenca !== null && diferenca !== 0 && Math.abs(diferenca) > 0.01;
 
   validationCell.innerHTML = `
     <div class="validation-result ${statusClass}">
       <div class="validation-content-horizontal">
         <span class="validation-price">${precoTabelaFormatado}</span>
-        ${temDiferenca ? `
-          <span class="validation-diff-amount">${diferenca > 0 ? "+" : "-"}${diferencaFormatada}</span>
-          <span class="validation-diff-percent">${diferenca > 0 ? "+" : ""}${percentualDiferenca.toFixed(2)}%</span>
-        ` : ""}
+        ${
+          temDiferenca
+            ? `
+          <span class="validation-diff-amount">${
+            diferenca > 0 ? "+" : "-"
+          }${diferencaFormatada}</span>
+          <span class="validation-diff-percent">${
+            diferenca > 0 ? "+" : ""
+          }${percentualDiferenca.toFixed(2)}%</span>
+        `
+            : ""
+        }
       </div>
     </div>
   `;

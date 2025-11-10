@@ -151,8 +151,9 @@ window.UserProfile.addAdminPanelOption = function () {
   adminButton.className = "tool-button admin-button";
   adminButton.setAttribute("data-tool", "admin");
   adminButton.innerHTML = `
-    <i class="fas fa-user-shield"></i>
-    <span>Administração</span>
+    <i class="fas fa-cog"></i>
+    <span>Configurações</span>
+    <i class="fas fa-external-link-alt"></i>
   `;
 
   // Adicionar o botão na sidebar (antes do footer)
@@ -162,11 +163,6 @@ window.UserProfile.addAdminPanelOption = function () {
   if (window.ToolManager && window.ToolManager.initToolButtons) {
     // Re-inicializar os botões para incluir o novo botão de admin
     window.ToolManager.initToolButtons();
-  } else {
-    // Adicionar evento de clique manualmente
-    adminButton.addEventListener("click", () => {
-      window.location.href = "/administration";
-    });
   }
 };
 
