@@ -15,24 +15,52 @@ window.AppInitializer.init = async function () {
       return;
     }
 
+    // Garantir que os módulos necessários estejam carregados
+    await window.AppInitializer.ensureModulesLoaded();
+
     // Executar passos de inicialização
     await window.AppInitializer.executeInitializationSteps();
 
     // Marcar como inicializado
     window.AppInitializer.state.isInitialized = true;
   } catch (error) {
-    console.error("❌ Erro ao inicializar aplicação principal:", error);
+    console.error("Erro ao inicializar aplicação:", error);
     throw error;
+  }
+};
+
+// Função para garantir que os módulos necessários estejam carregados
+window.AppInitializer.ensureModulesLoaded = async function () {
+  // Verificar se os módulos já estão disponíveis antes de tentar carregar
+  const authAlreadyLoaded = !!(window.AuthCore && window.UserAuth);
+  const coreAlreadyLoaded = !!(window.UserProfile && window.UserAvatar);
+
+  // Carregar módulos de autenticação primeiro (necessário para UserProfile)
+  if (window.ModuleLoader && window.ModuleLoader.loadModuleGroup) {
+    if (!authAlreadyLoaded) {
+      try {
+        await window.ModuleLoader.loadModuleGroup("auth");
+      } catch (error) {
+        console.error("Erro ao carregar módulos de autenticação:", error);
+      }
+    }
+  }
+
+  // Carregar módulos core (inclui UserProfile, UserAvatar, etc)
+  if (window.ModuleLoader && window.ModuleLoader.loadModuleGroup) {
+    if (!coreAlreadyLoaded) {
+      try {
+        await window.ModuleLoader.loadModuleGroup("core");
+      } catch (error) {
+        console.error("Erro ao carregar módulos core:", error);
+      }
+    }
   }
 };
 
 // Função para executar passos de inicialização
 window.AppInitializer.executeInitializationSteps = async function () {
   const steps = [
-    {
-      name: "Criar aba do dashboard",
-      func: window.AppInitializer.createDashboardTab,
-    },
     {
       name: "Forçar sidebar aberta",
       func: window.AppInitializer.forceOpenSidebar,
@@ -46,8 +74,8 @@ window.AppInitializer.executeInitializationSteps = async function () {
       func: window.AppInitializer.loadUserAvatar,
     },
     {
-      name: "Carregar dashboard inicial",
-      func: window.AppInitializer.loadWelcomeDashboard,
+      name: "Carregar tela inicial",
+      func: window.AppInitializer.loadWelcomeScreen,
     },
     {
       name: "Inicializar botões de ferramentas",
@@ -71,14 +99,19 @@ window.AppInitializer.executeInitializationSteps = async function () {
 
   for (const step of steps) {
     try {
-      await step.func();
+      // Adicionar timeout para cada passo para evitar travamento
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Timeout em ${step.name}`)), 15000);
+      });
+
+      await Promise.race([step.func(), timeoutPromise]);
       window.AppInitializer.state.initializationSteps.push({
         name: step.name,
         status: "success",
         timestamp: new Date(),
       });
     } catch (error) {
-      console.error(`❌ Erro em ${step.name}:`, error);
+      console.error(`Erro em ${step.name}:`, error);
       window.AppInitializer.state.initializationSteps.push({
         name: step.name,
         status: "error",
@@ -86,47 +119,26 @@ window.AppInitializer.executeInitializationSteps = async function () {
         timestamp: new Date(),
       });
       // Continuar com os próximos passos mesmo se um falhar
+      // Se for erro de carregamento de dados do usuário, atualizar interface
+      if (step.name === "Carregar dados do usuário") {
+        const userNameElement = document.getElementById("userName");
+        const userEmailElement = document.getElementById("userEmail");
+        if (
+          userNameElement &&
+          userNameElement.textContent === "Carregando..."
+        ) {
+          userNameElement.textContent = "Erro ao carregar";
+        }
+        if (
+          userEmailElement &&
+          userEmailElement.textContent === "Carregando..."
+        ) {
+          userEmailElement.textContent = error.message?.includes("Timeout")
+            ? "Timeout - tente recarregar"
+            : "Erro ao carregar dados";
+        }
+      }
     }
-  }
-};
-
-// Função para criar aba do dashboard
-window.AppInitializer.createDashboardTab = function () {
-  // Garantir que o tab-bar existe
-  let tabBar = document.querySelector(".tab-bar");
-  if (!tabBar) {
-    console.warn("⚠️ tab-bar não encontrado, criando elemento...");
-
-    // Criar tab-bar se não existir
-    const mainContent = document.querySelector(".main-content");
-    if (mainContent) {
-      tabBar = document.createElement("div");
-      tabBar.className = "tab-bar";
-      mainContent.insertBefore(tabBar, mainContent.firstChild);
-    } else {
-      console.error(
-        "❌ main-content não encontrado, não é possível criar tab-bar"
-      );
-      return;
-    }
-  }
-
-  // Garantir que o tabList existe
-  let tabList = document.getElementById("tabList");
-  if (!tabList) {
-    console.warn("⚠️ tabList não encontrado, criando elemento...");
-
-    tabList = document.createElement("div");
-    tabList.className = "tab-list";
-    tabList.id = "tabList";
-    tabBar.appendChild(tabList);
-  }
-
-  // Criar aba do dashboard
-  if (window.TabManager && window.TabManager.createDashboardTab) {
-    window.TabManager.createDashboardTab();
-  } else {
-    console.warn("⚠️ TabManager não está disponível ainda");
   }
 };
 
@@ -134,17 +146,57 @@ window.AppInitializer.createDashboardTab = function () {
 window.AppInitializer.forceOpenSidebar = function () {
   if (window.Sidebar && window.Sidebar.forceOpen) {
     window.Sidebar.forceOpen();
-  } else {
-    console.warn("⚠️ Sidebar module não está disponível");
   }
 };
 
 // Função para carregar dados do usuário
 window.AppInitializer.loadUserData = async function () {
+  // Fallback: se após 12 segundos ainda estiver "Carregando...", atualizar para erro
+  const fallbackTimeout = setTimeout(() => {
+    const userNameElement = document.getElementById("userName");
+    const userEmailElement = document.getElementById("userEmail");
+    if (userNameElement && userNameElement.textContent === "Carregando...") {
+      userNameElement.textContent = "Erro ao carregar";
+    }
+    if (userEmailElement && userEmailElement.textContent === "Carregando...") {
+      userEmailElement.textContent = "Timeout - tente recarregar";
+    }
+  }, 12000);
+
   if (window.UserProfile && window.UserProfile.loadUserData) {
-    await window.UserProfile.loadUserData();
+    try {
+      const result = await window.UserProfile.loadUserData();
+      clearTimeout(fallbackTimeout);
+      return result;
+    } catch (error) {
+      clearTimeout(fallbackTimeout);
+      // Garantir que a interface não fique travada
+      const userNameElement = document.getElementById("userName");
+      const userEmailElement = document.getElementById("userEmail");
+      if (userNameElement && userNameElement.textContent === "Carregando...") {
+        userNameElement.textContent = "Erro ao carregar";
+      }
+      if (
+        userEmailElement &&
+        userEmailElement.textContent === "Carregando..."
+      ) {
+        userEmailElement.textContent = error.message?.includes("Timeout")
+          ? "Timeout - tente recarregar"
+          : "Erro ao carregar dados";
+      }
+      throw error;
+    }
   } else {
-    console.warn("⚠️ [AppInitializer] UserProfile module não está disponível");
+    clearTimeout(fallbackTimeout);
+    // Atualizar interface mesmo se o módulo não estiver disponível
+    const userNameElement = document.getElementById("userName");
+    const userEmailElement = document.getElementById("userEmail");
+    if (userNameElement && userNameElement.textContent === "Carregando...") {
+      userNameElement.textContent = "Módulo não disponível";
+    }
+    if (userEmailElement && userEmailElement.textContent === "Carregando...") {
+      userEmailElement.textContent = "Recarregue a página";
+    }
   }
 };
 
@@ -152,21 +204,18 @@ window.AppInitializer.loadUserData = async function () {
 window.AppInitializer.loadUserAvatar = async function () {
   if (window.UserAvatar && window.UserAvatar.getUserAvatar) {
     await window.UserAvatar.getUserAvatar();
-  } else {
-    console.warn("⚠️ UserAvatar module não está disponível");
   }
 };
 
-// Função para carregar dashboard inicial
-window.AppInitializer.loadWelcomeDashboard = async function () {
+// Função para carregar tela inicial
+window.AppInitializer.loadWelcomeScreen = async function () {
   try {
     const welcomeScreen = document.getElementById("welcomeScreen");
-    if (welcomeScreen) {
-      // Esconder a tela de boas-vindas inicialmente
-      welcomeScreen.style.display = "none";
-    }
+    if (!welcomeScreen) return;
+
+    welcomeScreen.style.display = "flex";
   } catch (error) {
-    console.error("❌ Erro ao carregar tela inicial:", error);
+    console.error("Erro ao carregar tela inicial:", error);
   }
 };
 
@@ -174,8 +223,6 @@ window.AppInitializer.loadWelcomeDashboard = async function () {
 window.AppInitializer.initToolButtons = function () {
   if (window.ToolManager && window.ToolManager.initToolButtons) {
     window.ToolManager.initToolButtons();
-  } else {
-    console.warn("⚠️ ToolManager module não está disponível");
   }
 };
 
@@ -186,10 +233,6 @@ window.AppInitializer.initTabSystem = function () {
     if (window.TabDragDrop.init) {
       window.TabDragDrop.init();
     }
-
-    // A aba do dashboard já foi criada no início, não precisa criar novamente
-  } else {
-    console.warn("⚠️ TabManager ou TabDragDrop modules não estão disponíveis");
   }
 };
 
@@ -199,7 +242,6 @@ window.AppInitializer.initUserDropdown = function () {
   const template = document.getElementById("userDropdownTemplate");
 
   if (!userProfileButton || !template) {
-    console.warn("⚠️ Elementos do dropdown do usuário não encontrados");
     return;
   }
 
@@ -275,8 +317,6 @@ window.AppInitializer.initUserDropdown = function () {
 window.AppInitializer.initModals = function () {
   if (window.Modals && window.Modals.init) {
     window.Modals.init();
-  } else {
-    console.warn("⚠️ Modals module não está disponível");
   }
 };
 
@@ -285,8 +325,6 @@ window.AppInitializer.initSidebar = function () {
   if (window.Sidebar && window.Sidebar.init) {
     window.Sidebar.init();
     window.Sidebar.addPersistentEvents();
-  } else {
-    console.warn("⚠️ Sidebar module não está disponível");
   }
 };
 
@@ -313,12 +351,21 @@ window.AppInitializer.reinitialize = async function () {
 };
 
 // Inicialização automática apenas em páginas protegidas
+// Verificar se o ModuleLoader está gerenciando a inicialização
+// Se estiver na página /home, o ModuleLoader.loadHomePage() já vai chamar init()
+const isManagedByModuleLoader =
+  window.location.pathname === "/home" ||
+  window.location.pathname.includes("home");
+
 if (
   !window.location.pathname.includes("login") &&
-  window.location.pathname !== "/"
+  window.location.pathname !== "/" &&
+  !isManagedByModuleLoader
 ) {
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", window.AppInitializer.init);
+    document.addEventListener("DOMContentLoaded", () => {
+      window.AppInitializer.init();
+    });
   } else {
     window.AppInitializer.init();
   }

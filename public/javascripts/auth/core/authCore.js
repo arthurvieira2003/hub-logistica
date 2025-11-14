@@ -58,21 +58,38 @@ window.AuthCore.checkAuth = function () {
  */
 window.AuthCore.validateToken = async function (token) {
   try {
-    const response = await fetch("http://localhost:4010/session/validate", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
-    });
+    // Criar um AbortController para timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de timeout
 
-    if (!response.ok) {
-      throw new Error("Falha na validação do token");
+    try {
+      const response = await fetch("http://localhost:4010/session/validate", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(
+          `Falha na validação do token: ${response.status} ${response.statusText}`
+        );
+      }
+
+      return await response.json();
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === "AbortError") {
+        throw new Error("Timeout ao validar token");
+      }
+      throw fetchError;
     }
-
-    return await response.json();
   } catch (error) {
-    console.error("❌ Erro ao validar token:", error);
+    console.error("Erro ao validar token:", error);
     return null;
   }
 };
@@ -105,7 +122,9 @@ window.AuthCore.validateTokenExpiration = async function () {
     return null;
   }
 
-  if (window.AuthCore.isTokenExpired(userData)) {
+  const isExpired = window.AuthCore.isTokenExpired(userData);
+
+  if (isExpired) {
     return null;
   }
 

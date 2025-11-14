@@ -59,9 +59,6 @@ window.ToolManager.loadToolContent = async function (tool, contentElement) {
       case "fretes":
         await window.ToolManager.loadFretesTool(contentElement);
         break;
-      case "frota":
-        await window.ToolManager.loadFrotaTool(contentElement);
-        break;
       case "rastreamento":
         await window.ToolManager.loadRastreamentoTool(contentElement);
         break;
@@ -291,13 +288,26 @@ window.ToolManager.validarPrecosFretes = async function (items) {
         const response = await fetch(
           `http://localhost:4010/cte/${item.Serial}/validar-preco`
         );
-        if (!response.ok) {
-          throw new Error("Erro ao validar preço");
+
+        let validacao;
+        if (response.ok) {
+          validacao = await response.json();
+        } else {
+          // Tentar obter a resposta JSON mesmo em caso de erro
+          try {
+            validacao = await response.json();
+          } catch {
+            validacao = {
+              valido: false,
+              motivo: `Erro ${response.status}: ${response.statusText}`,
+              precoTabela: null,
+              precoCTE: item.DocTotal,
+            };
+          }
         }
-        const validacao = await response.json();
+
         return { serial: item.Serial, validacao };
       } catch (error) {
-        console.error(`Erro ao validar preço do CT-e ${item.Serial}:`, error);
         return {
           serial: item.Serial,
           validacao: {
@@ -969,565 +979,6 @@ window.ToolManager.downloadCTEXML = function (serial) {
   window.open(`http://localhost:4010/cte/${serial}/xml`, "_blank");
 };
 
-window.ToolManager.loadFrotaTool = async function (contentElement) {
-  contentElement.innerHTML = `
-    <div class="tool-header">
-      <h2>Gerenciamento de Frota</h2>
-      <p>Sistema de gerenciamento de veículos da frota.</p>
-    </div>
-    <div class="frota-tabs">
-      <button class="frota-tab-button active" data-tab="veiculos">
-        <i class="fas fa-car"></i> Veículos
-      </button>
-      <button class="frota-tab-button" data-tab="manutencoes">
-        <i class="fas fa-tools"></i> Manutenções
-      </button>
-    </div>
-    <div class="frota-container">
-      <div class="frota-tab-content active" id="veiculosTab">
-        <div class="frota-actions">
-          <button class="btn-primary frota-add-btn">
-            <i class="fas fa-plus"></i> Adicionar Veículo
-          </button>
-          <div class="frota-search">
-            <input type="text" id="frotaSearch" placeholder="Buscar veículo por placa ou modelo...">
-            <button><i class="fas fa-search"></i></button>
-          </div>
-          <div class="frota-filter">
-            <select id="frotaFilter">
-              <option value="todos">Todos os veículos</option>
-              <option value="Disponível">Disponíveis</option>
-              <option value="Em uso">Em uso</option>
-              <option value="Manutenção">Em manutenção</option>
-            </select>
-          </div>
-        </div>
-        <div class="frota-list" id="frotaList">
-          <div class="loader">
-            <i class="fas fa-spinner fa-spin"></i> Carregando veículos...
-          </div>
-        </div>
-        <div class="pagination" id="frotaPagination">
-        </div>
-      </div>
-      
-      <div class="frota-tab-content" id="manutencoesTab">
-        <div class="frota-actions">
-          <button class="btn-primary frota-add-manutencao-btn">
-            <i class="fas fa-plus"></i> Registrar Manutenção
-          </button>
-          <div class="frota-search">
-            <input type="text" id="manutencaoSearch" placeholder="Buscar por placa ou serviço...">
-            <button><i class="fas fa-search"></i></button>
-          </div>
-          <div class="frota-filter">
-            <select id="manutencaoFilter">
-              <option value="todos">Todos os veículos</option>
-            </select>
-          </div>
-        </div>
-        <div class="manutencao-list" id="manutencaoList">
-          <div class="loader">
-            <i class="fas fa-spinner fa-spin"></i> Carregando manutenções...
-          </div>
-        </div>
-        <div class="pagination" id="manutencaoPagination">
-        </div>
-      </div>
-    </div>
-  `;
-
-  window.ToolManager.setupFrotaTabs();
-
-  window.ToolManager.setupFrotaSearch();
-  window.ToolManager.setupFrotaFilters();
-  window.ToolManager.setupManutencoesSearch();
-  window.ToolManager.setupManutencoesFilters();
-
-  await window.ToolManager.loadFrotaData();
-  await window.ToolManager.loadManutencoesData();
-};
-
-window.ToolManager.setupFrotaTabs = function () {
-  const tabButtons = document.querySelectorAll(".frota-tab-button");
-  const tabContents = document.querySelectorAll(".frota-tab-content");
-
-  tabButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const tabName = button.dataset.tab;
-
-      tabButtons.forEach((btn) => btn.classList.remove("active"));
-      tabContents.forEach((content) => content.classList.remove("active"));
-
-      button.classList.add("active");
-      document.getElementById(`${tabName}Tab`).classList.add("active");
-    });
-  });
-};
-
-window.ToolManager.loadFrotaData = async function () {
-  try {
-    const response = await fetch("http://localhost:4010/frota");
-    if (!response.ok) {
-      throw new Error("Falha ao carregar dados da frota");
-    }
-
-    const veiculos = await response.json();
-    window.ToolManager.renderFrotaItems(veiculos);
-  } catch (error) {
-    console.error("❌ Erro ao carregar dados da frota:", error);
-  }
-};
-
-window.ToolManager.renderFrotaItems = function (veiculos) {
-  const frotaList = document.getElementById("frotaList");
-  if (!frotaList) {
-    console.error("❌ Elemento frotaList não encontrado");
-    return;
-  }
-
-  const veiculosAtivos = veiculos.filter(
-    (veiculo) => veiculo.situacaoativo !== "Desativado"
-  );
-
-  if (veiculosAtivos.length === 0) {
-    frotaList.innerHTML =
-      '<div class="empty-state">Nenhum veículo ativo encontrado.</div>';
-    return;
-  }
-
-  frotaList.innerHTML = "";
-
-  veiculosAtivos.forEach((veiculo) => {
-    const card = document.createElement("div");
-    card.className = "frota-card";
-    card.dataset.placa = veiculo.idobject;
-    card.dataset.situacao = veiculo.situacaoativo;
-
-    let statusClass = "disponivel";
-    if (veiculo.situacaoativo === "Em uso") {
-      statusClass = "em_uso";
-    } else if (veiculo.situacaoativo === "Manutenção") {
-      statusClass = "manutencao";
-    }
-
-    card.innerHTML = `
-      <div class="frota-card-header">
-        <h3>${veiculo.idobject}</h3>
-        <span class="status-badge ${statusClass}">${
-      veiculo.situacaoativo
-    }</span>
-      </div>
-      <div class="frota-card-body">
-        <div class="vehicle-info">
-          <p><strong>Modelo:</strong> ${veiculo.nmobject}</p>
-          <p><strong>Tipo:</strong> ${veiculo.nmobjecttype}</p>
-          <p><strong>Fabricante:</strong> ${
-            veiculo.nmcompany || "Não informado"
-          }</p>
-          <p><strong>Local:</strong> ${veiculo.nmsite}</p>
-        </div>
-      </div>
-      <div class="frota-card-footer">
-        <button class="btn-outline btn-edit" data-placa="${veiculo.idobject}">
-          <i class="fas fa-edit"></i> Editar
-        </button>
-        <button class="btn-outline btn-history" data-placa="${
-          veiculo.idobject
-        }">
-          <i class="fas fa-history"></i> Histórico
-        </button>
-        ${
-          veiculo.situacaoativo === "Manutenção"
-            ? `<button class="btn-outline btn-maintenance-complete" data-placa="${veiculo.idobject}">
-               <i class="fas fa-check"></i> Finalizar manutenção
-             </button>`
-            : `<button class="btn-outline btn-maintenance" data-placa="${veiculo.idobject}">
-               <i class="fas fa-tools"></i> Manutenção
-             </button>`
-        }
-      </div>
-    `;
-
-    frotaList.appendChild(card);
-  });
-
-  window.ToolManager.setupFrotaButtons();
-};
-
-window.ToolManager.loadManutencoesData = async function () {
-  try {
-    const response = await fetch("http://localhost:4010/frota/manutencoes");
-    if (!response.ok) {
-      throw new Error("Falha ao carregar dados de manutenções");
-    }
-
-    const manutencoes = await response.json();
-
-    window.ToolManager.manutencoesData = manutencoes;
-
-    window.ToolManager.processManutencoesData(manutencoes);
-  } catch (error) {
-    console.error("❌ Erro ao carregar dados de manutenções:", error);
-    const manutencaoList = document.getElementById("manutencaoList");
-    if (manutencaoList) {
-      manutencaoList.innerHTML = `
-        <div class="error-state">
-          <i class="fas fa-exclamation-triangle"></i>
-          <p>Falha ao carregar dados de manutenções. Tente novamente mais tarde.</p>
-          <button class="retry-button" id="retryLoadManutencoes">Tentar novamente</button>
-        </div>
-      `;
-
-      document
-        .getElementById("retryLoadManutencoes")
-        .addEventListener("click", () => {
-          window.ToolManager.loadManutencoesData();
-        });
-    }
-  }
-};
-
-window.ToolManager.processManutencoesData = function (manutencoes) {
-  const manutencaoList = document.getElementById("manutencaoList");
-  if (!manutencaoList) {
-    console.error("❌ Elemento manutencaoList não encontrado");
-    return;
-  }
-
-  if (manutencoes.length === 0) {
-    manutencaoList.innerHTML =
-      '<div class="empty-state">Nenhuma manutenção encontrada.</div>';
-    return;
-  }
-
-  const grupamentoManutencoes = {};
-
-  manutencoes.forEach((manutencao) => {
-    const placa = manutencao.idobject;
-    const data = manutencao.dtcheckin;
-
-    const chave = `${placa}-${data}`;
-
-    if (!grupamentoManutencoes[chave]) {
-      grupamentoManutencoes[chave] = {
-        placa,
-        modelo: manutencao.nmobject,
-        local: manutencao.nmsite,
-        data,
-        status: manutencao.situacaoativo,
-        responsavel: manutencao.idcommercial,
-        observacao: manutencao.dsobservation,
-        servicos: [],
-      };
-    }
-
-    grupamentoManutencoes[chave].servicos.push({
-      descricao: manutencao.nmcostvariable,
-      origem: manutencao.origemcusto,
-      valor: manutencao.vlrealcost,
-    });
-  });
-
-  const manutencoesVeiculos = {};
-
-  Object.values(grupamentoManutencoes).forEach((manutencao) => {
-    const placa = manutencao.placa;
-
-    if (!manutencoesVeiculos[placa]) {
-      manutencoesVeiculos[placa] = {
-        placa,
-        modelo: manutencao.modelo,
-        local: manutencao.local,
-        status: manutencao.status,
-        manutencoes: [],
-      };
-    }
-
-    manutencoesVeiculos[placa].manutencoes.push(manutencao);
-  });
-
-  window.ToolManager.manutencoesAgrupadas = Object.values(manutencoesVeiculos);
-
-  window.ToolManager.renderManutencoesItems(
-    window.ToolManager.manutencoesAgrupadas
-  );
-
-  window.ToolManager.updateManutencoesFilter();
-};
-
-window.ToolManager.renderManutencoesItems = function (items) {
-  const manutencaoList = document.getElementById("manutencaoList");
-  if (!manutencaoList) {
-    console.error("❌ Elemento manutencaoList não encontrado");
-    return;
-  }
-
-  if (items.length === 0) {
-    manutencaoList.innerHTML =
-      '<div class="empty-state">Nenhuma manutenção encontrada com os filtros aplicados.</div>';
-    return;
-  }
-
-  manutencaoList.innerHTML = "";
-
-  items.forEach((veiculo) => {
-    const card = document.createElement("div");
-    card.className = "manutencao-veiculo-card";
-    card.dataset.placa = veiculo.placa;
-
-    let statusClass = "disponivel";
-    if (veiculo.status === "Em uso") {
-      statusClass = "em_uso";
-    } else if (veiculo.status === "Manutenção") {
-      statusClass = "manutencao";
-    }
-
-    const manutencoes = veiculo.manutencoes.sort((a, b) => {
-      return new Date(b.data) - new Date(a.data);
-    });
-
-    const totalServicos = manutencoes.reduce((total, manutencao) => {
-      return total + manutencao.servicos.length;
-    }, 0);
-
-    const ultimaManutencao = manutencoes[0];
-    const dataUltimaManutencao = new Date(
-      ultimaManutencao.data
-    ).toLocaleDateString("pt-BR");
-
-    const servicosPreview = ultimaManutencao.servicos
-      .map((s) => s.descricao)
-      .slice(0, 2);
-    const temMaisServicos = ultimaManutencao.servicos.length > 2;
-
-    card.innerHTML = `
-      <div class="manutencao-veiculo-header">
-        <div class="manutencao-veiculo-info">
-          <h3>${veiculo.placa}</h3>
-          <p class="veiculo-modelo">${veiculo.modelo}</p>
-        </div>
-        <span class="status-badge ${statusClass}">${veiculo.status}</span>
-      </div>
-      <div class="manutencao-veiculo-body">
-        <div class="manutencao-veiculo-stats">
-          <div class="manutencao-stat">
-            <span class="stat-value">${manutencoes.length}</span>
-            <span class="stat-label">Manutenções</span>
-          </div>
-          <div class="manutencao-stat">
-            <span class="stat-value">${totalServicos}</span>
-            <span class="stat-label">Serviços</span>
-          </div>
-          <div class="manutencao-stat">
-            <span class="stat-value">${dataUltimaManutencao}</span>
-            <span class="stat-label">Última manutenção</span>
-          </div>
-        </div>
-        <div class="manutencao-veiculo-preview">
-          <h4>Últimos serviços:</h4>
-          <ul class="servicos-preview">
-            ${servicosPreview.map((servico) => `<li>${servico}</li>`).join("")}
-            ${
-              temMaisServicos
-                ? `<li class="mais-servicos">+ ${
-                    ultimaManutencao.servicos.length - 2
-                  } mais</li>`
-                : ""
-            }
-          </ul>
-        </div>
-      </div>
-      <div class="manutencao-veiculo-footer">
-        <button class="btn-outline btn-view-history" data-placa="${
-          veiculo.placa
-        }">
-          <i class="fas fa-history"></i> Ver Histórico Completo
-        </button>
-      </div>
-    `;
-
-    manutencaoList.appendChild(card);
-  });
-
-  window.ToolManager.setupManutencoesButtons();
-};
-
-window.ToolManager.updateManutencoesFilter = function () {
-  const filterSelect = document.getElementById("manutencaoFilter");
-  if (!filterSelect || !window.ToolManager.manutencoesAgrupadas) return;
-
-  filterSelect.innerHTML = '<option value="todos">Todos os veículos</option>';
-
-  window.ToolManager.manutencoesAgrupadas.forEach((veiculo) => {
-    const option = document.createElement("option");
-    option.value = veiculo.placa;
-    option.textContent = veiculo.placa;
-    filterSelect.appendChild(option);
-  });
-};
-
-window.ToolManager.setupFrotaSearch = function () {
-  const searchInput = document.getElementById("frotaSearch");
-  if (!searchInput) return;
-
-  let searchTimeout;
-  searchInput.addEventListener("input", (e) => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      const searchTerm = e.target.value.toLowerCase();
-      window.ToolManager.filterFrotaItems(searchTerm);
-    }, 300);
-  });
-};
-
-window.ToolManager.setupFrotaFilters = function () {
-  const filterSelect = document.getElementById("frotaFilter");
-  if (!filterSelect) return;
-
-  filterSelect.addEventListener("change", (e) => {
-    const statusFilter = e.target.value;
-    window.ToolManager.filterFrotaItems(null, statusFilter);
-  });
-};
-
-window.ToolManager.filterFrotaItems = function (
-  searchTerm = "",
-  statusFilter = "todos"
-) {
-  const frotaList = document.getElementById("frotaList");
-  if (!frotaList) return;
-
-  const cards = frotaList.querySelectorAll(".frota-card");
-
-  cards.forEach((card) => {
-    const placa = card.dataset.placa.toLowerCase();
-    const situacao = card.dataset.situacao;
-
-    const matchSearch = !searchTerm || placa.includes(searchTerm);
-    const matchStatus = statusFilter === "todos" || situacao === statusFilter;
-
-    if (matchSearch && matchStatus) {
-      card.style.display = "block";
-    } else {
-      card.style.display = "none";
-    }
-  });
-};
-
-window.ToolManager.setupFrotaButtons = function () {
-  document.querySelectorAll(".btn-edit").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      window.Notifications.showNotification(
-        `Editando veículo ${btn.dataset.placa}`,
-        "info"
-      );
-    });
-  });
-
-  document.querySelectorAll(".btn-history").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const manutencoesTab = document.querySelector(
-        '.frota-tab-button[data-tab="manutencoes"]'
-      );
-      if (manutencoesTab) {
-        manutencoesTab.click();
-        const manutencaoFilter = document.getElementById("manutencaoFilter");
-        if (manutencaoFilter) {
-          manutencaoFilter.value = btn.dataset.placa;
-          manutencaoFilter.dispatchEvent(new Event("change"));
-        }
-      }
-    });
-  });
-
-  document.querySelectorAll(".btn-maintenance").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      window.Notifications.showNotification(
-        `Iniciando manutenção do veículo ${btn.dataset.placa}`,
-        "info"
-      );
-    });
-  });
-
-  document.querySelectorAll(".btn-maintenance-complete").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      window.Notifications.showNotification(
-        `Finalizando manutenção do veículo ${btn.dataset.placa}`,
-        "success"
-      );
-    });
-  });
-};
-
-window.ToolManager.setupManutencoesSearch = function () {
-  const searchInput = document.getElementById("manutencaoSearch");
-  if (!searchInput) return;
-
-  let searchTimeout;
-  searchInput.addEventListener("input", (e) => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-      const searchTerm = e.target.value.toLowerCase();
-      window.ToolManager.filterManutencoesItems(searchTerm);
-    }, 300);
-  });
-};
-
-window.ToolManager.setupManutencoesFilters = function () {
-  const filterSelect = document.getElementById("manutencaoFilter");
-  if (!filterSelect) return;
-
-  filterSelect.addEventListener("change", (e) => {
-    const placaFilter = e.target.value;
-    window.ToolManager.filterManutencoesItems(null, placaFilter);
-  });
-};
-
-window.ToolManager.filterManutencoesItems = function (
-  searchTerm = "",
-  placaFilter = "todos"
-) {
-  if (!window.ToolManager.manutencoesAgrupadas) return;
-
-  const filteredManutencoes = window.ToolManager.manutencoesAgrupadas.filter(
-    (veiculo) => {
-      const matchPlaca =
-        placaFilter === "todos" || veiculo.placa === placaFilter;
-
-      const placa = veiculo.placa.toLowerCase();
-      const modelo = veiculo.modelo.toLowerCase();
-
-      const servicosMatch = veiculo.manutencoes.some((manutencao) => {
-        return manutencao.servicos.some((servico) => {
-          return servico.descricao.toLowerCase().includes(searchTerm);
-        });
-      });
-
-      const matchSearch =
-        searchTerm === "" ||
-        placa.includes(searchTerm) ||
-        modelo.includes(searchTerm) ||
-        servicosMatch;
-
-      return matchPlaca && matchSearch;
-    }
-  );
-
-  window.ToolManager.renderManutencoesItems(filteredManutencoes);
-};
-
-window.ToolManager.setupManutencoesButtons = function () {
-  document.querySelectorAll(".btn-view-history").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      window.Notifications.showNotification(
-        `Visualizando histórico completo do veículo ${btn.dataset.placa}`,
-        "info"
-      );
-    });
-  });
-};
-
 window.ToolManager.loadRastreamentoTool = async function (contentElement) {
   if (!window.RastreamentoMain) {
     try {
@@ -1544,8 +995,8 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
   contentElement.innerHTML = `
     <div id="trackingView" class="tracking-container">
       <div class="rastreamento-header" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
-        <div class="dashboard-title-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <h2 class="dashboard-title" style="font-size: 1.75rem; font-weight: 600; margin: 0;">Rastreamento de Notas</h2>
+        <div class="rastreamento-title-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <h2 style="font-size: 1.75rem; font-weight: 600; margin: 0;">Rastreamento de Notas</h2>
         </div>
       </div>
       <div id="rastreamentoContainer"></div>
@@ -1579,12 +1030,7 @@ window.ToolManager.setupRastreamentoEvents = function () {
         button.removeAttribute("onclick");
 
         button.addEventListener("click", () => {
-          if (
-            window.DashboardNavigation &&
-            window.DashboardNavigation.showTracking
-          ) {
-            window.DashboardNavigation.showTracking();
-          } else if (window.showTracking) {
+          if (window.showTracking) {
             window.showTracking();
           }
         });
@@ -1595,12 +1041,7 @@ window.ToolManager.setupRastreamentoEvents = function () {
         button.setAttribute("data-event-attached", "true");
 
         button.addEventListener("click", () => {
-          if (
-            window.DashboardNavigation &&
-            window.DashboardNavigation.showTracking
-          ) {
-            window.DashboardNavigation.showTracking();
-          } else if (window.showTracking) {
+          if (window.showTracking) {
             window.showTracking();
           }
         });

@@ -115,11 +115,10 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
     return dataA - dataB;
   });
 
-  // Verificar se estamos usando a nova estrutura HTML com dashboard
-  const dashboardView = document.getElementById("dashboardView");
+  // Verificar se existe trackingView
   const trackingView = document.getElementById("trackingView");
 
-  if (dashboardView && trackingView) {
+  if (trackingView) {
     // Limpar o conteúdo existente do trackingView para evitar duplicação
     contentElement.innerHTML = "";
 
@@ -184,7 +183,6 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
       contentElement.appendChild(containerVazio);
 
       // Configurar eventos do datepicker mesmo quando não há notas
-
       window.RastreamentoEvents.configurarEventosData();
     }
   }

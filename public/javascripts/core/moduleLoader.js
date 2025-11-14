@@ -15,7 +15,7 @@ window.ModuleLoader.configs = {
   // Configuração para módulos core (base)
   core: {
     basePath: "/javascripts",
-    dependencies: [],
+    dependencies: ["auth"], // UserProfile depende de AuthCore
     modules: [
       { name: "scriptLoader", path: "/utils/scriptLoader.js", priority: 1 },
       { name: "helpers", path: "/utils/helpers.js", priority: 2 },
@@ -58,32 +58,6 @@ window.ModuleLoader.configs = {
     ],
   },
 
-  // Configuração para módulos do dashboard
-  dashboard: {
-    basePath: "/javascripts/dashboard",
-    dependencies: ["core"],
-    modules: [
-      { name: "dashboardUI", path: "/ui/dashboardUI.js", priority: 1 },
-      { name: "dashboardData", path: "/data/dashboardData.js", priority: 2 },
-      {
-        name: "dashboardCharts",
-        path: "/charts/dashboardCharts.js",
-        priority: 3,
-      },
-      {
-        name: "dashboardNavigation",
-        path: "/navigation/dashboardNavigation.js",
-        priority: 4,
-      },
-      {
-        name: "dashboardEvents",
-        path: "/events/dashboardEvents.js",
-        priority: 5,
-      },
-      { name: "dashboardMain", path: "/dashboardMain.js", priority: 6 },
-    ],
-  },
-
   // Configuração para módulos de rastreamento
   rastreamento: {
     basePath: "/javascripts/rastreamento",
@@ -122,22 +96,78 @@ window.ModuleLoader.configs = {
       { name: "adminUI", path: "/../auth/ui/authUI.js", priority: 2 },
       { name: "adminMain", path: "/adminMain.js", priority: 3 },
       // Módulos de administração componentizados
-      { name: "administrationState", path: "/state/administrationState.js", priority: 4 },
-      { name: "administrationApi", path: "/api/administrationApi.js", priority: 5 },
-      { name: "administrationUtils", path: "/utils/administrationUtils.js", priority: 6 },
-      { name: "administrationPagination", path: "/utils/pagination.js", priority: 6.5 },
-      { name: "administrationDeleteConfirm", path: "/utils/deleteConfirmModal.js", priority: 6.6 },
-      { name: "administrationTabs", path: "/tabs/administrationTabs.js", priority: 7 },
+      {
+        name: "administrationState",
+        path: "/state/administrationState.js",
+        priority: 4,
+      },
+      {
+        name: "administrationApi",
+        path: "/api/administrationApi.js",
+        priority: 5,
+      },
+      {
+        name: "administrationUtils",
+        path: "/utils/administrationUtils.js",
+        priority: 6,
+      },
+      {
+        name: "administrationPagination",
+        path: "/utils/pagination.js",
+        priority: 6.5,
+      },
+      {
+        name: "administrationDeleteConfirm",
+        path: "/utils/deleteConfirmModal.js",
+        priority: 6.6,
+      },
+      {
+        name: "administrationTabs",
+        path: "/tabs/administrationTabs.js",
+        priority: 7,
+      },
       { name: "administrationUsers", path: "/entities/users.js", priority: 8 },
-      { name: "administrationSessions", path: "/entities/sessions.js", priority: 9 },
-      { name: "administrationEstados", path: "/entities/estados.js", priority: 10 },
-      { name: "administrationCidades", path: "/entities/cidades.js", priority: 11 },
-      { name: "administrationTransportadoras", path: "/entities/transportadoras.js", priority: 12 },
-      { name: "administrationFaixasPeso", path: "/entities/faixasPeso.js", priority: 13 },
+      {
+        name: "administrationSessions",
+        path: "/entities/sessions.js",
+        priority: 9,
+      },
+      {
+        name: "administrationEstados",
+        path: "/entities/estados.js",
+        priority: 10,
+      },
+      {
+        name: "administrationCidades",
+        path: "/entities/cidades.js",
+        priority: 11,
+      },
+      {
+        name: "administrationTransportadoras",
+        path: "/entities/transportadoras.js",
+        priority: 12,
+      },
+      {
+        name: "administrationFaixasPeso",
+        path: "/entities/faixasPeso.js",
+        priority: 13,
+      },
       { name: "administrationRotas", path: "/entities/rotas.js", priority: 14 },
-      { name: "administrationPrecosFaixas", path: "/entities/precosFaixas.js", priority: 15 },
-      { name: "administrationEvents", path: "/events/administrationEvents.js", priority: 16 },
-      { name: "administrationMain", path: "/administrationMain.js", priority: 17 },
+      {
+        name: "administrationPrecosFaixas",
+        path: "/entities/precosFaixas.js",
+        priority: 15,
+      },
+      {
+        name: "administrationEvents",
+        path: "/events/administrationEvents.js",
+        priority: 16,
+      },
+      {
+        name: "administrationMain",
+        path: "/administrationMain.js",
+        priority: 17,
+      },
     ],
   },
 };
@@ -161,7 +191,7 @@ window.ModuleLoader.loadScript = function (src) {
       resolve();
     };
     script.onerror = (error) => {
-      console.error(`❌ [ModuleLoader] Erro ao carregar script: ${src}`, error);
+      console.error(`Erro ao carregar script: ${src}`, error);
       reject(new Error(`Failed to load script: ${src}`));
     };
     document.head.appendChild(script);
@@ -179,12 +209,8 @@ window.ModuleLoader.loadScripts = async function (scripts) {
     try {
       await window.ModuleLoader.loadScript(script.path);
     } catch (error) {
-      console.error(
-        `❌ [ModuleLoader] Erro ao carregar módulo ${script.name}:`,
-        error
-      );
+      console.error(`Erro ao carregar módulo ${script.name}:`, error);
       // Continuar carregando outros módulos mesmo se um falhar
-      console.warn(`⚠️ [ModuleLoader] Continuando sem o módulo ${script.name}`);
     }
   }
 };
@@ -216,12 +242,8 @@ window.ModuleLoader.loadModuleGroup = async function (groupName) {
     // Carregar módulos do grupo
     await window.ModuleLoader.loadScripts(scripts);
   } catch (error) {
-    console.error(
-      `❌ [ModuleLoader] Erro ao carregar grupo ${groupName}:`,
-      error
-    );
+    console.error(`Erro ao carregar grupo ${groupName}:`, error);
     // Não fazer throw para evitar loops - continuar com outros grupos
-    console.warn(`⚠️ [ModuleLoader] Continuando sem o grupo ${groupName}`);
   }
 };
 
@@ -281,35 +303,6 @@ window.ModuleLoader.checkAuthAndRedirect = async function () {
 };
 
 /**
- * Carrega módulos específicos para o dashboard
- */
-window.ModuleLoader.loadDashboardPage = async function () {
-  try {
-    window.ModuleLoader.state.isLoading = true;
-
-    // Carregar módulos de autenticação primeiro (necessário para UserAuth)
-    await window.ModuleLoader.loadModuleGroup("auth");
-
-    // Carregar módulos do dashboard
-    await window.ModuleLoader.loadModuleGroup("dashboard");
-
-    // Inicializar dashboard se disponível
-    if (window.DashboardMain && window.DashboardMain.initDashboard) {
-      window.DashboardMain.initDashboard();
-    }
-
-    window.ModuleLoader.state.isLoading = false;
-  } catch (error) {
-    window.ModuleLoader.state.isLoading = false;
-    console.error("❌ [ModuleLoader] Erro ao carregar dashboard:", error);
-    // Não fazer throw para evitar loops
-    console.warn(
-      "⚠️ [ModuleLoader] Continuando sem alguns módulos do dashboard"
-    );
-  }
-};
-
-/**
  * Carrega módulos específicos para rastreamento
  */
 window.ModuleLoader.loadRastreamentoPage = async function () {
@@ -341,6 +334,34 @@ window.ModuleLoader.loadAdminPage = async function () {
   } catch (error) {
     window.ModuleLoader.state.isLoading = false;
     console.error("❌ [ModuleLoader] Erro ao carregar administração:", error);
+    throw error;
+  }
+};
+
+/**
+ * Carrega módulos específicos para a página home
+ */
+window.ModuleLoader.loadHomePage = async function () {
+  try {
+    window.ModuleLoader.state.isLoading = true;
+
+    // Carregar módulos core (inclui appInitializer)
+    await window.ModuleLoader.loadModuleGroup("core");
+
+    // Aguardar um pouco para garantir que todos os scripts foram executados
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Inicializar a aplicação
+    if (window.AppInitializer && window.AppInitializer.init) {
+      await window.AppInitializer.init();
+    } else {
+      console.error("AppInitializer não está disponível");
+    }
+
+    window.ModuleLoader.state.isLoading = false;
+  } catch (error) {
+    window.ModuleLoader.state.isLoading = false;
+    console.error("Erro ao carregar página home:", error);
     throw error;
   }
 };
@@ -382,8 +403,8 @@ window.ModuleLoader.init = function () {
     window.ModuleLoader.loadLoginPage();
   } else if (currentPath.includes("administration")) {
     window.ModuleLoader.loadAdminPage();
-  } else if (currentPath.includes("home") || currentPath.includes("index")) {
-    window.ModuleLoader.loadDashboardPage();
+  } else if (currentPath === "/home" || currentPath.includes("home")) {
+    window.ModuleLoader.loadHomePage();
   }
 };
 

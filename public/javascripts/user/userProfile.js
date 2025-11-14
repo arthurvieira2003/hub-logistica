@@ -10,18 +10,72 @@ window.UserProfile.state = {
 // Função para carregar dados do usuário
 window.UserProfile.loadUserData = async function () {
   try {
-    const userData = await window.UserAuth.validateTokenExpiration();
+    // Verificar se AuthCore/UserAuth está disponível
+    if (!window.AuthCore && !window.UserAuth) {
+      // Tentar novamente após um pequeno delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      if (!window.AuthCore && !window.UserAuth) {
+        const userNameElement = document.getElementById("userName");
+        const userEmailElement = document.getElementById("userEmail");
+        if (userNameElement) userNameElement.textContent = "Erro ao carregar";
+        if (userEmailElement)
+          userEmailElement.textContent =
+            "Módulo de autenticação não disponível";
+        return null;
+      }
+    }
+
+    const authModule = window.AuthCore || window.UserAuth;
+    const userData = await authModule.validateTokenExpiration();
+
     if (userData) {
       window.UserProfile.state.userData = userData;
       window.UserProfile.state.isLoaded = true;
       window.UserProfile.updateUserProfile(userData);
       return userData;
     } else {
-      console.warn("⚠️ [UserProfile] Nenhum dado de usuário encontrado");
+      // Atualizar interface para mostrar que não há dados
+      const userNameElement = document.getElementById("userName");
+      const userEmailElement = document.getElementById("userEmail");
+
+      if (userNameElement)
+        userNameElement.textContent = "Usuário não encontrado";
+      if (userEmailElement)
+        userEmailElement.textContent = "Faça login novamente";
+
+      // Marcar como carregado mesmo sem dados para não ficar travado
+      window.UserProfile.state.isLoaded = true;
     }
   } catch (error) {
-    console.error("❌ [UserProfile] Erro ao carregar dados do usuário:", error);
-    window.location.replace("/");
+    console.error("Erro ao carregar dados do usuário:", error);
+    // Atualizar interface para mostrar erro
+    const userNameElement = document.getElementById("userName");
+    const userEmailElement = document.getElementById("userEmail");
+
+    if (userNameElement) {
+      userNameElement.textContent = "Erro ao carregar";
+    }
+    if (userEmailElement) {
+      // Mostrar mensagem de erro mais amigável
+      const errorMessage = error.message || "Erro desconhecido";
+      if (
+        errorMessage.includes("Timeout") ||
+        errorMessage.includes("timeout")
+      ) {
+        userEmailElement.textContent = "Timeout - tente novamente";
+      } else if (
+        errorMessage.includes("Failed to fetch") ||
+        errorMessage.includes("NetworkError")
+      ) {
+        userEmailElement.textContent = "Sem conexão com servidor";
+      } else {
+        userEmailElement.textContent = "Erro ao carregar dados";
+      }
+    }
+
+    // Marcar como carregado mesmo com erro para não ficar travado
+    window.UserProfile.state.isLoaded = true;
   }
 };
 
@@ -142,7 +196,7 @@ window.UserProfile.addAdminPanelOption = function () {
   // Buscar a navegação da sidebar
   const sidebarNav = document.querySelector(".sidebar-nav");
   if (!sidebarNav) {
-    console.error("❌ Sidebar nav não encontrada");
+    console.error("Sidebar nav não encontrada");
     return;
   }
 
