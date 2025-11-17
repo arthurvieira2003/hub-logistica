@@ -1,20 +1,8 @@
-/**
- * Renderizador de Tabela com DataTables
- * Contém funções para renderizar a tabela de rastreamento usando DataTables
- */
-
-// Namespace para renderizadores DataTables
 window.RastreamentoDataTablesRenderer =
   window.RastreamentoDataTablesRenderer || {};
 
-// Variável global para armazenar a instância do DataTable
 window.dataTableInstance = null;
 
-/**
- * Renderiza o cabeçalho da tabela com estatísticas
- * @param {Array} todasNotas - Array com todas as notas
- * @returns {string} HTML do cabeçalho
- */
 window.RastreamentoDataTablesRenderer.renderizarCabecalhoTabela = function (
   todasNotas
 ) {
@@ -63,27 +51,19 @@ window.RastreamentoDataTablesRenderer.renderizarCabecalhoTabela = function (
   `;
 };
 
-/**
- * Converte dados das notas para formato DataTables
- * @param {Array} todasNotas - Array com todas as notas
- * @returns {Array} Array formatado para DataTables
- */
 window.RastreamentoDataTablesRenderer.converterDadosParaDataTables = function (
   todasNotas
 ) {
   return todasNotas.map((nota, index) => {
-    // Determinar cor da borda da transportadora
     let borderColor = window.RastreamentoUtils.obterCorBordaTransportadora(
       nota.transportadora.nome
     );
 
-    // Renderizar logo da transportadora
     const logoTransportadora =
       window.RastreamentoUtils.renderizarLogoTransportadora(
         nota.transportadora
       );
 
-    // Determinar cor do status
     const statusColor =
       nota.status === "Aguardando coleta"
         ? "#ff9800"
@@ -100,7 +80,6 @@ window.RastreamentoDataTablesRenderer.converterDadosParaDataTables = function (
         : "#757575";
 
     return {
-      // Dados para exibição
       numero: nota.numero,
       transportadora: `
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -130,7 +109,6 @@ window.RastreamentoDataTablesRenderer.converterDadosParaDataTables = function (
           <i class="fas fa-eye"></i>
         </button>
       `,
-      // Dados para ordenação e filtros
       _numero: parseInt(nota.numero) || 0,
       _transportadora: nota.transportadora.nome,
       _status: nota.status,
@@ -152,11 +130,6 @@ window.RastreamentoDataTablesRenderer.converterDadosParaDataTables = function (
   });
 };
 
-/**
- * Renderiza a tabela completa com DataTables
- * @param {Array} todasNotas - Array com todas as notas
- * @returns {string} HTML da tabela
- */
 window.RastreamentoDataTablesRenderer.renderizarTabela = function (todasNotas) {
   const cabecalho =
     window.RastreamentoDataTablesRenderer.renderizarCabecalhoTabela(todasNotas);
@@ -168,7 +141,6 @@ window.RastreamentoDataTablesRenderer.renderizarTabela = function (todasNotas) {
         to { opacity: 1; transform: translateY(0); }
       }
       
-      /* Estilos para o seletor de data */
       .date-selector input[type="date"]:focus {
         outline: none;
         border-color: #1a5a5a;
@@ -193,7 +165,6 @@ window.RastreamentoDataTablesRenderer.renderizarTabela = function (todasNotas) {
         transform: rotate(180deg);
       }
       
-      /* Responsivo para o seletor de data */
       @media (max-width: 768px) {
         .header-rastreamento {
           flex-direction: column !important;
@@ -211,7 +182,6 @@ window.RastreamentoDataTablesRenderer.renderizarTabela = function (todasNotas) {
         }
       }
       
-      /* Estilos para DataTables */
       .dataTables_wrapper {
         font-family: Arial, sans-serif;
       }
@@ -270,7 +240,6 @@ window.RastreamentoDataTablesRenderer.renderizarTabela = function (todasNotas) {
         cursor: not-allowed;
       }
       
-      /* Estilos para a tabela */
       #rastreamentoDataTable {
         width: 100% !important;
         border-collapse: collapse;
@@ -301,7 +270,6 @@ window.RastreamentoDataTablesRenderer.renderizarTabela = function (todasNotas) {
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
       }
       
-      /* Estilos para ordenação */
       .dataTables_wrapper .dataTables_sorting {
         cursor: pointer;
         position: relative;
@@ -329,7 +297,6 @@ window.RastreamentoDataTablesRenderer.renderizarTabela = function (todasNotas) {
         color: #247675;
       }
       
-      /* Responsivo */
       @media (max-width: 768px) {
         .dataTables_wrapper .dataTables_length,
         .dataTables_wrapper .dataTables_filter {
@@ -372,31 +339,23 @@ window.RastreamentoDataTablesRenderer.renderizarTabela = function (todasNotas) {
           </tr>
         </thead>
         <tbody>
-          <!-- Dados serão inseridos via DataTables -->
         </tbody>
       </table>
     </div>
   `;
 };
 
-/**
- * Aplica filtros personalizados no DataTable
- * @param {string} tipoFiltro - Tipo do filtro ('status', 'transportadora', 'atrasadas')
- * @param {string|Array} valor - Valor do filtro
- */
 window.RastreamentoDataTablesRenderer.aplicarFiltro = function (
   tipoFiltro,
   valor
 ) {
   if (!window.dataTableInstance) return;
 
-  // Limpar filtros anteriores
   window.dataTableInstance.search("").columns().search("").draw();
 
   switch (tipoFiltro) {
     case "status":
       if (Array.isArray(valor) && valor.length > 0) {
-        // Filtro múltiplo de status
         const regex = valor
           .map((v) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
           .join("|");
@@ -419,7 +378,6 @@ window.RastreamentoDataTablesRenderer.aplicarFiltro = function (
 
     case "atrasadas":
       if (valor) {
-        // Filtrar apenas notas atrasadas
         window.dataTableInstance.column(2).search("Atrasado", true, false);
       }
       break;
@@ -434,42 +392,31 @@ window.RastreamentoDataTablesRenderer.aplicarFiltro = function (
   window.dataTableInstance.draw();
 };
 
-/**
- * Limpa todos os filtros do DataTable
- */
 window.RastreamentoDataTablesRenderer.limparFiltros = function () {
   if (!window.dataTableInstance) return;
 
   window.dataTableInstance.search("").columns().search("").draw();
 };
 
-/**
- * Inicializa o DataTable com os dados
- * @param {Array} todasNotas - Array com todas as notas
- */
 window.RastreamentoDataTablesRenderer.inicializarDataTable = function (
   todasNotas
 ) {
-  // Verificar se jQuery está disponível
   if (typeof $ === "undefined") {
     console.error("❌ jQuery não está disponível");
     return;
   }
 
-  // Verificar se a tabela existe
   const tabelaElement = $("#rastreamentoDataTable");
   if (tabelaElement.length === 0) {
     console.error("❌ Tabela #rastreamentoDataTable não encontrada");
     return;
   }
 
-  // Verificar se todasNotas é um array válido
   if (!Array.isArray(todasNotas)) {
     console.error("❌ todasNotas não é um array válido:", todasNotas);
     return;
   }
 
-  // Destruir instância anterior se existir
   if (window.dataTableInstance) {
     try {
       window.dataTableInstance.destroy();
@@ -479,13 +426,11 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = function (
     window.dataTableInstance = null;
   }
 
-  // Converter dados para formato DataTables
   const dadosDataTables =
     window.RastreamentoDataTablesRenderer.converterDadosParaDataTables(
       todasNotas
     );
 
-  // Verificar se os dados estão no formato correto
   if (dadosDataTables.length > 0) {
     const primeiroRegistro = dadosDataTables[0];
     const camposObrigatorios = [
@@ -513,7 +458,6 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = function (
   }
 
   try {
-    // Inicializar DataTable com configuração avançada incluindo filtros por coluna
     window.dataTableInstance = $("#rastreamentoDataTable").DataTable({
       data: dadosDataTables,
       columns: [
@@ -565,7 +509,7 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = function (
           className: "dt-actions",
         },
       ],
-      order: [[6, "desc"]], // Ordenar por faturamento (decrescente)
+      order: [[6, "desc"]],
       pageLength: 100,
       lengthMenu: [
         [10, 25, 50, 100],
@@ -596,15 +540,13 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = function (
       },
       responsive: true,
       dom: '<"top"lf>rt<"bottom"ip><"clear">',
-      // Configurações para filtros avançados por coluna
       columnDefs: [
         {
-          targets: [0, 6, 7, 8], // Colunas numéricas e de data
-          type: "string", // Forçar tipo string para evitar problemas de ordenação
+          targets: [0, 6, 7, 8],
+          type: "string",
         },
       ],
       initComplete: function () {
-        // Configurar eventos dos botões de detalhes após inicialização
         if (
           window.RastreamentoEvents &&
           window.RastreamentoEvents.configurarEventosDetalhes
@@ -612,8 +554,6 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = function (
           window.RastreamentoEvents.configurarEventosDetalhes(todasNotas);
         }
 
-        // Adicionar filtros avançados por coluna
-        // Dentro do initComplete, 'this' é o elemento jQuery, então usamos $(this).DataTable()
         window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados(
           $(this).DataTable()
         );
@@ -626,10 +566,6 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = function (
   }
 };
 
-/**
- * Renderiza mensagem quando não há notas
- * @returns {string} HTML da mensagem
- */
 window.RastreamentoDataTablesRenderer.renderizarMensagemVazia = function () {
   const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
@@ -676,14 +612,9 @@ window.RastreamentoDataTablesRenderer.renderizarMensagemVazia = function () {
   `;
 };
 
-/**
- * Adiciona filtros avançados por coluna (similar ao site de demonstração do DataTables)
- * @param {DataTable} dataTableInstance - Instância do DataTable
- */
 window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados = function (
   dataTableInstance
 ) {
-  // Usar a instância passada como parâmetro ou a global
   const instance = dataTableInstance || window.dataTableInstance;
 
   if (!instance) {
@@ -691,69 +622,55 @@ window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados = function (
     return;
   }
 
-  // Adicionar botões de filtro avançado em cada cabeçalho de coluna
   const tabela = instance.table().node();
 
   const cabecalhos = tabela.querySelectorAll("thead th");
 
   cabecalhos.forEach((cabecalho, index) => {
-    // Pular a coluna de ações (última coluna)
     if (index === cabecalhos.length - 1) {
       return;
     }
 
-    // Verificar se já existe o container dt-column-header
     let container = cabecalho.querySelector(".dt-column-header");
 
     if (!container) {
-      // Criar container para os controles
       container = document.createElement("div");
       container.className = "dt-column-header";
       container.style.position = "relative";
 
-      // Mover o conteúdo existente para dentro do container
       const conteudoExistente = cabecalho.innerHTML;
       container.innerHTML = conteudoExistente;
 
-      // Substituir o conteúdo do cabeçalho
       cabecalho.innerHTML = "";
       cabecalho.appendChild(container);
     }
 
-    // Verificar se já existem os botões para evitar duplicação
     const botoesExistentes = container.querySelector(".dtcc");
 
     if (botoesExistentes) {
       return;
     }
 
-    // Encontrar o span com o título da coluna
     let spanTitulo = container.querySelector(".dt-column-title");
 
     if (!spanTitulo) {
-      // Se não existe, criar um
       spanTitulo = document.createElement("span");
       spanTitulo.className = "dt-column-title";
 
-      // Pegar o texto do cabeçalho (removendo elementos de ordenação existentes)
       const textoOriginal = cabecalho.textContent.trim();
       spanTitulo.textContent = textoOriginal;
 
-      // Adicionar o título no início do container
       container.insertBefore(spanTitulo, container.firstChild);
     } else {
-      // Se já existe, garantir que tenha o texto correto
       const textoOriginal = cabecalho.textContent.trim();
       if (!spanTitulo.textContent.trim()) {
         spanTitulo.textContent = textoOriginal;
       }
     }
 
-    // Criar container para os botões
     const botoesContainer = document.createElement("span");
     botoesContainer.className = "dtcc";
 
-    // Botão de filtro avançado (apenas ícone)
     const botaoFiltro = document.createElement("span");
     botaoFiltro.className = "dt-column-filter";
     botaoFiltro.setAttribute("role", "button");
@@ -769,7 +686,6 @@ window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados = function (
       </svg>
     `;
 
-    // Adicionar evento ao botão de filtro
     botaoFiltro.addEventListener("click", function (e) {
       e.stopPropagation();
       window.RastreamentoDataTablesRenderer.mostrarFiltroAvancado(
@@ -779,16 +695,14 @@ window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados = function (
       );
     });
 
-    // Adicionar o botão ao container
     botoesContainer.appendChild(botaoFiltro);
     container.appendChild(botoesContainer);
 
-    // Forçar alinhamento via JavaScript
     container.style.display = "flex";
     container.style.alignItems = "center";
     container.style.justifyContent = "flex-start";
     container.style.width = "100%";
-    container.style.flexDirection = "row"; // Forçar direção da linha
+    container.style.flexDirection = "row";
 
     if (spanTitulo) {
       spanTitulo.style.order = "1";
@@ -809,23 +723,11 @@ window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados = function (
     }
   });
 
-  // Log final para verificar o estado dos cabeçalhos
   const cabecalhosFinais = tabela.querySelectorAll("thead th");
   cabecalhosFinais.forEach((cabecalho, index) => {
-    const $cabecalho = $(cabecalho);
-    const title = $cabecalho.find(".dt-column-title").text().trim();
-    const hasOrder = $cabecalho.find(".dt-column-order").length > 0;
-    const hasFilter = $cabecalho.find(".dt-column-filter").length > 0;
-    const hasContainer = $cabecalho.find(".dt-column-header").length > 0;
-
-    // Verificar estilos CSS computados
     const container = cabecalho.querySelector(".dt-column-header");
     const titleElement = cabecalho.querySelector(".dt-column-title");
     const dtccElement = cabecalho.querySelector(".dtcc");
-
-    let containerStyles = {};
-    let titleStyles = {};
-    let dtccStyles = {};
 
     if (container) {
       const computedStyle = window.getComputedStyle(container);
@@ -858,36 +760,25 @@ window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados = function (
   });
 };
 
-/**
- * Mostra o dropdown de filtro avançado para uma coluna específica
- * @param {number} indiceColuna - Índice da coluna
- * @param {HTMLElement} botao - Botão que acionou o filtro
- * @param {DataTable} dataTableInstance - Instância do DataTable
- */
 window.RastreamentoDataTablesRenderer.mostrarFiltroAvancado = function (
   indiceColuna,
   botao,
   dataTableInstance
 ) {
-  // Usar a instância passada como parâmetro ou a global
   const instance = dataTableInstance || window.dataTableInstance;
-  // Remover dropdowns existentes
   document.querySelectorAll(".dtcc-dropdown").forEach((dropdown) => {
     dropdown.remove();
   });
 
-  // Criar dropdown
   const dropdown = document.createElement("div");
   dropdown.className = "dtcc-dropdown";
   dropdown.setAttribute("role", "dialog");
   dropdown.setAttribute("aria-label", "More...");
 
-  // Posicionar o dropdown usando CSS custom properties
   const rect = botao.getBoundingClientRect();
   dropdown.style.setProperty("--dropdown-top", rect.bottom + 5 + "px");
   dropdown.style.setProperty("--dropdown-left", rect.left + "px");
 
-  // Conteúdo do dropdown
   dropdown.innerHTML = `
     <div class="dtcc-dropdown-liner">
       <div class="dtcc-content dtcc-search dtcc-searchText">
@@ -960,7 +851,6 @@ window.RastreamentoDataTablesRenderer.mostrarFiltroAvancado = function (
     </div>
   `;
 
-  // Adicionar eventos aos botões do dropdown
   const botaoAsc = dropdown.querySelector(".dtcc-button_orderAsc");
   const botaoDesc = dropdown.querySelector(".dtcc-button_orderDesc");
   const botaoClear = dropdown.querySelector(".dtcc-button_orderClear");
@@ -988,7 +878,6 @@ window.RastreamentoDataTablesRenderer.mostrarFiltroAvancado = function (
     inputFiltro.value = "";
   });
 
-  // Aplicar filtro quando o usuário digitar
   let timeoutId;
   inputFiltro.addEventListener("input", function () {
     clearTimeout(timeoutId);
@@ -1001,7 +890,6 @@ window.RastreamentoDataTablesRenderer.mostrarFiltroAvancado = function (
         return;
       }
 
-      // Aplicar filtro baseado no tipo
       let regex = "";
       switch (tipo) {
         case "contains":
@@ -1036,7 +924,6 @@ window.RastreamentoDataTablesRenderer.mostrarFiltroAvancado = function (
     }, 300);
   });
 
-  // Fechar dropdown ao clicar fora
   document.addEventListener("click", function fecharDropdown(e) {
     if (!dropdown.contains(e.target) && !botao.contains(e.target)) {
       dropdown.remove();
@@ -1044,19 +931,13 @@ window.RastreamentoDataTablesRenderer.mostrarFiltroAvancado = function (
     }
   });
 
-  // Adicionar dropdown ao DOM
   document.body.appendChild(dropdown);
 
-  // Focar no input
   setTimeout(() => {
     inputFiltro.focus();
   }, 100);
 };
 
-/**
- * Atualiza os dados do DataTable
- * @param {Array} todasNotas - Array com todas as notas atualizadas
- */
 window.RastreamentoDataTablesRenderer.atualizarDados = function (todasNotas) {
   if (window.dataTableInstance) {
     const dadosDataTables =
@@ -1067,7 +948,6 @@ window.RastreamentoDataTablesRenderer.atualizarDados = function (todasNotas) {
     window.dataTableInstance.rows.add(dadosDataTables);
     window.dataTableInstance.draw();
 
-    // Reconfigurar eventos dos botões de detalhes
     window.RastreamentoEvents.configurarEventosDetalhes(todasNotas);
   }
 };

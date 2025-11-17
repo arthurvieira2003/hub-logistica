@@ -1,10 +1,7 @@
-// Script Loader Module - Carregador de scripts e CSS
 window.ScriptLoader = window.ScriptLoader || {};
 
-// Função para carregar script dinamicamente
 window.ScriptLoader.loadScript = function (src) {
   return new Promise((resolve, reject) => {
-    // Verificar se o script já foi carregado
     const existingScript = document.querySelector(`script[src="${src}"]`);
     if (existingScript) {
       resolve();
@@ -13,7 +10,9 @@ window.ScriptLoader.loadScript = function (src) {
 
     const script = document.createElement("script");
     script.src = src;
-    script.onload = resolve;
+    script.onload = () => {
+      resolve();
+    };
     script.onerror = (error) => {
       console.error(`❌ Erro ao carregar script: ${src}`, error);
       reject(error);
@@ -22,9 +21,7 @@ window.ScriptLoader.loadScript = function (src) {
   });
 };
 
-// Função para carregar CSS dinamicamente
 window.ScriptLoader.loadCSS = function (href) {
-  // Verificar se o CSS já foi carregado
   const existingCSS = document.querySelector(`link[href="${href}"]`);
   if (existingCSS) {
     return;
@@ -39,7 +36,6 @@ window.ScriptLoader.loadCSS = function (href) {
   document.head.appendChild(link);
 };
 
-// Função para carregar múltiplos scripts em sequência
 window.ScriptLoader.loadScripts = async function (scripts) {
   for (const script of scripts) {
     try {
@@ -51,19 +47,16 @@ window.ScriptLoader.loadScripts = async function (scripts) {
   }
 };
 
-// Função para carregar múltiplos CSS
 window.ScriptLoader.loadCSSFiles = function (cssFiles) {
   cssFiles.forEach((cssFile) => {
     window.ScriptLoader.loadCSS(cssFile);
   });
 };
 
-// Função para verificar se um script está carregado
 window.ScriptLoader.isScriptLoaded = function (src) {
   return document.querySelector(`script[src="${src}"]`) !== null;
 };
 
-// Função para verificar se um CSS está carregado
 window.ScriptLoader.isCSSLoaded = function (href) {
   return document.querySelector(`link[href="${href}"]`) !== null;
 };

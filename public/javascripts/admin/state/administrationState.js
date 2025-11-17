@@ -1,7 +1,5 @@
-// Administration State - Estado da aplicação
 window.Administration = window.Administration || {};
 
-// Estado da aplicação
 window.Administration.state = {
   users: [],
   sessions: [],
@@ -11,7 +9,6 @@ window.Administration.state = {
   faixasPeso: [],
   rotas: [],
   precosFaixas: [],
-  // Dados filtrados para busca
   filteredData: {},
   currentTab: "users",
   editingUserId: null,
@@ -19,4 +16,3 @@ window.Administration.state = {
   editingEntityType: null,
   pagination: {},
 };
-

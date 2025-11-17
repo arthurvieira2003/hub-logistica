@@ -31,7 +31,6 @@ body {
   overflow: auto;
 }
 
-/* Sidebar */
 .sidebar {
   width: 280px;
   background-color: var(--surface-color);
@@ -120,7 +119,6 @@ body {
   transition: var(--transition);
 }
 
-/* Aplicar filtro para colorir os SVGs com a cor primária */
 .tool-button .svg-icon {
   filter: invert(42%) sepia(74%) saturate(463%) hue-rotate(135deg)
     brightness(88%) contrast(86%);
@@ -144,10 +142,9 @@ body {
 }
 
 .tool-button.active .tool-icon {
-  filter: brightness(0) invert(1); /* Tornar o ícone branco quando ativo */
+  filter: brightness(0) invert(1);
 }
 
-/* Garantir que os ícones SVG fiquem brancos quando o botão estiver ativo */
 .tool-button.active .svg-icon {
   filter: brightness(0) invert(1) !important;
 }
@@ -178,7 +175,6 @@ body {
   border-top: 1px solid var(--border-color);
 }
 
-/* Main Content */
 .main-content {
   flex: 1;
   display: flex;
@@ -197,7 +193,6 @@ body {
   width: 100%;
 }
 
-/* Tab Bar */
 .tab-bar {
   background-color: var(--surface-color);
   border-bottom: 1px solid var(--border-color);
@@ -257,7 +252,6 @@ body {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Content Area */
 .content-area {
   flex: 1;
   padding: 0;
@@ -362,7 +356,6 @@ body {
   }
 }
 
-/* User Profile */
 .user-profile {
   display: flex;
   align-items: center;
@@ -435,7 +428,6 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Dropdown */
 .tippy-box[data-theme~="user-dropdown"] {
   background-color: var(--surface-color);
   color: var(--text-primary);
@@ -460,7 +452,6 @@ body {
   padding: 0.5rem;
 }
 
-/* Remover estilos antigos do dropdown que não são mais necessários */
 .user-profile:hover .user-dropdown {
   display: none;
 }
@@ -544,7 +535,6 @@ body {
   text-align: center;
 }
 
-/* Modals */
 .modal {
   position: fixed;
   top: 0;
@@ -718,7 +708,6 @@ body {
   cursor: not-allowed;
 }
 
-/* Cropper Modal */
 .cropper-modal-content {
   max-width: 800px;
 }
@@ -756,7 +745,6 @@ body {
   background-color: var(--background-color);
 }
 
-/* Notifications */
 .notification {
   position: fixed;
   bottom: 2rem;
@@ -823,7 +811,6 @@ body {
   color: var(--text-primary);
 }
 
-/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -835,7 +822,6 @@ body {
   }
 }
 
-/* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -854,7 +840,6 @@ body {
   background: var(--text-secondary);
 }
 
-/* Toggle Sidebar Button */
 .toggle-sidebar-button {
   position: fixed;
   top: 8px;
@@ -868,11 +853,11 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 1000; /* Aumentar o z-index para garantir que esteja acima de tudo */
+  z-index: 1000;
   box-shadow: var(--shadow-md);
   transition: all 0.3s ease;
   outline: none;
-  left: 10px; /* Posição padrão (quando a sidebar está fechada) */
+  left: 10px;
 }
 
 .toggle-sidebar-button:hover {
@@ -889,36 +874,30 @@ body {
   transition: var(--transition);
 }
 
-/* Ajuste para o botão de toggle quando a sidebar está visível */
 body:not(.sidebar-collapsed) .toggle-sidebar-button {
-  left: 260px; /* Posicionar o botão na borda direita da sidebar quando ela está aberta */
+  left: 260px;
 }
 
-/* Ajuste para o botão de toggle quando a sidebar está recolhida */
 body.sidebar-collapsed .toggle-sidebar-button {
-  left: 20px; /* Posicionar o botão no canto esquerdo quando a sidebar está fechada */
+  left: 20px;
 }
 
-/* Ajuste alternativo usando a classe da sidebar */
 .sidebar:not(.collapsed) ~ .toggle-sidebar-button {
-  left: 280px; /* Posicionar o botão na borda direita da sidebar quando ela está aberta */
+  left: 280px;
 }
 
 .sidebar.collapsed ~ .toggle-sidebar-button {
-  left: 20px; /* Posicionar o botão no canto esquerdo quando a sidebar está fechada */
+  left: 20px;
 }
 
-/* Ajuste para o tab-bar quando a sidebar está recolhida */
 .main-content.expanded .tab-bar {
-  padding-left: 70px; /* Espaço para o botão de toggle */
+  padding-left: 70px;
 }
 
-/* Ajuste para o tab-bar quando a sidebar está visível */
 .main-content:not(.expanded) .tab-bar {
   padding-left: 1rem;
 }
 
-/* Estilos para ferramentas */
 .tool-header {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
@@ -937,7 +916,6 @@ body.sidebar-collapsed .toggle-sidebar-button {
   font-size: 0.875rem;
 }
 
-/* Estados gerais */
 .loader {
   display: flex;
   align-items: center;
@@ -1015,7 +993,6 @@ body.sidebar-collapsed .toggle-sidebar-button {
   background-color: var(--background-color);
 }
 
-/* Paginação */
 .pagination {
   margin-top: 1.5rem;
   display: flex;
@@ -1075,7 +1052,6 @@ body.sidebar-collapsed .toggle-sidebar-button {
   color: var(--text-secondary);
 }
 
-/* Estilos para a seção de Fretes (CT-e) */
 .fretes-container {
   padding: 1rem;
   display: flex;
@@ -1157,7 +1133,6 @@ body.sidebar-collapsed .toggle-sidebar-button {
   background-color: var(--primary-color-dark);
 }
 
-/* Tabela de Fretes */
 .fretes-table-container {
   width: 100%;
   overflow-x: auto;
@@ -1236,8 +1211,9 @@ body.sidebar-collapsed .toggle-sidebar-button {
 }
 
 .frete-validation {
-  min-width: 250px;
-  max-width: 400px;
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .validation-loading {
@@ -1252,7 +1228,6 @@ body.sidebar-collapsed .toggle-sidebar-button {
   font-size: 0.875rem;
 }
 
-/* Estilos para linhas com erro */
 .fretes-table tbody tr.validation-row-error {
   background-color: #fff5f5;
   border-left: 4px solid #f44336;
@@ -1291,6 +1266,7 @@ body.sidebar-collapsed .toggle-sidebar-button {
 .validation-error {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   color: #c62828;
   font-size: 0.875rem;
@@ -1298,10 +1274,64 @@ body.sidebar-collapsed .toggle-sidebar-button {
   background-color: transparent;
   border-radius: 0.25rem;
   white-space: nowrap;
+  position: relative;
 }
 
 .validation-error i {
-  font-size: 0.875rem;
+  font-size: 1rem;
+  cursor: help;
+  position: relative;
+}
+
+.tippy-box[data-theme~="error-tooltip"] {
+  background-color: #333;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  max-width: 300px;
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
+.tippy-box[data-theme~="error-tooltip"] .tippy-arrow {
+  color: #333;
+}
+
+.tippy-box[data-theme~="validation-tooltip"] {
+  background-color: #333;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  max-width: 300px;
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
+.tippy-box[data-theme~="validation-tooltip"] .tippy-arrow {
+  color: #333;
+}
+
+.validation-result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.validation-result i {
+  font-size: 1rem;
+  cursor: help;
+}
+
+.validation-result.validation-ok i {
+  color: #2e7d32;
+}
+
+.validation-result.validation-acima i {
+  color: #c62828;
+}
+
+.validation-result.validation-abaixo i {
+  color: #e65100;
 }
 
 .validation-error.error {
@@ -1332,7 +1362,6 @@ body.sidebar-collapsed .toggle-sidebar-button {
   color: #880e4f;
 }
 
-/* Estilos para a linha da tabela com validação */
 .fretes-table tbody tr.validation-row-ok {
   background-color: #f1f8f4;
   border-left: 4px solid #4caf50;
@@ -1509,7 +1538,6 @@ body.sidebar-collapsed .toggle-sidebar-button {
   opacity: 0.5;
 }
 
-/* Modal de Detalhes do CT-E */
 .cte-modal-overlay {
   position: fixed;
   top: 0;
@@ -1752,7 +1780,6 @@ body.cte-modal-open {
   overflow: hidden;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .fretes-actions {
     flex-direction: column;

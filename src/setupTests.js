@@ -1,9 +1,3 @@
-/**
- * Configuração global para os testes
- * Simula o ambiente do navegador e configura mocks necessários
- */
-
-// Simular window e document globalmente
 global.window = global;
 global.document = {
   cookie: "",
@@ -31,7 +25,6 @@ global.document = {
   readyState: "complete",
 };
 
-// Simular localStorage
 const localStorageMock = (() => {
   let store = {};
   return {
@@ -50,7 +43,6 @@ const localStorageMock = (() => {
 
 global.localStorage = localStorageMock;
 
-// Simular sessionStorage
 const sessionStorageMock = (() => {
   let store = {};
   return {
@@ -69,10 +61,8 @@ const sessionStorageMock = (() => {
 
 global.sessionStorage = sessionStorageMock;
 
-// Simular fetch global
 global.fetch = jest.fn();
 
-// Simular URLSearchParams
 if (typeof global.URLSearchParams === "undefined") {
   global.URLSearchParams = class URLSearchParams {
     constructor(search = "") {
@@ -83,7 +73,6 @@ if (typeof global.URLSearchParams === "undefined") {
           if (key) this.params.set(key, value || "");
         });
       } else if (search && typeof search === "object") {
-        // Suportar objeto ou Map
         const entries =
           search instanceof Map ? search.entries() : Object.entries(search);
         for (const [key, value] of entries) {
@@ -114,10 +103,8 @@ if (typeof global.URLSearchParams === "undefined") {
   };
 }
 
-// Simular URL
 global.URL = class URL {
   constructor(url, base) {
-    // Se url é um objeto (como window.location), usar href
     let urlString;
     if (url && typeof url === "object") {
       urlString = url.href || String(url);
@@ -132,7 +119,6 @@ global.URL = class URL {
   }
 };
 
-// Simular navigator.clipboard
 global.navigator = {
   clipboard: {
     writeText: jest.fn(() => Promise.resolve()),
@@ -140,7 +126,6 @@ global.navigator = {
   },
 };
 
-// Mock para console methods para evitar logs nos testes
 global.console = {
   ...console,
   log: jest.fn(),
@@ -150,9 +135,7 @@ global.console = {
   error: jest.fn(),
 };
 
-// Limpar mocks antes de cada teste
 beforeEach(() => {
-  // Resetar cookies - precisa limpar todos os cookies primeiro
   const cookies = document.cookie.split(";");
   for (let i = 0; i < cookies.length; i++) {
     const cookie = cookies[i];
@@ -162,17 +145,13 @@ beforeEach(() => {
   }
   document.cookie = "";
 
-  // Limpar localStorage e sessionStorage
   localStorage.clear();
   sessionStorage.clear();
 
-  // Limpar fetch mocks
   fetch.mockClear();
 
-  // Limpar console mocks
   jest.clearAllMocks();
 
-  // Resetar namespaces globais
   global.window = { ...global };
   global.window.location = {
     href: "http://localhost:3060",
@@ -186,14 +165,12 @@ beforeEach(() => {
     pushState: jest.fn(),
   };
 
-  // Resetar navigator.clipboard
   if (global.navigator && global.navigator.clipboard) {
     global.navigator.clipboard.writeText.mockClear();
     global.navigator.clipboard.writeText.mockResolvedValue(undefined);
   }
 });
 
-// Helper para carregar módulos JavaScript
 global.loadModule = (modulePath) => {
   const fs = require("fs");
   const path = require("path");

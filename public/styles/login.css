@@ -102,7 +102,6 @@ body {
   border-radius: 2rem;
 }
 
-/* Garantir que o efeito de hover funcione corretamente */
 .btn-primary:hover::before {
   width: 100%;
 }
@@ -121,7 +120,6 @@ body {
   box-shadow: 0 0 0 0.25rem rgba(45, 102, 95, 0.5);
 }
 
-/* Remover estilos padrão do Bootstrap */
 .btn-primary,
 .btn-primary:hover,
 .btn-primary:focus,
@@ -131,7 +129,6 @@ body {
   border-color: transparent;
 }
 
-/* Sobrescrever qualquer estilo do Bootstrap */
 .btn.btn-primary {
   background-color: var(--primary-color) !important;
   border-color: transparent !important;
@@ -142,7 +139,6 @@ body {
   color: white !important;
 }
 
-/* Garantir que o efeito de hover com a cor secundária funcione */
 .btn-primary:hover .btn-primary::before {
   background-color: var(--secondary-color);
 }
@@ -265,7 +261,6 @@ body {
   color: var(--primary-color);
 }
 
-/* Estilos para notificações */
 .notification-container {
   position: fixed;
   top: 20px;
@@ -394,7 +389,6 @@ body {
   }
 }
 
-/* Responsividade para notificações */
 @media (max-width: 768px) {
   .notification-container {
     top: 10px;

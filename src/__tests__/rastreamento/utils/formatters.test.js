@@ -1,15 +1,8 @@
-/**
- * Testes para RastreamentoUtils (formatters)
- * Testa formatação de datas, verificações de atraso e utilitários
- */
-
-// Carregar módulo usando require() para permitir instrumentação do Jest
 const formattersPath = require.resolve(
   "../../../../public/javascripts/rastreamento/utils/formatters.js"
 );
 
 beforeAll(() => {
-  // Usar require() em vez de eval() para permitir instrumentação
   require(formattersPath);
 });
 
@@ -98,11 +91,9 @@ describe("RastreamentoUtils", () => {
     });
 
     test("deve retornar null quando token não existe", () => {
-      // Limpar cookies antes do teste
       document.cookie = "";
       document.cookie = "other=value";
       const token = window.RastreamentoUtils.obterToken();
-      // O código retorna null ou undefined dependendo da implementação
       expect(token).toBeFalsy();
     });
   });
@@ -118,7 +109,6 @@ describe("RastreamentoUtils", () => {
     });
 
     test("deve retornar true para nota atrasada (formato YYYY-MM-DD)", () => {
-      // Data de hoje: 2024-01-15, previsão: 2024-01-10 (5 dias atrás)
       const nota = {
         numero: "123",
         status: "Em trânsito",
@@ -140,7 +130,7 @@ describe("RastreamentoUtils", () => {
       const nota = {
         numero: "123",
         status: "Em trânsito",
-        previsaoEntrega: "2024-01-20", // 5 dias no futuro
+        previsaoEntrega: "2024-01-20",
       };
       expect(window.RastreamentoUtils.verificarNotaAtrasada(nota)).toBe(false);
     });
@@ -149,7 +139,7 @@ describe("RastreamentoUtils", () => {
       const nota = {
         numero: "123",
         status: "Em trânsito",
-        previsaoEntrega: "2024-01-15", // Hoje
+        previsaoEntrega: "2024-01-15",
       };
       expect(window.RastreamentoUtils.verificarNotaAtrasada(nota)).toBe(false);
     });
@@ -166,24 +156,21 @@ describe("RastreamentoUtils", () => {
 
   describe("calcularDiasAtraso", () => {
     test("deve calcular dias de atraso corretamente (formato YYYY-MM-DD)", () => {
-      // Usar uma data que sabemos que está atrasada em relação à data atual
       const hoje = new Date();
       const previsao = new Date(hoje);
-      previsao.setDate(previsao.getDate() - 5); // 5 dias atrás
-      const dataPrevisao = previsao.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+      previsao.setDate(previsao.getDate() - 5);
+      const dataPrevisao = previsao.toISOString().split("T")[0];
 
       const diasAtraso =
         window.RastreamentoUtils.calcularDiasAtraso(dataPrevisao);
-      // A diferença pode ser 4 ou 5 dependendo da hora do dia
       expect(diasAtraso).toBeGreaterThanOrEqual(4);
       expect(diasAtraso).toBeLessThanOrEqual(5);
     });
 
     test("deve calcular dias de atraso corretamente (formato DD/MM/YYYY)", () => {
-      // Usar uma data que sabemos que está atrasada
       const hoje = new Date();
       const previsao = new Date(hoje);
-      previsao.setDate(previsao.getDate() - 5); // 5 dias atrás
+      previsao.setDate(previsao.getDate() - 5);
       const dia = String(previsao.getDate()).padStart(2, "0");
       const mes = String(previsao.getMonth() + 1).padStart(2, "0");
       const ano = previsao.getFullYear();
@@ -191,7 +178,6 @@ describe("RastreamentoUtils", () => {
 
       const diasAtraso =
         window.RastreamentoUtils.calcularDiasAtraso(dataPrevisao);
-      // A diferença pode ser 4 ou 5 dependendo da hora do dia
       expect(diasAtraso).toBeGreaterThanOrEqual(4);
       expect(diasAtraso).toBeLessThanOrEqual(5);
     });
@@ -217,12 +203,11 @@ describe("RastreamentoUtils", () => {
     test("deve calcular corretamente para 1 dia de atraso", () => {
       const hoje = new Date();
       const previsao = new Date(hoje);
-      previsao.setDate(previsao.getDate() - 1); // 1 dia atrás
+      previsao.setDate(previsao.getDate() - 1);
       const dataPrevisao = previsao.toISOString().split("T")[0];
 
       const diasAtraso =
         window.RastreamentoUtils.calcularDiasAtraso(dataPrevisao);
-      // A diferença pode ser 0 ou 1 dependendo da hora do dia
       expect(diasAtraso).toBeGreaterThanOrEqual(0);
       expect(diasAtraso).toBeLessThanOrEqual(1);
     });
@@ -230,12 +215,11 @@ describe("RastreamentoUtils", () => {
     test("deve calcular corretamente para 30 dias de atraso", () => {
       const hoje = new Date();
       const previsao = new Date(hoje);
-      previsao.setDate(previsao.getDate() - 30); // 30 dias atrás
+      previsao.setDate(previsao.getDate() - 30);
       const dataPrevisao = previsao.toISOString().split("T")[0];
 
       const diasAtraso =
         window.RastreamentoUtils.calcularDiasAtraso(dataPrevisao);
-      // A diferença pode ser 29 ou 30 dependendo da hora do dia
       expect(diasAtraso).toBeGreaterThanOrEqual(29);
       expect(diasAtraso).toBeLessThanOrEqual(30);
     });

@@ -1,10 +1,12 @@
-// User Avatar Module - Gerenciamento de avatar e foto do usuário
 window.UserAvatar = window.UserAvatar || {};
 
-// Função para carregar avatar do usuário
 window.UserAvatar.getUserAvatar = async function () {
   try {
-    const userData = await window.UserAuth.validateTokenExpiration();
+    // Tentar usar dados do usuário já carregados primeiro (evita validação duplicada)
+    let userData = window.UserProfile?.state?.userData;
+    if (!userData) {
+      userData = await window.UserAuth.validateTokenExpiration();
+    }
     const userEmail = userData.email;
 
     const response = await fetch(
@@ -15,7 +17,6 @@ window.UserAvatar.getUserAvatar = async function () {
     const userAvatarElement = document.getElementById("userAvatar");
     const userPhotoPreviewElement = document.getElementById("userPhotoPreview");
 
-    // Função para atualizar a foto em ambos os lugares
     const updatePhotoDisplay = (content) => {
       if (userAvatarElement) {
         userAvatarElement.innerHTML = content;
@@ -27,7 +28,6 @@ window.UserAvatar.getUserAvatar = async function () {
     };
 
     if (userAvatar.image) {
-      // Criar elemento de imagem com o base64 retornado
       const photoContent = `<img src="${userAvatar.image}" alt="Avatar" />`;
       updatePhotoDisplay(photoContent);
     } else {
@@ -43,7 +43,6 @@ window.UserAvatar.getUserAvatar = async function () {
   }
 };
 
-// Função para atualizar foto de perfil
 window.UserAvatar.updateProfilePicture = async function (imageData) {
   try {
     const userData = await window.UserAuth.validateTokenExpiration();
@@ -64,11 +63,9 @@ window.UserAvatar.updateProfilePicture = async function (imageData) {
       throw new Error("Falha ao atualizar a foto de perfil");
     }
 
-    // Atualizar a interface com a nova foto em ambos os lugares
     const photoContent = `<img src="${imageData}" alt="Avatar" />`;
     window.UserAvatar.updatePhotoDisplay(photoContent);
 
-    // Mostrar mensagem de sucesso
     window.Notifications.showNotification(
       "Foto de perfil atualizada com sucesso!",
       "success"
@@ -85,7 +82,6 @@ window.UserAvatar.updateProfilePicture = async function (imageData) {
   }
 };
 
-// Função para remover foto de perfil
 window.UserAvatar.removeProfilePicture = async function () {
   try {
     const userData = await window.UserAuth.validateTokenExpiration();
@@ -106,11 +102,9 @@ window.UserAvatar.removeProfilePicture = async function () {
       throw new Error("Falha ao remover a foto de perfil");
     }
 
-    // Atualizar a interface em ambos os lugares
     const initialsContent = `<i class="fas fa-user"></i>`;
     window.UserAvatar.updatePhotoDisplay(initialsContent);
 
-    // Mostrar mensagem de sucesso
     window.Notifications.showNotification(
       "Foto de perfil removida com sucesso!",
       "success"
@@ -127,7 +121,6 @@ window.UserAvatar.removeProfilePicture = async function () {
   }
 };
 
-// Função para atualizar exibição da foto
 window.UserAvatar.updatePhotoDisplay = function (content) {
   const userAvatarElement = document.getElementById("userAvatar");
   const userPhotoPreviewElement = document.getElementById("userPhotoPreview");
@@ -141,7 +134,6 @@ window.UserAvatar.updatePhotoDisplay = function (content) {
   }
 };
 
-// Função para atualizar preview do avatar após recorte
 window.UserAvatar.updateAvatarPreview = function (croppedImage) {
   const avatarPreview = document.getElementById("avatarPreview");
   if (avatarPreview) {

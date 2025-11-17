@@ -1,4 +1,3 @@
-// Administration Transportadoras - Gerenciamento de transportadoras
 window.Administration = window.Administration || {};
 
 window.Administration.loadTransportadoras = async function () {
@@ -8,7 +7,6 @@ window.Administration.loadTransportadoras = async function () {
     );
     if (transportadoras) {
       window.Administration.state.transportadoras = transportadoras;
-      // Limpar dados filtrados ao recarregar
       window.Administration.state.filteredData.transportadoras = null;
       window.Administration.resetPagination("transportadoras");
       window.Administration.renderTransportadoras(transportadoras);
@@ -23,13 +21,11 @@ window.Administration.renderTransportadoras = function (transportadoras) {
   const tbody = document.querySelector("#transportadorasTable tbody");
   if (!tbody) return;
 
-  // Se transportadoras não foi passado, usar dados do state (pode ser filtrado)
   const dataToRender =
     transportadoras ||
     window.Administration.state.filteredData.transportadoras ||
     window.Administration.state.transportadoras;
 
-  // Aplicar paginação
   const { items, pagination } = window.Administration.getPaginatedData(
     dataToRender,
     "transportadoras"
@@ -99,7 +95,6 @@ window.Administration.renderTransportadoras = function (transportadoras) {
       });
     });
 
-  // Renderizar controles de paginação
   window.Administration.renderPagination(
     "transportadorasPagination",
     "transportadoras",
@@ -156,7 +151,6 @@ window.Administration.saveTransportadora = async function () {
     cnpj: document.getElementById("transportadoraCnpj").value || null,
     telefone: document.getElementById("transportadoraTelefone").value || null,
     email: document.getElementById("transportadoraEmail").value || null,
-    // ativa não é mais editável - será sempre true ao criar/editar
     ativa: true,
   };
 
@@ -189,12 +183,10 @@ window.Administration.saveTransportadora = async function () {
 
 window.Administration.deleteTransportadora = async function (id) {
   try {
-    // Buscar contagem de registros relacionados
     const counts = await window.Administration.apiRequest(
       `/transportadoras/${id}/count-related`
     );
 
-    // Buscar nome da transportadora para exibir na mensagem
     const transportadora = window.Administration.state.transportadoras.find(
       (t) => t.id_transportadora == id
     );
@@ -205,7 +197,6 @@ window.Administration.deleteTransportadora = async function (id) {
     const title = "Confirmar Desativação";
     const message = `Tem certeza que deseja desativar ${transportadoraNome}?`;
 
-    // Abrir modal de confirmação
     window.Administration.openDeleteConfirmModal(
       title,
       message,

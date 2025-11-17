@@ -1,4 +1,3 @@
-// Administration Sessions - Gerenciamento de sessões
 window.Administration = window.Administration || {};
 
 window.Administration.loadSessions = async function () {
@@ -6,7 +5,6 @@ window.Administration.loadSessions = async function () {
     const sessions = await window.Administration.apiRequest("/session/active");
     if (sessions) {
       window.Administration.state.sessions = sessions;
-      // Limpar dados filtrados ao recarregar
       window.Administration.state.filteredData.sessions = null;
       window.Administration.resetPagination("sessions");
       window.Administration.renderSessions(sessions);
@@ -21,13 +19,11 @@ window.Administration.renderSessions = function (sessions) {
   const tbody = document.querySelector("#sessionsTable tbody");
   if (!tbody) return;
 
-  // Se sessions não foi passado, usar dados do state (pode ser filtrado)
   const dataToRender =
     sessions ||
     window.Administration.state.filteredData.sessions ||
     window.Administration.state.sessions;
 
-  // Aplicar paginação
   const { items, pagination } = window.Administration.getPaginatedData(
     dataToRender,
     "sessions"
@@ -53,11 +49,9 @@ window.Administration.renderSessions = function (sessions) {
 
   tbody.innerHTML = items
     .map((session) => {
-      // Tentar diferentes formatos de data (createdAt, created_at)
       const createdAt = session.createdAt || session.created_at;
       const expiresAt = session.expiresAt || session.expires_at;
 
-      // Formatar datas
       let createdAtFormatted = "N/A";
       let expiresAtFormatted = "N/A";
 
@@ -83,12 +77,10 @@ window.Administration.renderSessions = function (sessions) {
         }
       }
 
-      // Tentar diferentes formatos de relacionamento com usuário
       const user = session.User || session.user;
       const userName = user?.name || "N/A";
       const userEmail = user?.email || "N/A";
 
-      // Tentar diferentes formatos de dispositivo (userAgent, device_info)
       const device = session.userAgent || session.device_info || "N/A";
 
       return `
@@ -109,7 +101,6 @@ window.Administration.renderSessions = function (sessions) {
     })
     .join("");
 
-  // Adicionar event listeners
   document.querySelectorAll(".terminate-session").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const sessionId = e.currentTarget.getAttribute("data-session-id");
@@ -117,7 +108,6 @@ window.Administration.renderSessions = function (sessions) {
     });
   });
 
-  // Renderizar controles de paginação
   window.Administration.renderPagination(
     "sessionsPagination",
     "sessions",

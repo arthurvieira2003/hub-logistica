@@ -1,21 +1,15 @@
-// Module Loader - Sistema de carregamento unificado
-// Versão: 2025-10-16 - Unificação de todos os loaders
-
 window.ModuleLoader = window.ModuleLoader || {};
 
-// Estado do carregador
 window.ModuleLoader.state = {
   loadedModules: new Set(),
   isLoading: false,
   moduleConfigs: new Map(),
 };
 
-// Configurações dos módulos (centralizadas)
 window.ModuleLoader.configs = {
-  // Configuração para módulos core (base)
   core: {
     basePath: "/javascripts",
-    dependencies: ["auth"], // UserProfile depende de AuthCore
+    dependencies: ["auth"],
     modules: [
       { name: "scriptLoader", path: "/utils/scriptLoader.js", priority: 1 },
       { name: "helpers", path: "/utils/helpers.js", priority: 2 },
@@ -31,7 +25,6 @@ window.ModuleLoader.configs = {
     ],
   },
 
-  // Configuração para módulos de autenticação
   auth: {
     basePath: "/javascripts/auth",
     dependencies: [],
@@ -47,7 +40,6 @@ window.ModuleLoader.configs = {
     ],
   },
 
-  // Configuração para módulos de login
   login: {
     basePath: "/javascripts/login",
     dependencies: ["auth"],
@@ -58,7 +50,6 @@ window.ModuleLoader.configs = {
     ],
   },
 
-  // Configuração para módulos de rastreamento
   rastreamento: {
     basePath: "/javascripts/rastreamento",
     dependencies: ["core"],
@@ -87,7 +78,6 @@ window.ModuleLoader.configs = {
     ],
   },
 
-  // Configuração para módulos administrativos
   admin: {
     basePath: "/javascripts/admin",
     dependencies: ["auth"],
@@ -95,7 +85,6 @@ window.ModuleLoader.configs = {
       { name: "adminAuth", path: "/auth/authMain.js", priority: 1 },
       { name: "adminUI", path: "/../auth/ui/authUI.js", priority: 2 },
       { name: "adminMain", path: "/adminMain.js", priority: 3 },
-      // Módulos de administração componentizados
       {
         name: "administrationState",
         path: "/state/administrationState.js",
@@ -172,12 +161,8 @@ window.ModuleLoader.configs = {
   },
 };
 
-/**
- * Carrega um script dinamicamente com verificação de duplicação
- */
 window.ModuleLoader.loadScript = function (src) {
   return new Promise((resolve, reject) => {
-    // Verificar se o script já foi carregado
     const existingScript = document.querySelector(`script[src="${src}"]`);
     if (existingScript) {
       resolve();
@@ -198,11 +183,7 @@ window.ModuleLoader.loadScript = function (src) {
   });
 };
 
-/**
- * Carrega múltiplos scripts em sequência respeitando prioridades
- */
 window.ModuleLoader.loadScripts = async function (scripts) {
-  // Ordenar por prioridade
   const sortedScripts = scripts.sort((a, b) => a.priority - b.priority);
 
   for (const script of sortedScripts) {
@@ -210,14 +191,10 @@ window.ModuleLoader.loadScripts = async function (scripts) {
       await window.ModuleLoader.loadScript(script.path);
     } catch (error) {
       console.error(`Erro ao carregar módulo ${script.name}:`, error);
-      // Continuar carregando outros módulos mesmo se um falhar
     }
   }
 };
 
-/**
- * Carrega um grupo de módulos com suas dependências
- */
 window.ModuleLoader.loadModuleGroup = async function (groupName) {
   try {
     const config = window.ModuleLoader.configs[groupName];
@@ -225,39 +202,30 @@ window.ModuleLoader.loadModuleGroup = async function (groupName) {
       throw new Error(`Configuração não encontrada para o grupo: ${groupName}`);
     }
 
-    // Carregar dependências primeiro
     if (config.dependencies && config.dependencies.length > 0) {
       for (const dependency of config.dependencies) {
         await window.ModuleLoader.loadModuleGroup(dependency);
       }
     }
 
-    // Construir caminhos completos
     const basePath = window.location.origin + config.basePath;
     const scripts = config.modules.map((module) => ({
       ...module,
       path: basePath + module.path,
     }));
 
-    // Carregar módulos do grupo
     await window.ModuleLoader.loadScripts(scripts);
   } catch (error) {
     console.error(`Erro ao carregar grupo ${groupName}:`, error);
-    // Não fazer throw para evitar loops - continuar com outros grupos
   }
 };
 
-/**
- * Carrega módulos específicos para a página de login
- */
 window.ModuleLoader.loadLoginPage = async function () {
   try {
     window.ModuleLoader.state.isLoading = true;
 
-    // Carregar módulos de autenticação primeiro
     await window.ModuleLoader.loadModuleGroup("auth");
 
-    // Carregar módulos de login
     await window.ModuleLoader.loadModuleGroup("login");
 
     window.ModuleLoader.state.isLoading = false;
@@ -268,22 +236,16 @@ window.ModuleLoader.loadLoginPage = async function () {
   }
 };
 
-/**
- * Verifica autenticação na página raiz e redireciona apropriadamente
- */
 window.ModuleLoader.checkAuthAndRedirect = async function () {
   try {
-    // Carregar módulos de autenticação primeiro
     await window.ModuleLoader.loadModuleGroup("auth");
 
-    // Verificar se há token nos cookies
     const token = window.AuthCore.getToken();
     if (!token) {
       window.ModuleLoader.loadLoginPage();
       return;
     }
 
-    // Verificar se o token é válido
     if (window.AuthCore && window.AuthCore.validateToken) {
       const userData = await window.AuthCore.validateToken(token);
       if (userData && !window.AuthCore.isTokenExpired(userData)) {
@@ -292,7 +254,6 @@ window.ModuleLoader.checkAuthAndRedirect = async function () {
       }
     }
 
-    // Token inválido ou expirado, carregar página de login
     window.AuthCore.removeToken();
     window.ModuleLoader.loadLoginPage();
   } catch (error) {
@@ -302,14 +263,10 @@ window.ModuleLoader.checkAuthAndRedirect = async function () {
   }
 };
 
-/**
- * Carrega módulos específicos para rastreamento
- */
 window.ModuleLoader.loadRastreamentoPage = async function () {
   try {
     window.ModuleLoader.state.isLoading = true;
 
-    // Carregar módulos de rastreamento
     await window.ModuleLoader.loadModuleGroup("rastreamento");
 
     window.ModuleLoader.state.isLoading = false;
@@ -320,14 +277,10 @@ window.ModuleLoader.loadRastreamentoPage = async function () {
   }
 };
 
-/**
- * Carrega módulos específicos para administração
- */
 window.ModuleLoader.loadAdminPage = async function () {
   try {
     window.ModuleLoader.state.isLoading = true;
 
-    // Carregar módulos administrativos
     await window.ModuleLoader.loadModuleGroup("admin");
 
     window.ModuleLoader.state.isLoading = false;
@@ -338,20 +291,14 @@ window.ModuleLoader.loadAdminPage = async function () {
   }
 };
 
-/**
- * Carrega módulos específicos para a página home
- */
 window.ModuleLoader.loadHomePage = async function () {
   try {
     window.ModuleLoader.state.isLoading = true;
 
-    // Carregar módulos core (inclui appInitializer)
     await window.ModuleLoader.loadModuleGroup("core");
 
-    // Aguardar um pouco para garantir que todos os scripts foram executados
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Inicializar a aplicação
     if (window.AppInitializer && window.AppInitializer.init) {
       await window.AppInitializer.init();
     } else {
@@ -366,16 +313,10 @@ window.ModuleLoader.loadHomePage = async function () {
   }
 };
 
-/**
- * Verifica se um módulo está carregado
- */
 window.ModuleLoader.isModuleLoaded = function (modulePath) {
   return window.ModuleLoader.state.loadedModules.has(modulePath);
 };
 
-/**
- * Obtém status do carregador
- */
 window.ModuleLoader.getStatus = function () {
   return {
     isLoading: window.ModuleLoader.state.isLoading,
@@ -384,17 +325,12 @@ window.ModuleLoader.getStatus = function () {
   };
 };
 
-/**
- * Limpa o estado do carregador
- */
 window.ModuleLoader.clearState = function () {
   window.ModuleLoader.state.loadedModules.clear();
   window.ModuleLoader.state.isLoading = false;
 };
 
-// Exportar para uso global
 window.ModuleLoader.init = function () {
-  // Detectar página atual e carregar módulos apropriados
   const currentPath = window.location.pathname;
 
   if (currentPath === "/") {
@@ -408,7 +344,6 @@ window.ModuleLoader.init = function () {
   }
 };
 
-// Inicializar automaticamente quando o DOM estiver pronto
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", window.ModuleLoader.init);
 } else {

@@ -1,13 +1,11 @@
-// Administration Pagination - Sistema de paginação reutilizável
 window.Administration = window.Administration || {};
 
-// Configuração padrão de paginação
 const ITEMS_PER_PAGE = 10;
 
-/**
- * Inicializa a paginação para uma entidade
- */
-window.Administration.initPagination = function (entityType, itemsPerPage = ITEMS_PER_PAGE) {
+window.Administration.initPagination = function (
+  entityType,
+  itemsPerPage = ITEMS_PER_PAGE
+) {
   if (!window.Administration.state.pagination) {
     window.Administration.state.pagination = {};
   }
@@ -22,9 +20,6 @@ window.Administration.initPagination = function (entityType, itemsPerPage = ITEM
   }
 };
 
-/**
- * Calcula os dados paginados
- */
 window.Administration.getPaginatedData = function (data, entityType) {
   if (!data || data.length === 0) {
     return { items: [], pagination: null };
@@ -36,8 +31,10 @@ window.Administration.getPaginatedData = function (data, entityType) {
   pagination.totalItems = data.length;
   pagination.totalPages = Math.ceil(data.length / pagination.itemsPerPage);
 
-  // Garantir que a página atual não exceda o total de páginas
-  if (pagination.currentPage > pagination.totalPages && pagination.totalPages > 0) {
+  if (
+    pagination.currentPage > pagination.totalPages &&
+    pagination.totalPages > 0
+  ) {
     pagination.currentPage = pagination.totalPages;
   }
 
@@ -48,10 +45,11 @@ window.Administration.getPaginatedData = function (data, entityType) {
   return { items, pagination };
 };
 
-/**
- * Renderiza os controles de paginação
- */
-window.Administration.renderPagination = function (containerId, entityType, onPageChange) {
+window.Administration.renderPagination = function (
+  containerId,
+  entityType,
+  onPageChange
+) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -88,7 +86,6 @@ window.Administration.renderPagination = function (containerId, entityType, onPa
         <div class="pagination-pages">
   `;
 
-  // Calcular quais páginas mostrar
   const maxVisiblePages = 5;
   let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
   let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
@@ -97,7 +94,6 @@ window.Administration.renderPagination = function (containerId, entityType, onPa
     startPage = Math.max(1, endPage - maxVisiblePages + 1);
   }
 
-  // Primeira página
   if (startPage > 1) {
     paginationHTML += `
       <button class="pagination-page" data-page="1">1</button>
@@ -105,7 +101,6 @@ window.Administration.renderPagination = function (containerId, entityType, onPa
     `;
   }
 
-  // Páginas visíveis
   for (let i = startPage; i <= endPage; i++) {
     paginationHTML += `
       <button 
@@ -116,10 +111,13 @@ window.Administration.renderPagination = function (containerId, entityType, onPa
     `;
   }
 
-  // Última página
   if (endPage < totalPages) {
     paginationHTML += `
-      ${endPage < totalPages - 1 ? '<span class="pagination-ellipsis">...</span>' : ""}
+      ${
+        endPage < totalPages - 1
+          ? '<span class="pagination-ellipsis">...</span>'
+          : ""
+      }
       <button class="pagination-page" data-page="${totalPages}">${totalPages}</button>
     `;
   }
@@ -146,33 +144,43 @@ window.Administration.renderPagination = function (containerId, entityType, onPa
 
   container.innerHTML = paginationHTML;
 
-  // Adicionar event listeners
-  container.querySelectorAll(".pagination-btn, .pagination-page").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      const action = btn.getAttribute("data-action");
-      const page = btn.getAttribute("data-page");
+  container
+    .querySelectorAll(".pagination-btn, .pagination-page")
+    .forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const action = btn.getAttribute("data-action");
+        const page = btn.getAttribute("data-page");
 
-      if (btn.disabled) return;
+        if (btn.disabled) return;
 
-      if (action === "first") {
-        window.Administration.goToPage(entityType, 1, onPageChange);
-      } else if (action === "prev") {
-        window.Administration.goToPage(entityType, currentPage - 1, onPageChange);
-      } else if (action === "next") {
-        window.Administration.goToPage(entityType, currentPage + 1, onPageChange);
-      } else if (action === "last") {
-        window.Administration.goToPage(entityType, totalPages, onPageChange);
-      } else if (page) {
-        window.Administration.goToPage(entityType, parseInt(page), onPageChange);
-      }
+        if (action === "first") {
+          window.Administration.goToPage(entityType, 1, onPageChange);
+        } else if (action === "prev") {
+          window.Administration.goToPage(
+            entityType,
+            currentPage - 1,
+            onPageChange
+          );
+        } else if (action === "next") {
+          window.Administration.goToPage(
+            entityType,
+            currentPage + 1,
+            onPageChange
+          );
+        } else if (action === "last") {
+          window.Administration.goToPage(entityType, totalPages, onPageChange);
+        } else if (page) {
+          window.Administration.goToPage(
+            entityType,
+            parseInt(page),
+            onPageChange
+          );
+        }
+      });
     });
-  });
 };
 
-/**
- * Navega para uma página específica
- */
 window.Administration.goToPage = function (entityType, page, onPageChange) {
   const pagination = window.Administration.state.pagination?.[entityType];
   if (!pagination) return;
@@ -184,12 +192,8 @@ window.Administration.goToPage = function (entityType, page, onPageChange) {
   }
 };
 
-/**
- * Reseta a paginação para a primeira página
- */
 window.Administration.resetPagination = function (entityType) {
   if (window.Administration.state.pagination?.[entityType]) {
     window.Administration.state.pagination[entityType].currentPage = 1;
   }
 };
-

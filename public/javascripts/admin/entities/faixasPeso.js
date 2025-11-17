@@ -1,4 +1,3 @@
-// Administration Faixas de Peso - Gerenciamento de faixas de peso
 window.Administration = window.Administration || {};
 
 window.Administration.loadFaixasPeso = async function () {
@@ -6,7 +5,6 @@ window.Administration.loadFaixasPeso = async function () {
     const faixas = await window.Administration.apiRequest("/faixas-peso");
     if (faixas) {
       window.Administration.state.faixasPeso = faixas;
-      // Limpar dados filtrados ao recarregar
       window.Administration.state.filteredData.faixasPeso = null;
       window.Administration.resetPagination("faixasPeso");
       window.Administration.renderFaixasPeso(faixas);
@@ -21,13 +19,11 @@ window.Administration.renderFaixasPeso = function (faixas) {
   const tbody = document.querySelector("#faixasPesoTable tbody");
   if (!tbody) return;
 
-  // Se faixas não foi passado, usar dados do state (pode ser filtrado)
   const dataToRender =
     faixas ||
     window.Administration.state.filteredData.faixasPeso ||
     window.Administration.state.faixasPeso;
 
-  // Aplicar paginação
   const { items, pagination } = window.Administration.getPaginatedData(
     dataToRender,
     "faixasPeso"
@@ -98,7 +94,6 @@ window.Administration.renderFaixasPeso = function (faixas) {
       });
     });
 
-  // Renderizar controles de paginação
   window.Administration.renderPagination(
     "faixasPesoPagination",
     "faixasPeso",
@@ -149,7 +144,6 @@ window.Administration.saveFaixaPeso = async function () {
     peso_maximo: parseFloat(document.getElementById("faixaPesoMaximo").value),
     descricao: document.getElementById("faixaPesoDescricao").value,
     ordem_faixa: parseInt(document.getElementById("faixaPesoOrdem").value),
-    // ativa não é mais editável - será sempre true ao criar/editar
     ativa: true,
   };
 
@@ -182,12 +176,10 @@ window.Administration.saveFaixaPeso = async function () {
 
 window.Administration.deleteFaixaPeso = async function (id) {
   try {
-    // Buscar contagem de registros relacionados
     const counts = await window.Administration.apiRequest(
       `/faixas-peso/${id}/count-related`
     );
 
-    // Buscar descrição da faixa para exibir na mensagem
     const faixa = window.Administration.state.faixasPeso.find(
       (f) => f.id_faixa == id
     );
@@ -198,7 +190,6 @@ window.Administration.deleteFaixaPeso = async function (id) {
     const title = "Confirmar Desativação";
     const message = `Tem certeza que deseja desativar ${faixaNome}? O registro será desativado e não aparecerá mais nas listagens.`;
 
-    // Abrir modal de confirmação
     window.Administration.openDeleteConfirmModal(
       title,
       message,

@@ -1,4 +1,3 @@
-// Administration Tabs - Gerenciamento de abas
 window.Administration = window.Administration || {};
 
 window.Administration.initTabs = function () {
@@ -9,11 +8,9 @@ window.Administration.initTabs = function () {
     tab.addEventListener("click", () => {
       const tabName = tab.getAttribute("data-tab");
 
-      // Remover active de todas as tabs
       tabs.forEach((t) => t.classList.remove("active"));
       contentTabs.forEach((ct) => ct.classList.remove("active"));
 
-      // Adicionar active na tab clicada
       tab.classList.add("active");
       const contentTab = document.getElementById(`${tabName}Tab`);
       if (contentTab) {
@@ -22,7 +19,6 @@ window.Administration.initTabs = function () {
 
       window.Administration.state.currentTab = tabName;
 
-      // Carregar dados da tab
       if (tabName === "users") {
         window.Administration.loadUsers();
       } else if (tabName === "sessions") {
@@ -43,4 +39,3 @@ window.Administration.initTabs = function () {
     });
   });
 };
-

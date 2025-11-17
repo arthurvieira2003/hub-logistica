@@ -1,4 +1,3 @@
-// Administration Estados - Gerenciamento de estados
 window.Administration = window.Administration || {};
 
 window.Administration.loadEstados = async function () {
@@ -6,7 +5,6 @@ window.Administration.loadEstados = async function () {
     const estados = await window.Administration.apiRequest("/estados");
     if (estados) {
       window.Administration.state.estados = estados;
-      // Limpar dados filtrados ao recarregar
       window.Administration.state.filteredData.estados = null;
       window.Administration.resetPagination("estados");
       window.Administration.renderEstados(estados);
@@ -21,11 +19,15 @@ window.Administration.renderEstados = function (estados) {
   const tbody = document.querySelector("#estadosTable tbody");
   if (!tbody) return;
 
-  // Se estados não foi passado, usar dados do state (pode ser filtrado)
-  const dataToRender = estados || window.Administration.state.filteredData.estados || window.Administration.state.estados;
+  const dataToRender =
+    estados ||
+    window.Administration.state.filteredData.estados ||
+    window.Administration.state.estados;
 
-  // Aplicar paginação
-  const { items, pagination } = window.Administration.getPaginatedData(dataToRender, "estados");
+  const { items, pagination } = window.Administration.getPaginatedData(
+    dataToRender,
+    "estados"
+  );
 
   if (items.length === 0) {
     tbody.innerHTML = `
@@ -33,9 +35,15 @@ window.Administration.renderEstados = function (estados) {
         <td colspan="4" class="loading-data">Nenhum estado encontrado</td>
       </tr>
     `;
-    window.Administration.renderPagination("estadosPagination", "estados", () => {
-      window.Administration.renderEstados(window.Administration.state.estados);
-    });
+    window.Administration.renderPagination(
+      "estadosPagination",
+      "estados",
+      () => {
+        window.Administration.renderEstados(
+          window.Administration.state.estados
+        );
+      }
+    );
     return;
   }
 
@@ -77,9 +85,10 @@ window.Administration.renderEstados = function (estados) {
       });
     });
 
-  // Renderizar controles de paginação
   window.Administration.renderPagination("estadosPagination", "estados", () => {
-    const dataToRender = window.Administration.state.filteredData.estados || window.Administration.state.estados;
+    const dataToRender =
+      window.Administration.state.filteredData.estados ||
+      window.Administration.state.estados;
     window.Administration.renderEstados(dataToRender);
   });
 };
@@ -145,32 +154,39 @@ window.Administration.saveEstado = async function () {
 
 window.Administration.deleteEstado = async function (id) {
   try {
-    // Buscar contagem de registros relacionados
-    const counts = await window.Administration.apiRequest(`/estados/${id}/count-related`);
-    
-    // Buscar nome do estado para exibir na mensagem
-    const estado = window.Administration.state.estados.find(e => e.id_estado == id);
-    const estadoNome = estado ? `${estado.uf} - ${estado.nome_estado}` : "este estado";
-    
+    const counts = await window.Administration.apiRequest(
+      `/estados/${id}/count-related`
+    );
+
+    const estado = window.Administration.state.estados.find(
+      (e) => e.id_estado == id
+    );
+    const estadoNome = estado
+      ? `${estado.uf} - ${estado.nome_estado}`
+      : "este estado";
+
     const title = "Confirmar Exclusão de Estado";
     const message = `Tem certeza que deseja excluir ${estadoNome}? Esta ação não pode ser desfeita!`;
-    
-    // Abrir modal de confirmação
-    window.Administration.openDeleteConfirmModal(title, message, counts, async () => {
-      try {
-        await window.Administration.apiRequest(`/estados/${id}`, {
-          method: "DELETE",
-        });
-        window.Administration.showSuccess("Estado excluído com sucesso");
-        window.Administration.loadEstados();
-      } catch (error) {
-        console.error("❌ Erro ao excluir estado:", error);
-        window.Administration.showError("Erro ao excluir estado");
+
+    window.Administration.openDeleteConfirmModal(
+      title,
+      message,
+      counts,
+      async () => {
+        try {
+          await window.Administration.apiRequest(`/estados/${id}`, {
+            method: "DELETE",
+          });
+          window.Administration.showSuccess("Estado excluído com sucesso");
+          window.Administration.loadEstados();
+        } catch (error) {
+          console.error("❌ Erro ao excluir estado:", error);
+          window.Administration.showError("Erro ao excluir estado");
+        }
       }
-    });
+    );
   } catch (error) {
     console.error("❌ Erro ao buscar informações de exclusão:", error);
     window.Administration.showError("Erro ao buscar informações de exclusão");
   }
 };
-

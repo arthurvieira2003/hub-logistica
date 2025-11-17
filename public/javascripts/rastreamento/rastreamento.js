@@ -1,17 +1,5 @@
-/**
- * Módulo Principal de Rastreamento
- * Orquestra todos os módulos e inicializa a interface de rastreamento
- */
-
-// Namespace principal
 window.RastreamentoMain = window.RastreamentoMain || {};
-
-/**
- * Inicializa a interface de rastreamento
- * @param {HTMLElement} contentElement - Elemento onde será renderizado o conteúdo
- */
 window.RastreamentoMain.initRastreamento = async function (contentElement) {
-  // Verificar se contentElement foi fornecido, se não, tentar encontrar o trackingView
   if (!contentElement) {
     contentElement = document.getElementById("trackingView");
     if (!contentElement) {
@@ -22,7 +10,6 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
     }
   }
 
-  // Carregar Font Awesome se não estiver disponível
   if (!document.querySelector('link[href*="font-awesome"]')) {
     const fontAwesome = document.createElement("link");
     fontAwesome.rel = "stylesheet";
@@ -31,7 +18,6 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
     document.head.appendChild(fontAwesome);
   }
 
-  // Verificar se os módulos estão carregados
   if (!window.RastreamentoAPI) {
     console.error("❌ RastreamentoAPI não encontrado");
     return;
@@ -45,7 +31,6 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
     return;
   }
 
-  // Carregar dados reais da Ouro Negro, Princesa e outras transportadoras antes de processar a interface
   try {
     await window.RastreamentoAPI.carregarDadosOuroNegro();
 
@@ -56,7 +41,6 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
     console.error("❌ Erro ao carregar dados:", error);
   }
 
-  // Processar as notas para identificar as atrasadas
   let totalNotasAtrasadas = 0;
   let todasNotas = [];
 
@@ -68,7 +52,6 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
     transportadora.notas.forEach((nota) => {
       if (window.RastreamentoUtils.verificarNotaAtrasada(nota)) {
         nota.atrasada = true;
-        // Manter o status original para referência, mas exibir como "Atrasado"
         nota.statusExibicao = "Atrasado";
         notasAtrasadas++;
         totalNotasAtrasadas++;
@@ -77,7 +60,6 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
         nota.statusExibicao = nota.status;
       }
 
-      // Adicionar referência à transportadora para uso na tabela
       nota.transportadora = {
         id: transportadora.id,
         nome: transportadora.nome,
@@ -85,49 +67,39 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
         logo: transportadora.logo,
       };
 
-      // Adicionar à lista de todas as notas para a visualização em tabela
       todasNotas.push(nota);
     });
 
-    // Adicionar contador de notas atrasadas à transportadora
     transportadora.notasAtrasadas = notasAtrasadas;
 
-    // Ordenar as notas: primeiro as atrasadas, depois por data de previsão
     transportadora.notas.sort((a, b) => {
       if (a.atrasada && !b.atrasada) return -1;
       if (!a.atrasada && b.atrasada) return 1;
 
-      // Se ambas têm o mesmo status de atraso, ordenar por data de previsão
       const dataA = new Date(a.previsaoEntrega);
       const dataB = new Date(b.previsaoEntrega);
       return dataA - dataB;
     });
   });
 
-  // Ordenar todas as notas para a visualização em tabela
   todasNotas.sort((a, b) => {
     if (a.atrasada && !b.atrasada) return -1;
     if (!a.atrasada && b.atrasada) return 1;
 
-    // Se ambas têm o mesmo status de atraso, ordenar por data de previsão
     const dataA = new Date(a.previsaoEntrega);
     const dataB = new Date(b.previsaoEntrega);
     return dataA - dataB;
   });
 
-  // Verificar se existe trackingView
   const trackingView = document.getElementById("trackingView");
 
   if (trackingView) {
-    // Limpar o conteúdo existente do trackingView para evitar duplicação
     contentElement.innerHTML = "";
 
-    // Obter todas as notas de todas as transportadoras
     let todasNotas = [];
     transportadoras.forEach((transportadora) => {
       if (transportadora.notas && transportadora.notas.length > 0) {
         transportadora.notas.forEach((nota) => {
-          // Adicionar referência à transportadora para uso na tabela
           nota.transportadora = {
             id: transportadora.id,
             nome: transportadora.nome,
@@ -140,9 +112,7 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
     });
 
     if (todasNotas.length > 0) {
-      // Ordenar notas por data de faturamento (decrescente) e número da nota (decrescente)
       todasNotas.sort((a, b) => {
-        // Primeiro critério: data de faturamento (decrescente)
         const dataA = a.docDate
           ? new Date(a.docDate.split(" ")[0])
           : new Date(0);
@@ -152,11 +122,9 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
         if (dataB - dataA !== 0) {
           return dataB - dataA;
         }
-        // Segundo critério: número da nota (decrescente)
         return parseInt(b.numero) - parseInt(a.numero);
       });
 
-      // Criar uma tabela simples
       const tabelaSimples = document.createElement("div");
       tabelaSimples.style.transition = "all 0.3s ease";
       tabelaSimples.style.animation = "fadeIn 0.5s ease-out forwards";
@@ -166,13 +134,10 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
 
       trackingView.appendChild(tabelaSimples);
 
-      // Inicializar DataTable
       window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
 
-      // Configurar eventos do datepicker
       window.RastreamentoEvents.configurarEventosData();
     } else {
-      // Exibir mensagem quando não há notas, mas incluir o datepicker
       const containerVazio = document.createElement("div");
       containerVazio.style.transition = "all 0.3s ease";
       containerVazio.style.animation = "fadeIn 0.5s ease-out forwards";
@@ -182,12 +147,10 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
 
       contentElement.appendChild(containerVazio);
 
-      // Configurar eventos do datepicker mesmo quando não há notas
       window.RastreamentoEvents.configurarEventosData();
     }
   }
 
-  // Inicializar os eventos após o HTML ser inserido
   setTimeout(() => {
     try {
       if (
@@ -205,9 +168,6 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
   }, 100);
 };
 
-/**
- * Re-renderiza a tabela com os dados atualizados
- */
 window.RastreamentoMain.reRenderizarTabela = async function () {
   const trackingView = document.getElementById("trackingView");
   if (!trackingView) {
@@ -215,17 +175,14 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
     return;
   }
 
-  // Limpar conteúdo existente
   trackingView.innerHTML = "";
 
-  // Obter todas as notas atualizadas
   const transportadoras = window.RastreamentoConfig.transportadoras;
   let todasNotas = [];
 
   transportadoras.forEach((transportadora) => {
     if (transportadora.notas && transportadora.notas.length > 0) {
       transportadora.notas.forEach((nota) => {
-        // Adicionar referência à transportadora para uso na tabela
         nota.transportadora = {
           id: transportadora.id,
           nome: transportadora.nome,
@@ -238,7 +195,6 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
   });
 
   if (todasNotas.length > 0) {
-    // Ordenar notas por data de faturamento (decrescente) e número da nota (decrescente)
     todasNotas.sort((a, b) => {
       const dataA = a.docDate ? new Date(a.docDate.split(" ")[0]) : new Date(0);
       const dataB = b.docDate ? new Date(b.docDate.split(" ")[0]) : new Date(0);
@@ -248,7 +204,6 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
       return parseInt(b.numero) - parseInt(a.numero);
     });
 
-    // Criar nova tabela
     const tabelaSimples = document.createElement("div");
     tabelaSimples.style.transition = "all 0.3s ease";
     tabelaSimples.style.animation = "fadeIn 0.5s ease-out forwards";
@@ -258,13 +213,10 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
 
     trackingView.appendChild(tabelaSimples);
 
-    // Inicializar DataTable
     window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
 
-    // Configurar eventos do datepicker
     window.RastreamentoEvents.configurarEventosData();
   } else {
-    // Exibir mensagem quando não há notas
     const containerVazio = document.createElement("div");
     containerVazio.style.transition = "all 0.3s ease";
     containerVazio.style.animation = "fadeIn 0.5s ease-out forwards";
@@ -274,13 +226,10 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
 
     trackingView.appendChild(containerVazio);
 
-    // Configurar eventos do datepicker mesmo quando não há notas
-
     window.RastreamentoEvents.configurarEventosData();
   }
 };
 
-// Exportar as funções para uso global
 window.initRastreamento = window.RastreamentoMain.initRastreamento;
 window.reRenderizarTabela = window.RastreamentoMain.reRenderizarTabela;
 window.animateCards = window.RastreamentoEvents.animateCards;

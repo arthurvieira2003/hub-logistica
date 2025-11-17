@@ -1,15 +1,8 @@
-/**
- * Testes para RastreamentoConfig
- * Testa configurações de transportadoras e utilitários
- */
-
-// Carregar módulo usando require() para permitir instrumentação do Jest
 const configPath = require.resolve(
   "../../../../public/javascripts/rastreamento/config/transportadoras.js"
 );
 
 beforeAll(() => {
-  // Usar require() em vez de eval() para permitir instrumentação
   require(configPath);
 });
 
@@ -90,7 +83,6 @@ describe("RastreamentoConfig", () => {
     test("deve ter cores no formato rgba válido", () => {
       Object.values(window.RastreamentoConfig.coresTransportadoras).forEach(
         (cor) => {
-          // Regex atualizada para permitir números decimais (com ponto)
           expect(cor).toMatch(/^rgba\(\d+,\s*\d+,\s*\d+,\s*[\d.]+\)$/);
         }
       );
@@ -187,9 +179,8 @@ describe("RastreamentoConfig", () => {
       const cores = window.RastreamentoConfig.coresTransportadoras;
 
       transportadoras.forEach((transportadora) => {
-        // Verificar se existe cor correspondente ou se usa cor padrão
         const temCor = cores.hasOwnProperty(transportadora.nome);
-        expect(temCor || true).toBe(true); // Sempre passa, mas verifica se existe
+        expect(temCor || true).toBe(true);
       });
     });
   });

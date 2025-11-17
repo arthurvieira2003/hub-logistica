@@ -1,4 +1,3 @@
-// Administration Rotas - Gerenciamento de rotas
 window.Administration = window.Administration || {};
 
 window.Administration.loadRotas = async function () {
@@ -6,7 +5,6 @@ window.Administration.loadRotas = async function () {
     const rotas = await window.Administration.apiRequest("/rotas");
     if (rotas) {
       window.Administration.state.rotas = rotas;
-      // Limpar dados filtrados ao recarregar
       window.Administration.state.filteredData.rotas = null;
       window.Administration.resetPagination("rotas");
       window.Administration.renderRotas(rotas);
@@ -21,13 +19,11 @@ window.Administration.renderRotas = function (rotas) {
   const tbody = document.querySelector("#rotasTable tbody");
   if (!tbody) return;
 
-  // Se rotas não foi passado, usar dados do state (pode ser filtrado)
   const dataToRender =
     rotas ||
     window.Administration.state.filteredData.rotas ||
     window.Administration.state.rotas;
 
-  // Aplicar paginação
   const { items, pagination } = window.Administration.getPaginatedData(
     dataToRender,
     "rotas"
@@ -103,7 +99,6 @@ window.Administration.renderRotas = function (rotas) {
       });
     });
 
-  // Renderizar controles de paginação
   window.Administration.renderPagination("rotasPagination", "rotas", () => {
     const dataToRender =
       window.Administration.state.filteredData.rotas ||
@@ -119,7 +114,6 @@ window.Administration.openRotaModal = async function (id = null) {
     return;
   }
 
-  // Carregar cidades para os selects
   if (window.Administration.state.cidades.length === 0) {
     await window.Administration.loadCidades();
   }
@@ -176,7 +170,6 @@ window.Administration.saveRota = async function () {
     id_cidade_origem: origem,
     id_cidade_destino: destino,
     observacoes: document.getElementById("rotaObservacoes").value || null,
-    // ativa não é mais editável - será sempre true ao criar/editar
     ativa: true,
   };
 
@@ -207,12 +200,10 @@ window.Administration.saveRota = async function () {
 
 window.Administration.deleteRota = async function (id) {
   try {
-    // Buscar contagem de registros relacionados
     const counts = await window.Administration.apiRequest(
       `/rotas/${id}/count-related`
     );
 
-    // Buscar informações da rota para exibir na mensagem
     const rota = window.Administration.state.rotas.find((r) => r.id_rota == id);
     let rotaNome = "esta rota";
     if (rota) {
@@ -226,7 +217,6 @@ window.Administration.deleteRota = async function (id) {
     const title = "Confirmar Desativação";
     const message = `Tem certeza que deseja desativar a rota ${rotaNome}? O registro será desativado e não aparecerá mais nas listagens.`;
 
-    // Abrir modal de confirmação
     window.Administration.openDeleteConfirmModal(
       title,
       message,

@@ -1,9 +1,5 @@
-// Namespace unificado para interface de autenticação
 window.AuthUI = window.AuthUI || {};
 
-/**
- * Mostra indicador de carregamento durante validação
- */
 window.AuthUI.showLoading = function (message = "Carregando...") {
   if (!document.body) {
     document.addEventListener("DOMContentLoaded", () =>
@@ -12,7 +8,6 @@ window.AuthUI.showLoading = function (message = "Carregando...") {
     return;
   }
 
-  // Verificar se já existe um overlay
   if (document.getElementById("auth-loading-overlay")) {
     return;
   }
@@ -55,7 +50,6 @@ window.AuthUI.showLoading = function (message = "Carregando...") {
     </div>
   `;
 
-  // Adicionar CSS da animação se não existir
   if (!document.querySelector("#auth-loading-styles")) {
     const style = document.createElement("style");
     style.id = "auth-loading-styles";
@@ -70,13 +64,9 @@ window.AuthUI.showLoading = function (message = "Carregando...") {
 
   document.body.appendChild(overlay);
 
-  // Timeout de segurança para garantir que o overlay será removido depois de 10 segundos
   setTimeout(window.AuthUI.hideLoading, 10000);
 };
 
-/**
- * Remove o indicador de carregamento
- */
 window.AuthUI.hideLoading = function () {
   if (!document.body) {
     document.addEventListener("DOMContentLoaded", window.AuthUI.hideLoading);
@@ -89,9 +79,6 @@ window.AuthUI.hideLoading = function () {
   }
 };
 
-/**
- * Remove overlay de carregamento se existir (usado por outros scripts)
- */
 window.AuthUI.removeExistingOverlay = function () {
   const authLoadingOverlay = document.getElementById("auth-loading-overlay");
   if (authLoadingOverlay) {
@@ -99,17 +86,12 @@ window.AuthUI.removeExistingOverlay = function () {
   }
 };
 
-/**
- * Mostra notificação de erro de autenticação
- */
 window.AuthUI.showAuthError = function (message) {
-  // Verificar se já existe uma notificação e removê-la
   const existingNotification = document.querySelector(".auth-notification");
   if (existingNotification) {
     existingNotification.remove();
   }
 
-  // Criar elemento de notificação
   const notification = document.createElement("div");
   notification.className = "auth-notification auth-notification-error";
   notification.style.cssText = `
@@ -150,10 +132,8 @@ window.AuthUI.showAuthError = function (message) {
     ">&times;</button>
   `;
 
-  // Adicionar ao corpo do documento
   document.body.appendChild(notification);
 
-  // Adicionar evento para fechar a notificação
   const closeButton = notification.querySelector("button");
   closeButton.addEventListener("click", () => {
     notification.style.opacity = "0";
@@ -165,7 +145,6 @@ window.AuthUI.showAuthError = function (message) {
     }, 300);
   });
 
-  // Remover automaticamente após 5 segundos
   setTimeout(() => {
     if (document.body.contains(notification)) {
       notification.style.opacity = "0";
@@ -178,16 +157,10 @@ window.AuthUI.showAuthError = function (message) {
     }
   }, 5000);
 
-  // Animar entrada
   setTimeout(() => {
     notification.style.opacity = "1";
     notification.style.transform = "translateX(0)";
   }, 10);
 };
 
-// ============================================================================
-// COMPATIBILIDADE COM CÓDIGO EXISTENTE
-// ============================================================================
-
-// Manter compatibilidade com AdminAuthUI (alias para AuthUI)
 window.AdminAuthUI = window.AuthUI;

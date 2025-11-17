@@ -1,17 +1,5 @@
-/**
- * Renderizador de Modal de Detalhes
- * Contém funções para renderizar o conteúdo do modal de detalhes da nota
- */
-
-// Namespace para renderizadores de modal
 window.RastreamentoModalRenderers = window.RastreamentoModalRenderers || {};
 
-/**
- * Renderiza o timeline de rastreamento
- * @param {Array} historico - Array com o histórico de ocorrências
- * @param {Object} nota - Objeto da nota
- * @returns {string} HTML do timeline
- */
 window.RastreamentoModalRenderers.renderizarTimeline = function (
   historico,
   nota
@@ -24,16 +12,14 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
     `;
   }
 
-  // Função para extrair cidade do campo obs da Princesa
   const extrairCidadeDaObs = (obs) => {
     if (!obs) return null;
 
-    // Padrões comuns na Princesa - mais específicos
     const padroes = [
-      /Saida de ([A-ZÁÊÇÕ][a-záêçõ\s]+(?:DO|DA|DOS|DAS)?)\s+em/i, // "Saida de CURITIBA em"
-      /chegada na base ([A-ZÁÊÇÕ][a-záêçõ\s]+(?:DO|DA|DOS|DAS)?)\s+em/i, // "chegada na base SAO MATEUS DO SUL em"
-      /base ([A-ZÁÊÇÕ][a-záêçõ\s]+(?:DO|DA|DOS|DAS)?)\s+em/i, // "base UNIAO DA VITORIA em"
-      /([A-ZÁÊÇÕ][a-záêçõ\s]+(?:DO|DA|DOS|DAS)?)\s*-\s*[A-Z]{2}/i, // "CIDADE - UF"
+      /Saida de ([A-ZÁÊÇÕ][a-záêçõ\s]+(?:DO|DA|DOS|DAS)?)\s+em/i,
+      /chegada na base ([A-ZÁÊÇÕ][a-záêçõ\s]+(?:DO|DA|DOS|DAS)?)\s+em/i,
+      /base ([A-ZÁÊÇÕ][a-záêçõ\s]+(?:DO|DA|DOS|DAS)?)\s+em/i,
+      /([A-ZÁÊÇÕ][a-záêçõ\s]+(?:DO|DA|DOS|DAS)?)\s*-\s*[A-Z]{2}/i,
     ];
 
     for (const padrao of padroes) {
@@ -46,10 +32,9 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
     return null;
   };
 
-  // Função para remover eventos duplicados (mesmo tipo e horário muito próximo)
   const removerDuplicados = (historico) => {
     const eventosUnicos = [];
-    const toleranciaMinutos = 2; // 2 minutos de tolerância
+    const toleranciaMinutos = 2;
 
     historico.forEach((evento) => {
       const eventoData = evento.data
@@ -61,7 +46,6 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
       const descricao =
         evento.descricao || evento.DESCOCORRENCIA || evento.ocorrencia || "";
 
-      // Verificar se já existe um evento similar
       const existeSimilar = eventosUnicos.some((existente) => {
         const existenteData = existente.data
           ? new Date(existente.data)
@@ -92,35 +76,26 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
     return eventosUnicos;
   };
 
-  // Remover eventos duplicados antes de ordenar
   const historicoSemDuplicados = removerDuplicados(historico);
 
-  // Ordenar histórico por data e hora (mais antigo primeiro)
   const historicoOrdenado = [...historicoSemDuplicados].sort((a, b) => {
-    // Verificar formato da Ouro Negro, genérico ou Princesa
     let dataA, dataB;
 
     if (a.DATAOCORRENCIA) {
-      // Formato Ouro Negro
       dataA = new Date(`${a.DATAOCORRENCIA} ${a.HORAOCORRENCIA}`);
     } else if (a.data_hora) {
-      // Formato genérico
       dataA = new Date(a.data_hora);
     } else if (a.data) {
-      // Formato Princesa
       dataA = new Date(a.data);
     } else {
       dataA = new Date(0);
     }
 
     if (b.DATAOCORRENCIA) {
-      // Formato Ouro Negro
       dataB = new Date(`${b.DATAOCORRENCIA} ${b.HORAOCORRENCIA}`);
     } else if (b.data_hora) {
-      // Formato genérico
       dataB = new Date(b.data_hora);
     } else if (b.data) {
-      // Formato Princesa
       dataB = new Date(b.data);
     } else {
       dataB = new Date(0);
@@ -129,7 +104,6 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
     return dataA - dataB;
   });
 
-  // Verificar se a nota foi entregue
   const foiEntregue = historicoOrdenado.some(
     (oc) =>
       (oc.DESCOCORRENCIA && oc.DESCOCORRENCIA.includes("ENTREGA REALIZADA")) ||
@@ -140,7 +114,6 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
       (oc.ocorrencia && oc.ocorrencia.includes("MERCADORIA ENTREGUE"))
   );
 
-  // Se não foi entregue, adicionar o status "Entregue" no final
   if (!foiEntregue) {
     historicoOrdenado.push({
       DESCOCORRENCIA: "ENTREGA REALIZADA",
@@ -153,14 +126,13 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
       data_hora: nota.previsaoEntrega + "T00:00:00",
       cidade: nota.destino.split(", ")[0],
       codigo_ocorrencia: "01",
-      isPrevisao: true, // Flag para identificar que é previsão
+      isPrevisao: true,
     });
   }
 
   return `
     <h4 style="margin-top: 30px; margin-bottom: 20px; color: #333; font-size: 20px; font-weight: 600; border-bottom: 2px solid #247675; padding-bottom: 10px; text-align: center;">Histórico de Rastreamento</h4>
     <div class="timeline-container" style="position: relative; margin-top: 20px;">
-      <!-- Controles de navegação -->
       <div class="timeline-controls" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <button class="timeline-nav-btn timeline-nav-left" style="background: #247675; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; transition: all 0.3s ease; opacity: 0.7;" disabled>
           <i class="fas fa-chevron-left"></i>
@@ -175,18 +147,14 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
         </button>
       </div>
       
-      <!-- Container do timeline com scroll -->
       <div class="timeline-scroll-container" style="position: relative; overflow: hidden; border-radius: 8px; background: #f8f9fa; padding: 10px;">
         <div class="timeline-horizontal" style="position: relative; padding: 25px 0; overflow-x: auto; display: flex; scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: #247675 #f1f1f1;">
           <div class="timeline-track" style="position: relative; display: flex; min-width: max-content; gap: 15px; padding: 0 15px; justify-content: flex-start; align-items: center;">
         ${historicoOrdenado
           .map((ocorrencia, index) => {
-            // Determinar a cor e ícone baseado no código de ocorrência ou descrição
-            let statusColor = "#757575"; // Cor padrão cinza
+            let statusColor = "#757575";
             let icon = "fas fa-clock";
-            let isCompleted = true;
 
-            // Lógica específica para dados da Princesa
             if (ocorrencia.descricao) {
               const descricao = ocorrencia.descricao.toLowerCase();
 
@@ -194,39 +162,31 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                 descricao.includes("entrega") &&
                 descricao.includes("realizada")
               ) {
-                // Entrega realizada (verde)
                 statusColor = "#4caf50";
                 icon = "fas fa-check-circle";
               } else if (descricao.includes("manifestado")) {
-                // Manifestado - em rota de entrega (laranja)
                 statusColor = "#ff9800";
                 icon = "fas fa-truck";
               } else if (
                 descricao.includes("transferencia") &&
                 descricao.includes("iniciada")
               ) {
-                // Transferência iniciada - saída (azul)
                 statusColor = "#2196f3";
                 icon = "fas fa-arrow-right";
               } else if (
                 descricao.includes("transferencia") &&
                 descricao.includes("finalizada")
               ) {
-                // Transferência finalizada - em trânsito (azul claro)
                 statusColor = "#03a9f4";
                 icon = "fas fa-exchange-alt";
               } else if (descricao.includes("emissao")) {
-                // Emissão realizada - início do processo (verde claro)
                 statusColor = "#8bc34a";
                 icon = "fas fa-file-alt";
               } else {
-                // Outros eventos (cinza)
                 statusColor = "#757575";
                 icon = "fas fa-clock";
               }
-            }
-            // Verificar primeiro se é entrega realizada pela descrição ou código
-            else if (
+            } else if (
               (ocorrencia.DESCOCORRENCIA &&
                 ocorrencia.DESCOCORRENCIA.includes("ENTREGA REALIZADA")) ||
               ocorrencia.CODOCORRENCIA === "108" ||
@@ -236,53 +196,50 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                 ocorrencia.ocorrencia.includes("MERCADORIA ENTREGUE"))
             ) {
               if (ocorrencia.isPrevisao) {
-                // Entrega prevista (apagada)
-                statusColor = "#bdbdbd"; // Cinza claro para previsão
+                statusColor = "#bdbdbd";
                 icon = "fas fa-clock";
               } else {
-                // Entrega realizada (verde)
-                statusColor = "#4caf50"; // Verde para entregue
+                statusColor = "#4caf50";
                 icon = "fas fa-check-circle";
               }
             } else {
-              // Verificar código de ocorrência (formato Ouro Negro ou genérico)
               const codigoOcorrencia =
                 ocorrencia.CODOCORRENCIA || ocorrencia.codigo_ocorrencia;
 
               switch (codigoOcorrencia) {
-                case "101": // INICIO DO PROCESSO - EMISSAO DO CTE
-                case "71": // DOCUMENTO DE TRANSPORTE EMITIDO
-                case "80": // DOCUMENTO DE TRANSPORTE EMITIDO
-                case "74": // DOCUMENTO DE TRANSPORTE EMITIDO
-                  statusColor = "#9c27b0"; // Roxo para processamento
+                case "101":
+                case "71":
+                case "80":
+                case "74":
+                  statusColor = "#9c27b0";
                   icon = "fas fa-file-invoice";
                   break;
-                case "000": // PROCESSO TRANSPORTE INICIADO
-                  statusColor = "#ff9800"; // Laranja para aguardando
+                case "000":
+                  statusColor = "#ff9800";
                   icon = "fas fa-truck-loading";
                   break;
-                case "104": // CHEGADA NO DEPOSITO DE TRANSBORDO
-                case "105": // CHEGADA NO DEPOSITO DE DESTINO
-                case "83": // CHEGADA EM UNIDADE DE TRANSBORDO
-                case "77": // CHEGADA EM UNIDADE DE TRANSBORDO
-                case "84": // CHEGADA EM UNIDADE
-                  statusColor = "#03a9f4"; // Azul claro para em trânsito
+                case "104":
+                case "105":
+                case "83":
+                case "77":
+                case "84":
+                  statusColor = "#03a9f4";
                   icon = "fas fa-warehouse";
                   break;
-                case "106": // EM TRANSITO PARA ENTREGA
-                case "82": // SAIDA DE UNIDADE
-                case "76": // SAIDA DE UNIDADE
-                  statusColor = "#00bcd4"; // Ciano para rota de entrega
+                case "106":
+                case "82":
+                case "76":
+                  statusColor = "#00bcd4";
                   icon = "fas fa-truck";
                   break;
-                case "85": // SAIDA PARA ENTREGA
-                  statusColor = "#00bcd4"; // Ciano para rota de entrega
+                case "85":
+                  statusColor = "#00bcd4";
                   icon = "fas fa-truck";
                   break;
-                case "108": // ENTREGA REALIZADA (código padrão)
-                case "001": // ENTREGA REALIZADA (código alternativo)
-                case "01": // MERCADORIA ENTREGUE
-                  statusColor = "#4caf50"; // Verde para entregue
+                case "108":
+                case "001":
+                case "01":
+                  statusColor = "#4caf50";
                   icon = "fas fa-check-circle";
                   break;
               }
@@ -290,12 +247,10 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
 
             return `
               <div class="timeline-step" style="position: relative; display: flex; flex-direction: column; align-items: center; min-width: 180px; max-width: 200px; flex-shrink: 0;">
-                <!-- Linha conectora -->
                 ${
                   index < historicoOrdenado.length - 1
                     ? `
                   <div class="timeline-connector" style="position: absolute; top: 25px; left: 50%; width: calc(100% + 15px); height: 2px; z-index: 1; ${
-                    // Se o próximo status é previsão de entrega e o status atual não é "EM TRANSITO PARA ENTREGA"
                     historicoOrdenado[index + 1]?.isPrevisao &&
                     !ocorrencia.DESCOCORRENCIA?.includes(
                       "EM TRANSITO PARA ENTREGA"
@@ -307,12 +262,10 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                     : ""
                 }
                 
-                <!-- Círculo do status -->
                 <div class="timeline-circle" style="position: relative; width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, ${statusColor}, ${statusColor}dd); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px ${statusColor}40; z-index: 2; margin-bottom: 12px;">
                   <i class="${icon}" style="color: white; font-size: 18px;"></i>
                 </div>
                 
-                <!-- Conteúdo do status -->
                 <div class="timeline-content" style="text-align: center; background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid ${statusColor}20; height: 120px; display: flex; flex-direction: column; justify-content: center; width: 100%; box-sizing: border-box;">
                   <h5 style="margin: 0 0 6px 0; color: ${
                     ocorrencia.isPrevisao ? "#999" : "#333"
@@ -351,7 +304,6 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                   }; margin-top: auto;">
                     <i class="fas fa-map-marker-alt" style="color: ${statusColor}; font-size: 9px;"></i>
                     <span style="text-align: center; line-height: 1.1;">${(() => {
-                      // Função para formatar localização corretamente
                       let cidade =
                         ocorrencia.CIDADE ||
                         ocorrencia.cidade ||
@@ -362,17 +314,14 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                       let estado =
                         ocorrencia.UF || nota.destino?.split(", ")[1] || "-";
 
-                      // Se cidade já contém estado (formato "CIDADE / UF"), usar apenas a cidade
                       if (cidade.includes(" / ")) {
                         const partes = cidade.split(" / ");
                         cidade = partes[0];
-                        // Se não há estado separado, usar o estado da cidade
                         if (estado === "-" && partes[1]) {
                           estado = partes[1];
                         }
                       }
 
-                      // Retornar formato "CIDADE, UF"
                       return `${cidade}, ${estado}`;
                     })()}</span>
                   </div>
@@ -388,11 +337,6 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
   `;
 };
 
-/**
- * Renderiza o conteúdo completo do modal de detalhes
- * @param {Object} nota - Objeto da nota
- * @returns {string} HTML completo do modal
- */
 window.RastreamentoModalRenderers.renderizarConteudoModal = function (nota) {
   const timelineHTML = window.RastreamentoModalRenderers.renderizarTimeline(
     nota.historico,

@@ -1,4 +1,3 @@
-// Administration Cidades - Gerenciamento de cidades
 window.Administration = window.Administration || {};
 
 window.Administration.loadCidades = async function () {
@@ -6,7 +5,6 @@ window.Administration.loadCidades = async function () {
     const cidades = await window.Administration.apiRequest("/cidades");
     if (cidades) {
       window.Administration.state.cidades = cidades;
-      // Limpar dados filtrados ao recarregar
       window.Administration.state.filteredData.cidades = null;
       window.Administration.resetPagination("cidades");
       window.Administration.renderCidades(cidades);
@@ -21,13 +19,11 @@ window.Administration.renderCidades = function (cidades) {
   const tbody = document.querySelector("#cidadesTable tbody");
   if (!tbody) return;
 
-  // Se cidades não foi passado, usar dados do state (pode ser filtrado)
   const dataToRender =
     cidades ||
     window.Administration.state.filteredData.cidades ||
     window.Administration.state.cidades;
 
-  // Aplicar paginação
   const { items, pagination } = window.Administration.getPaginatedData(
     dataToRender,
     "cidades"
@@ -98,7 +94,6 @@ window.Administration.renderCidades = function (cidades) {
       });
     });
 
-  // Renderizar controles de paginação
   window.Administration.renderPagination("cidadesPagination", "cidades", () => {
     const dataToRender =
       window.Administration.state.filteredData.cidades ||
@@ -109,7 +104,6 @@ window.Administration.renderCidades = function (cidades) {
 
 window.Administration.buscarCodigoIBGE = async function (nomeCidade, idEstado) {
   try {
-    // Buscar UF do estado selecionado
     const estado = window.Administration.state.estados.find(
       (e) => e.id_estado == idEstado
     );
@@ -142,7 +136,6 @@ window.Administration.openCidadeModal = async function (id = null) {
     return;
   }
 
-  // Carregar estados para o select
   if (window.Administration.state.estados.length === 0) {
     await window.Administration.loadEstados();
   }
@@ -156,12 +149,10 @@ window.Administration.openCidadeModal = async function (id = null) {
     estadoSelect.appendChild(option);
   });
 
-  // Armazenar valores iniciais para comparação
   let nomeInicial = "";
   let estadoInicial = "";
   let ibgeInicial = "";
 
-  // Preencher valores iniciais antes de adicionar event listeners
   if (id) {
     const cidade = window.Administration.state.cidades.find(
       (c) => c.id_cidade == id
@@ -173,7 +164,6 @@ window.Administration.openCidadeModal = async function (id = null) {
       document.getElementById("cidadeIbge").value = cidade.codigo_ibge || "";
       document.getElementById("cidadeModalTitle").textContent = "Editar Cidade";
 
-      // Armazenar valores iniciais
       nomeInicial = cidade.nome_cidade;
       estadoInicial = cidade.id_estado.toString();
       ibgeInicial = cidade.codigo_ibge || "";
@@ -183,13 +173,11 @@ window.Administration.openCidadeModal = async function (id = null) {
     document.getElementById("cidadeId").value = "";
     document.getElementById("cidadeModalTitle").textContent = "Nova Cidade";
 
-    // Valores iniciais vazios para nova cidade
     nomeInicial = "";
     estadoInicial = "";
     ibgeInicial = "";
   }
 
-  // Remover event listeners anteriores se existirem (clonando elementos)
   const nomeInput = document.getElementById("cidadeNome");
   const nomeInputClone = nomeInput.cloneNode(true);
   nomeInput.parentNode.replaceChild(nomeInputClone, nomeInput);
@@ -197,14 +185,12 @@ window.Administration.openCidadeModal = async function (id = null) {
   const estadoSelectClone = estadoSelect.cloneNode(true);
   estadoSelect.parentNode.replaceChild(estadoSelectClone, estadoSelect);
 
-  // Função para buscar IBGE quando nome ou estado mudarem
   let buscaTimeout = null;
   const buscarIBGEAutomatico = async () => {
     const nomeCidade = document.getElementById("cidadeNome").value;
     const idEstado = document.getElementById("cidadeEstado").value;
     const ibgeInput = document.getElementById("cidadeIbge");
 
-    // Só buscar se o código IBGE estiver vazio ou se o nome/estado mudaram
     const nomeMudou = nomeCidade !== nomeInicial;
     const estadoMudou = idEstado !== estadoInicial;
     const ibgeVazio = !ibgeInput.value || ibgeInput.value.trim() === "";
@@ -215,16 +201,13 @@ window.Administration.openCidadeModal = async function (id = null) {
       idEstado &&
       (ibgeVazio || nomeMudou || estadoMudou)
     ) {
-      // Limpar timeout anterior
       if (buscaTimeout) {
         clearTimeout(buscaTimeout);
       }
 
-      // Adicionar indicador de carregamento
       ibgeInput.placeholder = "Buscando código IBGE...";
       ibgeInput.disabled = true;
 
-      // Aguardar 500ms antes de buscar (debounce)
       buscaTimeout = setTimeout(async () => {
         const codigoIBGE = await window.Administration.buscarCodigoIBGE(
           nomeCidade,
@@ -237,7 +220,6 @@ window.Administration.openCidadeModal = async function (id = null) {
           ibgeInput.placeholder = "";
         } else {
           ibgeInput.placeholder = "Código IBGE não encontrado";
-          // Só limpar o valor se estiver buscando automaticamente (não se o usuário digitou)
           if (ibgeVazio) {
             ibgeInput.value = "";
           }
@@ -249,7 +231,6 @@ window.Administration.openCidadeModal = async function (id = null) {
     }
   };
 
-  // Adicionar event listeners
   document
     .getElementById("cidadeNome")
     .addEventListener("input", buscarIBGEAutomatico);
@@ -296,12 +277,10 @@ window.Administration.saveCidade = async function () {
 
 window.Administration.deleteCidade = async function (id) {
   try {
-    // Buscar contagem de registros relacionados
     const counts = await window.Administration.apiRequest(
       `/cidades/${id}/count-related`
     );
 
-    // Buscar nome da cidade para exibir na mensagem
     const cidade = window.Administration.state.cidades.find(
       (c) => c.id_cidade == id
     );
@@ -310,7 +289,6 @@ window.Administration.deleteCidade = async function (id) {
     const title = "Confirmar Exclusão de Cidade";
     const message = `Tem certeza que deseja excluir ${cidadeNome}? Esta ação não pode ser desfeita!`;
 
-    // Abrir modal de confirmação
     window.Administration.openDeleteConfirmModal(
       title,
       message,

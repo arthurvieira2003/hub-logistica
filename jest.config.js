@@ -19,7 +19,6 @@ module.exports = {
     "/src/__tests__/",
     "/.github/",
   ],
-  // Usar transformer customizado para instrumentar arquivos
   transform: {
     "^.+\\.js$": "<rootDir>/jest-transformer.js",
   },

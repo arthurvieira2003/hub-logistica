@@ -1,73 +1,64 @@
-/**
- * Configuração das transportadoras
- * Contém dados estáticos das transportadoras e suas configurações
- */
-
-// Namespace para configurações de transportadoras
 window.RastreamentoConfig = window.RastreamentoConfig || {};
 
 window.RastreamentoConfig.transportadoras = [
   {
     id: 1,
     nome: "Ouro Negro",
-    cor: "255, 204, 0", // RGB para amarelo e preto
+    cor: "255, 204, 0",
     logo: "../assets/images/transportadoras/ouro-negro.svg",
-    notas: [], // Será preenchido com dados reais da API
+    notas: [],
   },
   {
     id: 2,
     nome: "Expresso Leomar LTDA",
-    cor: "0, 52, 150", // RGB para azul Leomar
+    cor: "0, 52, 150",
     logo: "../assets/images/transportadoras/leomar.png",
-    notas: [], // Será preenchido com dados reais da API
+    notas: [],
   },
   {
     id: 3,
     nome: "Schreiber Logística LTDA",
-    cor: "21, 50, 127", // RGB para azul Schreiber
+    cor: "21, 50, 127",
     logo: "../assets/images/transportadoras/schreiber.svg",
-    notas: [], // Será preenchido com dados reais da API
+    notas: [],
   },
   {
     id: 4,
     nome: "Mengue Express transportes LTDA",
-    cor: "255, 101, 38", // RGB para laranja Mengue
+    cor: "255, 101, 38",
     logo: "../assets/images/transportadoras/mengue.png",
-    notas: [], // Será preenchido com dados reais da API
+    notas: [],
   },
   {
     id: 5,
     nome: "Transportes Expresso Santa Catarina LTDA",
-    cor: "2, 118, 116", // RGB para transportadora sem logo
+    cor: "2, 118, 116",
     logo: "fas fa-truck",
-    notas: [], // Será preenchido com dados reais da API
+    notas: [],
   },
   {
     id: 6,
     nome: "Expresso Princesa Dos Campos S/A",
-    cor: "2, 118, 116", // RGB para transportadora sem logo
+    cor: "2, 118, 116",
     logo: "../assets/images/transportadoras/princesa.png",
-    notas: [], // Será preenchido com dados reais da API
+    notas: [],
   },
   {
     id: 7,
     nome: "Transvapt Vupt transportes de cargas LTDA",
-    cor: "2, 118, 116", // RGB para transportadora sem logo
+    cor: "2, 118, 116",
     logo: "../assets/images/transportadoras/transvapt.png",
-    notas: [], // Será preenchido com dados reais da API
+    notas: [],
   },
   {
     id: 8,
     nome: "A+ Transportes e Logistica Eireli",
-    cor: "2, 118, 116", // RGB para transportadora sem logo
+    cor: "2, 118, 116",
     logo: "../assets/images/transportadoras/a+.png",
-    notas: [], // Será preenchido com dados reais da API
+    notas: [],
   },
 ];
 
-/**
- * Configuração de cores das bordas das transportadoras
- */
 window.RastreamentoConfig.coresTransportadoras = {
   "Ouro Negro": "rgba(255, 204, 0, 0.3)",
   "Expresso Leomar LTDA": "rgba(0, 52, 150, 0.3)",
@@ -77,35 +68,21 @@ window.RastreamentoConfig.coresTransportadoras = {
   "Expresso Princesa Dos Campos S/A": "rgba(14, 88, 46, 0.3)",
 };
 
-/**
- * Configuração de cores específicas para transportadoras genéricas
- */
 window.RastreamentoConfig.coresGenericas = {
-  "Expresso Leomar LTDA": "52, 152, 219", // Azul
-  "Schreiber Logística LTDA": "76, 175, 80", // Verde
-  "Mengue Express transportes LTDA": "156, 39, 176", // Roxo
-  "Transportes Expresso Santa Catarina LTDA": "255, 87, 34", // Laranja
+  "Expresso Leomar LTDA": "52, 152, 219",
+  "Schreiber Logística LTDA": "76, 175, 80",
+  "Mengue Express transportes LTDA": "156, 39, 176",
+  "Transportes Expresso Santa Catarina LTDA": "255, 87, 34",
 };
 
-/**
- * Configuração de data de rastreamento
- */
 window.RastreamentoConfig.dataRastreamento = new Date()
   .toISOString()
-  .split("T")[0]; // YYYY-MM-DD
+  .split("T")[0];
 
-/**
- * Atualiza a data de rastreamento
- * @param {string} novaData - Nova data no formato YYYY-MM-DD
- */
 window.RastreamentoConfig.atualizarDataRastreamento = function (novaData) {
   window.RastreamentoConfig.dataRastreamento = novaData;
 };
 
-/**
- * Obtém a data atual de rastreamento
- * @returns {string} Data atual no formato YYYY-MM-DD
- */
 window.RastreamentoConfig.obterDataRastreamento = function () {
   return window.RastreamentoConfig.dataRastreamento;
 };

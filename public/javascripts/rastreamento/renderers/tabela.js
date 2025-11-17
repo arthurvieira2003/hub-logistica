@@ -1,16 +1,5 @@
-/**
- * Renderizador de Tabela
- * Contém funções para renderizar a tabela de rastreamento
- */
-
-// Namespace para renderizadores
 window.RastreamentoRenderers = window.RastreamentoRenderers || {};
 
-/**
- * Renderiza o cabeçalho da tabela com estatísticas
- * @param {Array} todasNotas - Array com todas as notas
- * @returns {string} HTML do cabeçalho
- */
 window.RastreamentoRenderers.renderizarCabecalhoTabela = function (todasNotas) {
   const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
@@ -57,12 +46,6 @@ window.RastreamentoRenderers.renderizarCabecalhoTabela = function (todasNotas) {
   `;
 };
 
-/**
- * Renderiza uma linha da tabela
- * @param {Object} nota - Objeto da nota
- * @param {number} index - Índice da linha
- * @returns {string} HTML da linha
- */
 window.RastreamentoRenderers.renderizarLinhaTabela = function (nota, index) {
   let borderColor = window.RastreamentoUtils.obterCorBordaTransportadora(
     nota.transportadora.nome
@@ -135,11 +118,6 @@ window.RastreamentoRenderers.renderizarLinhaTabela = function (nota, index) {
   `;
 };
 
-/**
- * Renderiza a tabela completa
- * @param {Array} todasNotas - Array com todas as notas
- * @returns {string} HTML da tabela
- */
 window.RastreamentoRenderers.renderizarTabela = function (todasNotas) {
   const cabecalho =
     window.RastreamentoRenderers.renderizarCabecalhoTabela(todasNotas);
@@ -156,7 +134,6 @@ window.RastreamentoRenderers.renderizarTabela = function (todasNotas) {
         to { opacity: 1; transform: translateY(0); }
       }
       
-      /* Estilos para o seletor de data */
       .date-selector input[type="date"]:focus {
         outline: none;
         border-color: #1a5a5a;
@@ -181,7 +158,6 @@ window.RastreamentoRenderers.renderizarTabela = function (todasNotas) {
         transform: rotate(180deg);
       }
       
-      /* Responsivo para o seletor de data */
       @media (max-width: 768px) {
         .header-rastreamento {
           flex-direction: column !important;
@@ -199,7 +175,6 @@ window.RastreamentoRenderers.renderizarTabela = function (todasNotas) {
         }
       }
       
-      /* Estilos para garantir alinhamento correto da tabela */
       .tabela-container {
         width: 100%;
         overflow-x: auto;
@@ -233,10 +208,6 @@ window.RastreamentoRenderers.renderizarTabela = function (todasNotas) {
   `;
 };
 
-/**
- * Renderiza mensagem quando não há notas
- * @returns {string} HTML da mensagem
- */
 window.RastreamentoRenderers.renderizarMensagemVazia = function () {
   const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 

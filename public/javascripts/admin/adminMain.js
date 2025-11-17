@@ -1,23 +1,16 @@
-// Admin Main Module - Módulo principal para administração
 window.AdminMain = window.AdminMain || {};
 
-/**
- * Inicializa o sistema de administração
- */
 window.AdminMain.initAdmin = async function () {
   try {
-    // Aguardar ModuleLoader estar disponível e carregar admin
     if (window.ModuleLoader) {
       await window.ModuleLoader.loadAdminPage();
     }
 
-    // Aguardar um pouco para garantir que todos os módulos foram inicializados
-    // Verificar se o módulo Administration está disponível
     let attempts = 0;
-    const maxAttempts = 50; // 5 segundos (50 * 100ms)
-    
+    const maxAttempts = 50;
+
     while (!window.Administration && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       attempts++;
     }
 
@@ -26,12 +19,10 @@ window.AdminMain.initAdmin = async function () {
       return;
     }
 
-    // Inicializar funcionalidades específicas de admin
     if (!window.AdminAuthMain) {
       throw new Error("AdminAuthMain não encontrado");
     }
 
-    // Chamar initAdminAuth após garantir que todos os módulos foram carregados
     if (window.AdminAuthMain.initAdminAuth) {
       await window.AdminAuthMain.initAdminAuth();
     }
@@ -40,13 +31,8 @@ window.AdminMain.initAdmin = async function () {
   }
 };
 
-/**
- * Inicializa a página de administração após validação de autenticação
- * Esta função é chamada pelo AdminAuthMain após validar que o usuário é admin
- */
 window.AdminMain.initAdministrationPage = async function () {
   try {
-    // Inicializar a página de administração
     if (window.Administration && window.Administration.init) {
       await window.Administration.init();
     } else {
@@ -57,9 +43,6 @@ window.AdminMain.initAdministrationPage = async function () {
   }
 };
 
-/**
- * Inicializa quando o DOM estiver pronto
- */
 window.AdminMain.init = function () {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", window.AdminMain.initAdmin);
@@ -68,5 +51,4 @@ window.AdminMain.init = function () {
   }
 };
 
-// Executar automaticamente quando o script for carregado
 window.AdminMain.init();

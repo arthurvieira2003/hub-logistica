@@ -1,7 +1,5 @@
-// Helpers Module - Funções auxiliares
 window.Helpers = window.Helpers || {};
 
-// Função para obter iniciais do nome
 window.Helpers.getInitials = function (name) {
   if (!name) return "";
 
@@ -10,14 +8,12 @@ window.Helpers.getInitials = function (name) {
     return nameParts[0].charAt(0).toUpperCase();
   }
 
-  // Pegar a primeira letra do primeiro e último nome
   const firstInitial = nameParts[0].charAt(0);
   const lastInitial = nameParts[nameParts.length - 1].charAt(0);
 
   return (firstInitial + lastInitial).toUpperCase();
 };
 
-// Função para formatar data
 window.Helpers.formatDate = function (date, locale = "pt-BR") {
   if (!date) return "";
 
@@ -25,7 +21,6 @@ window.Helpers.formatDate = function (date, locale = "pt-BR") {
   return dateObj.toLocaleDateString(locale);
 };
 
-// Função para formatar moeda
 window.Helpers.formatCurrency = function (
   value,
   currency = "BRL",
@@ -39,7 +34,6 @@ window.Helpers.formatCurrency = function (
   }).format(value);
 };
 
-// Função para debounce
 window.Helpers.debounce = function (func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -52,7 +46,6 @@ window.Helpers.debounce = function (func, wait) {
   };
 };
 
-// Função para throttle
 window.Helpers.throttle = function (func, limit) {
   let inThrottle;
   return function () {
@@ -66,17 +59,14 @@ window.Helpers.throttle = function (func, limit) {
   };
 };
 
-// Função para gerar ID único
 window.Helpers.generateId = function (prefix = "id") {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
-// Função para verificar se elemento existe
 window.Helpers.elementExists = function (selector) {
   return document.querySelector(selector) !== null;
 };
 
-// Função para aguardar elemento aparecer
 window.Helpers.waitForElement = function (selector, timeout = 5000) {
   return new Promise((resolve, reject) => {
     const element = document.querySelector(selector);
@@ -107,7 +97,6 @@ window.Helpers.waitForElement = function (selector, timeout = 5000) {
   });
 };
 
-// Função para copiar texto para clipboard
 window.Helpers.copyToClipboard = async function (text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -118,20 +107,17 @@ window.Helpers.copyToClipboard = async function (text) {
   }
 };
 
-// Função para validar email
 window.Helpers.isValidEmail = function (email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-// Função para sanitizar HTML
 window.Helpers.sanitizeHTML = function (html) {
   const div = document.createElement("div");
   div.textContent = html;
   return div.innerHTML;
 };
 
-// Função para obter parâmetros da URL
 window.Helpers.getUrlParams = function () {
   const params = new URLSearchParams(window.location.search);
   const result = {};
@@ -141,7 +127,6 @@ window.Helpers.getUrlParams = function () {
   return result;
 };
 
-// Função para definir parâmetros da URL
 window.Helpers.setUrlParams = function (params) {
   const url = new URL(window.location);
   Object.keys(params).forEach((key) => {

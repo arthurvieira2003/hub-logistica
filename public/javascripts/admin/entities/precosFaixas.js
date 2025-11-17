@@ -1,4 +1,3 @@
-// Administration Preços de Faixas - Gerenciamento de preços de faixas
 window.Administration = window.Administration || {};
 
 window.Administration.loadPrecosFaixas = async function () {
@@ -6,7 +5,6 @@ window.Administration.loadPrecosFaixas = async function () {
     const precos = await window.Administration.apiRequest("/precos-faixas");
     if (precos) {
       window.Administration.state.precosFaixas = precos;
-      // Limpar dados filtrados ao recarregar
       window.Administration.state.filteredData.precosFaixas = null;
       window.Administration.resetPagination("precosFaixas");
       window.Administration.renderPrecosFaixas(precos);
@@ -21,13 +19,11 @@ window.Administration.renderPrecosFaixas = function (precos) {
   const tbody = document.querySelector("#precosFaixasTable tbody");
   if (!tbody) return;
 
-  // Se precos não foi passado, usar dados do state (pode ser filtrado)
   const dataToRender =
     precos ||
     window.Administration.state.filteredData.precosFaixas ||
     window.Administration.state.precosFaixas;
 
-  // Aplicar paginação
   const { items, pagination } = window.Administration.getPaginatedData(
     dataToRender,
     "precosFaixas"
@@ -113,7 +109,6 @@ window.Administration.renderPrecosFaixas = function (precos) {
       });
     });
 
-  // Renderizar controles de paginação
   window.Administration.renderPagination(
     "precosFaixasPagination",
     "precosFaixas",
@@ -133,7 +128,6 @@ window.Administration.openPrecoFaixaModal = async function (id = null) {
     return;
   }
 
-  // Carregar dados necessários
   if (window.Administration.state.rotas.length === 0) {
     await window.Administration.loadRotas();
   }
@@ -144,7 +138,6 @@ window.Administration.openPrecoFaixaModal = async function (id = null) {
     await window.Administration.loadTransportadoras();
   }
 
-  // Preencher selects
   const rotaSelect = document.getElementById("precoFaixaRota");
   const faixaSelect = document.getElementById("precoFaixaFaixa");
   const transpSelect = document.getElementById("precoFaixaTransportadora");
@@ -242,11 +235,9 @@ window.Administration.savePrecoFaixa = async function () {
       .value,
     data_vigencia_fim:
       document.getElementById("precoFaixaVigenciaFim").value || null,
-    // ativo não é mais editável - será sempre true ao criar/editar
     ativo: true,
   };
 
-  // Converter valores vazios para null
   Object.keys(precoData).forEach((key) => {
     if (
       precoData[key] === "" ||
@@ -292,10 +283,8 @@ window.Administration.savePrecoFaixa = async function () {
 
 window.Administration.deletePrecoFaixa = async function (id) {
   try {
-    // Preços de faixas não têm registros relacionados, então não precisamos buscar contagens
     const counts = {};
 
-    // Buscar informações do preço para exibir na mensagem
     const preco = window.Administration.state.precosFaixas.find(
       (p) => p.id_preco == id
     );
@@ -318,7 +307,6 @@ window.Administration.deletePrecoFaixa = async function (id) {
     const title = "Confirmar Desativação";
     const message = `Tem certeza que deseja desativar ${precoNome}? O registro será desativado e não aparecerá mais nas listagens.`;
 
-    // Abrir modal de confirmação
     window.Administration.openDeleteConfirmModal(
       title,
       message,

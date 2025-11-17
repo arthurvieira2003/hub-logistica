@@ -1,12 +1,8 @@
-// Namespace para autenticação de login
 window.LoginAuth = window.LoginAuth || {};
 
-/**
- * Processa resposta de erro do servidor
- */
 window.LoginAuth.processServerError = function (error) {
-  let errorTitle = "Erro no login";
-  let errorMessage = "Ocorreu um erro inesperado. Tente novamente.";
+  let errorTitle = "Erro ao fazer login";
+  let errorMessage = "Ocorreu um erro ao fazer login. Tente novamente.";
 
   if (error.data) {
     if (error.data.error) {
@@ -49,9 +45,6 @@ window.LoginAuth.processServerError = function (error) {
   window.LoginUI.showNotification(errorTitle, errorMessage, 6000);
 };
 
-/**
- * Processa erro de conexão
- */
 window.LoginAuth.processConnectionError = function (error) {
   let errorTitle = "Erro de conexão";
   let errorMessage =
@@ -74,9 +67,6 @@ window.LoginAuth.processConnectionError = function (error) {
   window.LoginUI.showNotification("error", errorTitle, errorMessage, 6000);
 };
 
-/**
- * Processa resposta de sucesso do login
- */
 window.LoginAuth.processLoginSuccess = function (data) {
   if (data.token) {
     window.LoginUI.showNotification(
@@ -86,11 +76,9 @@ window.LoginAuth.processLoginSuccess = function (data) {
       2000
     );
 
-    // Usar AuthCore para definir token
     if (window.AuthCore && window.AuthCore.setToken) {
       window.AuthCore.setToken(data.token);
     } else {
-      // Fallback para método antigo
       document.cookie = `token=${data.token}; path=/`;
     }
 
@@ -102,31 +90,14 @@ window.LoginAuth.processLoginSuccess = function (data) {
   }
 };
 
-/**
- * Autentica usuário
- */
 window.LoginAuth.authenticateUser = function (email, password) {
-  console.log("🔵 [LoginAuth.authenticateUser] Iniciando autenticação...");
-  console.log("   - Email:", email ? email.substring(0, 5) + "..." : "vazio");
-  console.log("   - Password:", password ? "***" : "vazio");
-  
-  // Validar dados antes de enviar
-  console.log("🔵 [LoginAuth.authenticateUser] Verificando LoginValidation...");
-  console.log("   - LoginValidation disponível:", !!window.LoginValidation);
-  console.log("   - validateLoginData disponível:", !!(window.LoginValidation && window.LoginValidation.validateLoginData));
-  
   if (!window.LoginValidation || !window.LoginValidation.validateLoginData) {
-    console.error("❌ [LoginAuth.authenticateUser] LoginValidation não disponível");
     return;
   }
-  
+
   if (!window.LoginValidation.validateLoginData(email, password)) {
-    console.warn("⚠️ [LoginAuth.authenticateUser] Validação falhou");
     return;
   }
-  
-  console.log("✅ [LoginAuth.authenticateUser] Validação passou, fazendo requisição...");
-  console.log("   - URL: http://localhost:4010/user/authenticate");
 
   fetch("http://localhost:4010/user/authenticate", {
     method: "POST",
@@ -136,47 +107,26 @@ window.LoginAuth.authenticateUser = function (email, password) {
     body: JSON.stringify({ email, password }),
   })
     .then((response) => {
-      console.log("🔵 [LoginAuth.authenticateUser] Resposta recebida");
-      console.log("   - Status:", response.status);
-      console.log("   - OK:", response.ok);
-      
-      // Sempre tenta ler o JSON, mesmo em caso de erro
       return response.json().then((data) => {
-        console.log("   - Data recebida:", data ? (data.token ? "Token presente" : "Sem token") : "null");
         if (!response.ok) {
-          // Se não há token, trata como erro
-          console.warn("⚠️ [LoginAuth.authenticateUser] Resposta não OK, lançando erro");
           throw { status: response.status, data: data };
         }
         return data;
       });
     })
     .then((data) => {
-      console.log("✅ [LoginAuth.authenticateUser] Login bem-sucedido, processando...");
       window.LoginAuth.processLoginSuccess(data);
     })
     .catch((error) => {
-      console.error("❌ [LoginAuth.authenticateUser] Erro na autenticação:", error);
-      console.error("   - Error.data:", error.data);
-      console.error("   - Error.status:", error.status);
-      
-      // Se o erro tem dados do servidor (erro estruturado)
       if (error.data) {
-        console.log("🔵 [LoginAuth.authenticateUser] Processando erro do servidor...");
         window.LoginAuth.processServerError(error);
       } else {
-        // Erro de conexão ou outros erros
-        console.log("🔵 [LoginAuth.authenticateUser] Processando erro de conexão...");
         window.LoginAuth.processConnectionError(error);
       }
     });
 };
 
-/**
- * Registra novo usuário
- */
 window.LoginAuth.registerUser = function (email, password, confirmPassword) {
-  // Validar dados antes de enviar
   if (
     !window.LoginValidation.validateRegisterData(
       email,
@@ -210,7 +160,6 @@ window.LoginAuth.registerUser = function (email, password, confirmPassword) {
         2000
       );
 
-      // Definir token se fornecido
       if (data.token) {
         if (window.AuthCore && window.AuthCore.setToken) {
           window.AuthCore.setToken(data.token);
@@ -224,8 +173,6 @@ window.LoginAuth.registerUser = function (email, password, confirmPassword) {
       }, 1500);
     })
     .catch((error) => {
-      console.error("❌ Erro no registro:", error);
-
       if (error.data) {
         window.LoginAuth.processServerError(error);
       } else {

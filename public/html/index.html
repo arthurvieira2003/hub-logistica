@@ -15,31 +15,26 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <!-- Cropper.js CSS -->
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
     />
-    <!-- Adicionar Tippy.js -->
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
     <link
       rel="stylesheet"
       href="https://unpkg.com/tippy.js@6/themes/light.css"
     />
-    <!-- jQuery (necessário para DataTables) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- DataTables CSS e JS -->
     <link
       rel="stylesheet"
       href="https://cdn.datatables.net/2.3.4/css/dataTables.dataTables.min.css"
     />
     <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
-    <!-- CSS específico para DataTables no rastreamento -->
     <link rel="stylesheet" href="../styles/datatables-rastreamento.css" />
   </head>
   <body>
-    <!-- Toggle Sidebar Button -->
     <button
       id="toggleSidebar"
       class="toggle-sidebar-button"
@@ -48,7 +43,6 @@
       <i class="fas fa-times"></i>
     </button>
 
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
@@ -84,18 +78,12 @@
       </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
-      <!-- Tab Bar -->
       <div class="tab-bar">
-        <div class="tab-list" id="tabList">
-          <!-- Tabs will be added here dynamically -->
-        </div>
+        <div class="tab-list" id="tabList"></div>
       </div>
 
-      <!-- Content Area -->
       <div class="content-area" id="contentArea">
-        <!-- Tool content will be loaded here -->
         <div class="welcome-screen" id="welcomeScreen">
           <div class="welcome-header">
             <div class="welcome-icon">
@@ -108,7 +96,6 @@
       </div>
     </main>
 
-    <!-- Modals -->
     <div class="modal" id="photoModal">
       <div class="modal-content">
         <div class="modal-header">
@@ -180,7 +167,6 @@
       </div>
     </div>
 
-    <!-- Template para o Tippy -->
     <template id="userDropdownTemplate">
       <div class="user-dropdown">
         <div class="user-photo-preview">
@@ -210,7 +196,6 @@
       </div>
     </template>
 
-    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../javascripts/core/moduleLoader.js"></script>

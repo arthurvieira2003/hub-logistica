@@ -1,17 +1,13 @@
-// Administration API - Requisições HTTP
 window.Administration = window.Administration || {};
 
-// URL base da API
 const API_BASE_URL = "http://localhost:4010";
 
-// Função para obter token do cookie
 function getToken() {
   const cookies = document.cookie.split("; ");
   const tokenCookie = cookies.find((row) => row.startsWith("token="));
   return tokenCookie ? tokenCookie.split("=")[1] : null;
 }
 
-// Função para fazer requisições autenticadas
 window.Administration.apiRequest = async function (url, options = {}) {
   const token = getToken();
   const headers = {
@@ -38,4 +34,3 @@ window.Administration.apiRequest = async function (url, options = {}) {
 
   return response.json();
 };
-

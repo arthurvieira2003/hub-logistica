@@ -1,18 +1,13 @@
-// User Profile Module - Gerenciamento de perfil do usuário
 window.UserProfile = window.UserProfile || {};
 
-// Estado do usuário
 window.UserProfile.state = {
   userData: null,
   isLoaded: false,
 };
 
-// Função para carregar dados do usuário
 window.UserProfile.loadUserData = async function () {
   try {
-    // Verificar se AuthCore/UserAuth está disponível
     if (!window.AuthCore && !window.UserAuth) {
-      // Tentar novamente após um pequeno delay
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       if (!window.AuthCore && !window.UserAuth) {
@@ -35,7 +30,6 @@ window.UserProfile.loadUserData = async function () {
       window.UserProfile.updateUserProfile(userData);
       return userData;
     } else {
-      // Atualizar interface para mostrar que não há dados
       const userNameElement = document.getElementById("userName");
       const userEmailElement = document.getElementById("userEmail");
 
@@ -44,12 +38,10 @@ window.UserProfile.loadUserData = async function () {
       if (userEmailElement)
         userEmailElement.textContent = "Faça login novamente";
 
-      // Marcar como carregado mesmo sem dados para não ficar travado
       window.UserProfile.state.isLoaded = true;
     }
   } catch (error) {
     console.error("Erro ao carregar dados do usuário:", error);
-    // Atualizar interface para mostrar erro
     const userNameElement = document.getElementById("userName");
     const userEmailElement = document.getElementById("userEmail");
 
@@ -57,7 +49,6 @@ window.UserProfile.loadUserData = async function () {
       userNameElement.textContent = "Erro ao carregar";
     }
     if (userEmailElement) {
-      // Mostrar mensagem de erro mais amigável
       const errorMessage = error.message || "Erro desconhecido";
       if (
         errorMessage.includes("Timeout") ||
@@ -74,44 +65,35 @@ window.UserProfile.loadUserData = async function () {
       }
     }
 
-    // Marcar como carregado mesmo com erro para não ficar travado
     window.UserProfile.state.isLoaded = true;
   }
 };
 
-// Função para atualizar perfil do usuário na interface
 window.UserProfile.updateUserProfile = function (userData) {
-  // Atualizar nome do usuário
   const userNameElement = document.getElementById("userName");
   if (userNameElement) {
     userNameElement.textContent = userData.name;
   }
 
-  // Atualizar nome do usuário no dropdown
   const userNamePreviewElement = document.getElementById("userNamePreview");
   if (userNamePreviewElement) {
     userNamePreviewElement.textContent = userData.name;
   }
 
-  // Atualizar email do usuário
   const userEmailElement = document.getElementById("userEmail");
   if (userEmailElement) {
     userEmailElement.textContent = userData.email;
   }
 
-  // Atualizar status do usuário
   window.UserProfile.updateUserStatus(userData);
 
-  // Atualizar avatar do usuário
   window.UserProfile.updateUserAvatar(userData);
 
-  // Verificar se o usuário é administrador
   if (userData.isAdmin) {
     window.UserProfile.addAdminPanelOption();
   }
 };
 
-// Função para atualizar status do usuário
 window.UserProfile.updateUserStatus = function (userData) {
   const userStatusElement = document.getElementById("userStatus");
   const userStatusDotElement = document.getElementById("userStatusDot");
@@ -138,12 +120,10 @@ window.UserProfile.updateUserStatus = function (userData) {
   }
 };
 
-// Função para atualizar avatar do usuário
 window.UserProfile.updateUserAvatar = function (userData) {
   const userAvatarElement = document.getElementById("userAvatar");
   const userPhotoPreviewElement = document.getElementById("userPhotoPreview");
 
-  // Função para atualizar a foto em ambos os lugares
   const updatePhotoDisplay = (content) => {
     if (userAvatarElement) {
       userAvatarElement.innerHTML = content;
@@ -154,20 +134,16 @@ window.UserProfile.updateUserAvatar = function (userData) {
     }
   };
 
-  // Verificar se há uma foto no banco de dados
   if (userData.profile_picture && userData.profile_picture !== null) {
-    // Se houver uma foto no banco de dados, usá-la
     updatePhotoDisplay(
       `<img src="${userData.profile_picture}" alt="${userData.name}" />`
     );
   } else {
-    // Caso não haja foto, gerar avatar com as iniciais do nome do usuário
     const initials = window.UserProfile.getInitials(userData.name);
     updatePhotoDisplay(initials);
   }
 };
 
-// Função para obter iniciais do nome
 window.UserProfile.getInitials = function (name) {
   if (!name) return "";
 
@@ -176,16 +152,13 @@ window.UserProfile.getInitials = function (name) {
     return nameParts[0].charAt(0).toUpperCase();
   }
 
-  // Pegar a primeira letra do primeiro e último nome
   const firstInitial = nameParts[0].charAt(0);
   const lastInitial = nameParts[nameParts.length - 1].charAt(0);
 
   return (firstInitial + lastInitial).toUpperCase();
 };
 
-// Função para adicionar opção de painel administrativo
 window.UserProfile.addAdminPanelOption = function () {
-  // Verificar se já existe
   const existingAdminButton = document.querySelector(
     '.tool-button[data-tool="admin"]'
   );
@@ -193,14 +166,12 @@ window.UserProfile.addAdminPanelOption = function () {
     return;
   }
 
-  // Buscar a navegação da sidebar
   const sidebarNav = document.querySelector(".sidebar-nav");
   if (!sidebarNav) {
     console.error("Sidebar nav não encontrada");
     return;
   }
 
-  // Criar o botão de administração
   const adminButton = document.createElement("div");
   adminButton.className = "tool-button admin-button";
   adminButton.setAttribute("data-tool", "admin");
@@ -210,27 +181,21 @@ window.UserProfile.addAdminPanelOption = function () {
     <i class="fas fa-external-link-alt"></i>
   `;
 
-  // Adicionar o botão na sidebar (antes do footer)
   sidebarNav.appendChild(adminButton);
 
-  // Inicializar o evento de clique se ToolManager estiver disponível
   if (window.ToolManager && window.ToolManager.initToolButtons) {
-    // Re-inicializar os botões para incluir o novo botão de admin
     window.ToolManager.initToolButtons();
   }
 };
 
-// Função para obter dados do usuário
 window.UserProfile.getUserData = function () {
   return window.UserProfile.state.userData;
 };
 
-// Função para verificar se os dados foram carregados
 window.UserProfile.isLoaded = function () {
   return window.UserProfile.state.isLoaded;
 };
 
-// Função para atualizar dados do usuário
 window.UserProfile.setUserData = function (userData) {
   window.UserProfile.state.userData = userData;
   window.UserProfile.updateUserProfile(userData);

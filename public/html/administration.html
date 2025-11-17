@@ -17,7 +17,6 @@
     />
   </head>
   <body>
-    <!-- Header com logo e botão de voltar ao hub -->
     <header class="admin-header">
       <div class="admin-header-container">
         <div class="admin-logo">
@@ -30,7 +29,6 @@
       </div>
     </header>
 
-    <!-- Conteúdo Principal -->
     <main class="admin-main">
       <div class="admin-panel">
         <nav class="admin-tabs">
@@ -61,7 +59,6 @@
         </nav>
 
         <div class="admin-content">
-          <!-- Aba de Usuários -->
           <div class="admin-content-tab active" id="usersTab">
             <div class="admin-toolbar">
               <button id="createUserBtn" class="btn btn-primary">
@@ -102,7 +99,6 @@
             <div id="usersPagination"></div>
           </div>
 
-          <!-- Aba de Sessões Ativas -->
           <div class="admin-content-tab" id="sessionsTab">
             <div class="admin-toolbar">
               <button id="refreshSessionsBtn" class="btn btn-secondary">
@@ -144,7 +140,6 @@
             <div id="sessionsPagination"></div>
           </div>
 
-          <!-- Aba de Estados -->
           <div class="admin-content-tab" id="estadosTab">
             <div class="admin-toolbar">
               <button id="createEstadoBtn" class="btn btn-primary">
@@ -182,7 +177,6 @@
             <div id="estadosPagination"></div>
           </div>
 
-          <!-- Aba de Cidades -->
           <div class="admin-content-tab" id="cidadesTab">
             <div class="admin-toolbar">
               <button id="createCidadeBtn" class="btn btn-primary">
@@ -221,7 +215,6 @@
             <div id="cidadesPagination"></div>
           </div>
 
-          <!-- Aba de Transportadoras -->
           <div class="admin-content-tab" id="transportadorasTab">
             <div class="admin-toolbar">
               <button id="createTransportadoraBtn" class="btn btn-primary">
@@ -261,7 +254,6 @@
             <div id="transportadorasPagination"></div>
           </div>
 
-          <!-- Aba de Faixas de Peso -->
           <div class="admin-content-tab" id="faixas-pesoTab">
             <div class="admin-toolbar">
               <button id="createFaixaPesoBtn" class="btn btn-primary">
@@ -302,7 +294,6 @@
             <div id="faixasPesoPagination"></div>
           </div>
 
-          <!-- Aba de Rotas -->
           <div class="admin-content-tab" id="rotasTab">
             <div class="admin-toolbar">
               <button id="createRotaBtn" class="btn btn-primary">
@@ -340,7 +331,6 @@
             <div id="rotasPagination"></div>
           </div>
 
-          <!-- Aba de Preços de Faixas -->
           <div class="admin-content-tab" id="precos-faixasTab">
             <div class="admin-toolbar">
               <button id="createPrecoFaixaBtn" class="btn btn-primary">
@@ -385,7 +375,6 @@
       </div>
     </main>
 
-    <!-- Modal para criação/edição de usuário -->
     <div id="userModal" class="admin-modal">
       <div class="admin-modal-content">
         <div class="admin-modal-header">
@@ -442,7 +431,6 @@
       </div>
     </div>
 
-    <!-- Modal para Estados -->
     <div id="estadoModal" class="admin-modal">
       <div class="admin-modal-content">
         <div class="admin-modal-header">
@@ -486,7 +474,6 @@
       </div>
     </div>
 
-    <!-- Modal para Cidades -->
     <div id="cidadeModal" class="admin-modal">
       <div class="admin-modal-content">
         <div class="admin-modal-header">
@@ -530,7 +517,6 @@
       </div>
     </div>
 
-    <!-- Modal para Transportadoras -->
     <div id="transportadoraModal" class="admin-modal">
       <div class="admin-modal-content">
         <div class="admin-modal-header">
@@ -596,7 +582,6 @@
       </div>
     </div>
 
-    <!-- Modal para Faixas de Peso -->
     <div id="faixaPesoModal" class="admin-modal">
       <div class="admin-modal-content">
         <div class="admin-modal-header">
@@ -659,7 +644,6 @@
       </div>
     </div>
 
-    <!-- Modal para Rotas -->
     <div id="rotaModal" class="admin-modal">
       <div class="admin-modal-content">
         <div class="admin-modal-header">
@@ -704,7 +688,6 @@
       </div>
     </div>
 
-    <!-- Modal para Preços de Faixas -->
     <div id="precoFaixaModal" class="admin-modal">
       <div class="admin-modal-content" style="max-width: 800px">
         <div class="admin-modal-header">
@@ -851,7 +834,6 @@
       </div>
     </div>
 
-    <!-- Modal de confirmação de exclusão -->
     <div id="deleteConfirmModal" class="admin-modal">
       <div class="admin-modal-content delete-confirm-modal">
         <div class="admin-modal-header">
@@ -878,10 +860,6 @@
       </div>
     </div>
 
-    <!-- Sistema de notificações -->
     <div id="notificationContainer"></div>
-
-    <!-- Scripts -->
-    <!-- O ModuleLoader carrega automaticamente os módulos admin, incluindo administration.js -->
   </body>
 </html>

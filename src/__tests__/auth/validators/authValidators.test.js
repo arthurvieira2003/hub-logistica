@@ -1,22 +1,12 @@
-/**
- * Testes para AuthValidators
- * Testa validações de email, senha, login e registro
- */
-
-// Carregar módulos usando require() para permitir instrumentação do Jest
 const helpersPath = require.resolve(
   "../../../../public/javascripts/utils/helpers.js"
 );
 const authValidatorsPath = require.resolve(
   "../../../../public/javascripts/auth/validators/authValidators.js"
 );
-
-// Carregar módulos necessários antes dos testes
 beforeAll(() => {
-  // Carregar helpers primeiro
   require(helpersPath);
 
-  // Mock das dependências necessárias antes de carregar AuthValidators
   window.LoginUI = {
     showNotification: jest.fn(),
   };
@@ -35,7 +25,6 @@ beforeAll(() => {
     hideLoading: jest.fn(),
   };
 
-  // Carregar AuthValidators usando require() para permitir instrumentação
   require(authValidatorsPath);
 });
 
@@ -231,7 +220,6 @@ describe("AuthValidators", () => {
     });
 
     test("deve retornar undefined quando token não existe", () => {
-      // Limpar cookies antes do teste
       document.cookie = "";
       document.cookie = "other=value";
       const token = window.AuthValidators.getToken();
@@ -241,14 +229,14 @@ describe("AuthValidators", () => {
 
   describe("isTokenExpired", () => {
     test("deve retornar true quando token está expirado", () => {
-      const expiredTime = Math.floor(Date.now() / 1000) - 3600; // 1 hora atrás
+      const expiredTime = Math.floor(Date.now() / 1000) - 3600;
       const userData = { exp: expiredTime };
       const result = window.AuthValidators.isTokenExpired(userData);
       expect(result).toBe(true);
     });
 
     test("deve retornar false quando token não está expirado", () => {
-      const futureTime = Math.floor(Date.now() / 1000) + 3600; // 1 hora no futuro
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
       const userData = { exp: futureTime };
       const result = window.AuthValidators.isTokenExpired(userData);
       expect(result).toBe(false);
@@ -257,7 +245,6 @@ describe("AuthValidators", () => {
 
   describe("advancedTokenCheck", () => {
     beforeEach(() => {
-      // Resetar location.href
       delete window.location;
       window.location = { href: "" };
       jest.clearAllMocks();
@@ -368,7 +355,6 @@ describe("AuthValidators", () => {
 
   describe("adminCheck", () => {
     beforeEach(() => {
-      // Resetar location.href
       delete window.location;
       window.location = { href: "" };
       jest.clearAllMocks();
@@ -488,7 +474,6 @@ describe("AuthValidators", () => {
 
   describe("redirectToHome", () => {
     beforeEach(() => {
-      // Resetar location.href
       delete window.location;
       window.location = { href: "" };
       localStorage.clear();

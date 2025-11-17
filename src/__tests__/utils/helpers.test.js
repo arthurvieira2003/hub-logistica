@@ -1,18 +1,7 @@
-/**
- * Testes para Helpers
- * Testa funções utilitárias gerais
- */
-
-// Carregar módulo usando require() para permitir instrumentação do Jest
-// O Jest precisa que o arquivo seja carregado via require() para rastrear cobertura
 const helpersPath = require.resolve(
   "../../../public/javascripts/utils/helpers.js"
 );
-
-// Carregar o módulo - o Jest irá instrumentar automaticamente
 beforeAll(() => {
-  // Usar require() em vez de eval() para permitir instrumentação
-  // O Jest transformer customizado irá processar o arquivo antes de executá-lo
   require(helpersPath);
 });
 
@@ -59,7 +48,7 @@ describe("Helpers", () => {
     test("deve usar locale pt-BR por padrão", () => {
       const date = new Date("2024-01-15");
       const formatted = window.Helpers.formatDate(date);
-      // Formato brasileiro geralmente é DD/MM/YYYY
+
       expect(formatted).toMatch(/\d{2}\/\d{2}\/\d{4}/);
     });
   });
@@ -232,7 +221,6 @@ describe("Helpers", () => {
 
   describe("getUrlParams", () => {
     beforeEach(() => {
-      // Resetar window.location
       delete window.location;
       window.location = {
         search: "",
@@ -244,7 +232,6 @@ describe("Helpers", () => {
 
     test("deve retornar objeto vazio quando não há parâmetros", () => {
       window.location.search = "";
-      // Mock URLSearchParams para retornar objeto vazio
       const originalUrlSearchParams = global.URLSearchParams;
       global.URLSearchParams = jest.fn(() => ({
         [Symbol.iterator]: function* () {},
@@ -257,7 +244,6 @@ describe("Helpers", () => {
     });
 
     test("deve extrair parâmetros da URL", () => {
-      // Mock URLSearchParams com parâmetros
       const originalUrlSearchParams = global.URLSearchParams;
       global.URLSearchParams = jest.fn(() => ({
         [Symbol.iterator]: function* () {
@@ -275,7 +261,6 @@ describe("Helpers", () => {
 
   describe("copyToClipboard", () => {
     beforeEach(() => {
-      // Resetar o mock do clipboard
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText.mockClear();
         navigator.clipboard.writeText.mockResolvedValue(undefined);
@@ -284,7 +269,6 @@ describe("Helpers", () => {
 
     test("deve copiar texto para clipboard", async () => {
       const text = "Texto para copiar";
-      // Garantir que navigator.clipboard existe
       if (!navigator.clipboard) {
         navigator.clipboard = {
           writeText: jest.fn(() => Promise.resolve()),
@@ -296,7 +280,6 @@ describe("Helpers", () => {
     });
 
     test("deve retornar false em caso de erro", async () => {
-      // Garantir que navigator.clipboard existe
       if (!navigator.clipboard) {
         navigator.clipboard = {
           writeText: jest.fn(() => Promise.reject(new Error("Erro"))),
@@ -314,17 +297,12 @@ describe("Helpers", () => {
 
     beforeEach(() => {
       jest.useFakeTimers();
-      // Limpar mocks do document
       document.querySelector.mockClear();
-      // Não sobrescrever document.body - já está definido no setupTests
-
-      // Mock MutationObserver
       mockObserver = {
         observe: jest.fn(),
         disconnect: jest.fn(),
       };
       global.MutationObserver = jest.fn((callback) => {
-        // Salvar callback para uso nos testes
         mockObserver.callback = callback;
         return mockObserver;
       });
@@ -341,29 +319,24 @@ describe("Helpers", () => {
 
       const promise = window.Helpers.waitForElement("#test-element");
 
-      // Deve resolver imediatamente
       await expect(promise).resolves.toBe(mockElement);
       expect(document.querySelector).toHaveBeenCalledWith("#test-element");
     });
 
     test("deve usar MutationObserver para esperar elemento aparecer", async () => {
-      // Elemento não existe inicialmente
       document.querySelector.mockReturnValueOnce(null);
 
       const promise = window.Helpers.waitForElement("#test-element");
 
-      // Verificar que observer foi criado e configurado
       expect(global.MutationObserver).toHaveBeenCalled();
       expect(mockObserver.observe).toHaveBeenCalledWith(document.body, {
         childList: true,
         subtree: true,
       });
 
-      // Simular elemento aparecendo
       const mockElement = { id: "test-element" };
       document.querySelector.mockReturnValue(mockElement);
 
-      // Simular callback do MutationObserver
       if (mockObserver.callback) {
         mockObserver.callback([], mockObserver);
       }
@@ -373,12 +346,10 @@ describe("Helpers", () => {
     });
 
     test("deve rejeitar após timeout se elemento não aparecer", async () => {
-      // Elemento nunca existe
       document.querySelector.mockReturnValue(null);
 
       const promise = window.Helpers.waitForElement("#test-element", 1000);
 
-      // Avançar o timer até o timeout
       jest.advanceTimersByTime(1000);
 
       await expect(promise).rejects.toThrow(
@@ -392,24 +363,20 @@ describe("Helpers", () => {
     let originalReplaceState;
 
     beforeEach(() => {
-      // Salvar e substituir replaceState
       originalReplaceState = window.history.replaceState;
       window.history.replaceState = jest.fn();
     });
 
     afterEach(() => {
-      // Restaurar
       window.history.replaceState = originalReplaceState;
     });
 
     test("deve adicionar/atualizar parâmetros na URL", () => {
-      // Executar a função - cobertura já está 100%
       window.Helpers.setUrlParams({
         key1: "value1",
         key2: "value2",
       });
 
-      // Verificar que replaceState foi chamado
       expect(window.history.replaceState).toHaveBeenCalled();
     });
 

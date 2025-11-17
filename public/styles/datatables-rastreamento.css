@@ -1,12 +1,8 @@
-/* Estilos específicos para DataTables no sistema de rastreamento */
-
-/* Container principal do DataTables */
 .dataTables_wrapper {
   font-family: "Poppins", Arial, sans-serif;
   margin-top: 20px;
 }
 
-/* Controles superiores (length e search) */
 .dataTables_wrapper .dt-layout-row:first-child {
   display: flex;
   justify-content: space-between;
@@ -50,7 +46,6 @@
   box-shadow: 0 0 0 3px rgba(36, 118, 117, 0.1);
 }
 
-/* Tabela principal */
 #rastreamentoDataTable {
   width: 100% !important;
   border-collapse: collapse;
@@ -62,7 +57,6 @@
   background: white;
 }
 
-/* Cabeçalho da tabela */
 #rastreamentoDataTable thead th {
   background: #f8f9fa;
   color: #333;
@@ -78,13 +72,11 @@
   background: #e9ecef;
 }
 
-/* Largura específica para coluna de status */
 #rastreamentoDataTable thead th:nth-child(3) {
   min-width: 140px;
   width: 140px;
 }
 
-/* Indicadores de ordenação - minimalista */
 .dataTables_wrapper .dt-ordering-asc:after {
   content: "↑";
   position: absolute;
@@ -107,7 +99,6 @@
   font-size: 12px;
 }
 
-/* Corpo da tabela - minimalista */
 #rastreamentoDataTable tbody td {
   padding: 12px 15px;
   border-bottom: 1px solid #e9ecef;
@@ -116,7 +107,6 @@
   transition: background-color 0.15s ease;
 }
 
-/* Ícones das transportadoras - cortar em vez de espremer */
 #rastreamentoDataTable tbody td:nth-child(2) img {
   width: 24px;
   height: 24px;
@@ -126,7 +116,6 @@
   flex-shrink: 0;
 }
 
-/* Evitar quebra de linha em status e padronizar badges */
 #rastreamentoDataTable tbody td:nth-child(3) {
   white-space: nowrap;
   min-width: 140px;
@@ -134,7 +123,6 @@
   text-align: center;
 }
 
-/* Badges ocupando toda a largura da coluna - sempre mesmo tamanho */
 #rastreamentoDataTable tbody td:nth-child(3) span {
   display: block !important;
   width: 100% !important;
@@ -164,7 +152,6 @@
   background-color: #e9ecef;
 }
 
-/* Botões de ação - apenas ícone centralizado */
 .btn-detalhes {
   background: linear-gradient(135deg, #247675, #1a5a5a) !important;
   color: white !important;
@@ -183,7 +170,6 @@
   margin: 0 auto !important;
 }
 
-/* Ocultar texto do botão, mostrar apenas ícone */
 .btn-detalhes .btn-text {
   display: none !important;
 }
@@ -198,7 +184,6 @@
   font-size: 14px;
 }
 
-/* Status badges */
 #rastreamentoDataTable tbody td span[style*="background:"] {
   display: inline-block;
   padding: 8px 16px;
@@ -216,7 +201,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Logos de transportadoras */
 #rastreamentoDataTable tbody td img {
   width: 24px;
   height: 24px;
@@ -225,7 +209,6 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Controles inferiores (info e paginação) */
 .dataTables_wrapper .dt-layout-row:last-child {
   display: flex;
   justify-content: space-between;
@@ -241,7 +224,6 @@
   font-weight: 500;
 }
 
-/* Paginação */
 .dataTables_wrapper .dt-paging {
   display: flex;
   gap: 5px;
@@ -290,7 +272,6 @@
   box-shadow: none;
 }
 
-/* Responsividade */
 @media (max-width: 768px) {
   .dataTables_wrapper .dt-layout-row:first-child {
     flex-direction: column;
@@ -346,7 +327,6 @@
   }
 }
 
-/* Animações */
 @keyframes fadeInDataTable {
   from {
     opacity: 0;
@@ -362,7 +342,6 @@
   animation: fadeInDataTable 0.5s ease-out;
 }
 
-/* Estados de carregamento */
 .dataTables_processing {
   background: rgba(36, 118, 117, 0.9) !important;
   color: white !important;
@@ -372,7 +351,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Scrollbar personalizada para tabela */
 .tabela-container::-webkit-scrollbar {
   height: 8px;
 }
@@ -391,7 +369,6 @@
   background: #1a5a5a;
 }
 
-/* Estilos para filtros avançados por coluna - minimalista */
 .dt-column-header {
   display: flex !important;
   align-items: center !important;
@@ -401,7 +378,6 @@
   flex-direction: row !important;
 }
 
-/* Garantir que o título da coluna tenha espaço suficiente e fique sempre à esquerda */
 .dt-column-title {
   flex: 0 0 auto !important;
   margin-right: 8px !important;
@@ -412,7 +388,6 @@
   text-align: left !important;
 }
 
-/* Estilo específico para cabeçalhos que já têm estrutura do DataTables */
 thead th .dt-column-header {
   display: flex !important;
   align-items: center !important;
@@ -421,7 +396,6 @@ thead th .dt-column-header {
   flex-direction: row !important;
 }
 
-/* Forçar alinhamento à esquerda para todos os cabeçalhos */
 #rastreamentoDataTable thead th .dt-column-header {
   display: flex !important;
   align-items: center !important;
@@ -430,7 +404,6 @@ thead th .dt-column-header {
   flex-direction: row !important;
 }
 
-/* Garantir que o título sempre fique à esquerda */
 #rastreamentoDataTable thead th .dt-column-title {
   flex: 0 0 auto !important;
   margin-right: 8px !important;
@@ -438,7 +411,6 @@ thead th .dt-column-header {
   text-align: left !important;
 }
 
-/* Garantir que os botões apareçam - minimalista */
 thead th .dtcc {
   display: flex !important;
   gap: 2px !important;
@@ -446,13 +418,11 @@ thead th .dtcc {
   order: 2 !important;
 }
 
-/* Botão de ordenação também deve ficar à direita */
 thead th .dt-column-order {
   order: 3 !important;
   margin-left: 4px !important;
 }
 
-/* Regras mais específicas para garantir posicionamento correto */
 #rastreamentoDataTable thead th .dtcc {
   display: flex !important;
   gap: 2px !important;
@@ -465,7 +435,6 @@ thead th .dt-column-order {
   margin-left: 4px !important;
 }
 
-/* Regra adicional para sobrescrever qualquer estilo do DataTables */
 .dataTables_wrapper #rastreamentoDataTable thead th .dt-column-header {
   display: flex !important;
   align-items: center !important;
@@ -488,7 +457,6 @@ thead th .dt-column-order {
   order: 2 !important;
 }
 
-/* Estilo para o botão de filtro - minimalista */
 .dt-column-filter {
   display: inline-block;
   width: 14px;
@@ -509,9 +477,6 @@ thead th .dt-column-order {
   color: inherit;
 }
 
-/* ===== ESTILOS PARA O POPUP DE FILTRO AVANÇADO ===== */
-
-/* Container principal do dropdown */
 .dtcc-dropdown {
   background: #ffffff !important;
   border: 1px solid #e0e0e0 !important;
@@ -526,12 +491,10 @@ thead th .dt-column-order {
   z-index: 1000 !important;
 }
 
-/* Liner interno */
 .dtcc-dropdown-liner {
   padding: 16px !important;
 }
 
-/* ===== SEÇÃO DE BUSCA ===== */
 .dtcc-content.dtcc-search {
   margin-bottom: 12px !important;
   display: flex !important;
@@ -548,7 +511,6 @@ thead th .dt-column-order {
   width: 100% !important;
 }
 
-/* Container da busca - layout vertical */
 .dtcc-content.dtcc-search > div {
   display: flex !important;
   flex-direction: column !important;
@@ -560,12 +522,10 @@ thead th .dt-column-order {
   transition: none !important;
 }
 
-/* Linha do tipo de filtro - horizontal */
 .dtcc-search-type-icon {
-  display: none !important; /* Ocultar ícone por enquanto */
+  display: none !important;
 }
 
-/* Select de tipo de filtro */
 .filtro-tipo {
   width: 100% !important;
   border: 1px solid #ddd !important;
@@ -589,12 +549,10 @@ thead th .dt-column-order {
   box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1) !important;
 }
 
-/* Linha do input de busca - horizontal */
 .dtcc-search-icon {
-  display: none !important; /* Ocultar ícone por enquanto */
+  display: none !important;
 }
 
-/* Input de valor */
 .filtro-valor {
   width: 100% !important;
   border: 1px solid #ddd !important;
@@ -622,12 +580,10 @@ thead th .dt-column-order {
   box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1) !important;
 }
 
-/* Container do input com botão limpar */
 .dtcc-content.dtcc-search > div > div {
   position: relative !important;
 }
 
-/* Botão limpar - posicionado à direita do input */
 .dtcc-search-clear {
   position: absolute !important;
   right: 8px !important;
@@ -651,14 +607,12 @@ thead th .dt-column-order {
   background: rgba(0, 0, 0, 0.05) !important;
 }
 
-/* ===== SEPARADOR ===== */
 .dtcc-spacer {
   height: 1px !important;
   background: #e9ecef !important;
   margin: 12px 0 !important;
 }
 
-/* ===== BOTÕES DE ORDENAÇÃO ===== */
 .dtcc-button {
   display: flex !important;
   align-items: center !important;
@@ -691,7 +645,6 @@ thead th .dt-column-order {
   transform: translateY(1px) !important;
 }
 
-/* Ícone dos botões */
 .dtcc-button-icon {
   display: flex !important;
   align-items: center !important;
@@ -701,19 +654,16 @@ thead th .dt-column-order {
   flex-shrink: 0 !important;
 }
 
-/* Texto dos botões */
 .dtcc-button-text {
   flex: 1 !important;
   font-weight: 500 !important;
 }
 
-/* Estados dos botões */
 .dtcc-button-state,
 .dtcc-button-extra {
   display: none !important;
 }
 
-/* Botão ativo */
 .dtcc-button_active {
   background: #247675 !important;
   color: #ffffff !important;
@@ -724,9 +674,6 @@ thead th .dt-column-order {
   color: #ffffff !important;
 }
 
-/* ===== ESTILOS PARA CONTROLES DO DATATABLES ===== */
-
-/* Container principal dos controles */
 .top {
   display: flex !important;
   justify-content: space-between !important;
@@ -738,7 +685,6 @@ thead th .dt-column-order {
   gap: 16px !important;
 }
 
-/* Seletor de resultados por página */
 .dt-length {
   display: flex !important;
   align-items: center !important;
@@ -775,7 +721,6 @@ thead th .dt-column-order {
   white-space: nowrap !important;
 }
 
-/* Campo de busca */
 .dt-search {
   display: flex !important;
   align-items: center !important;
@@ -817,7 +762,6 @@ thead th .dt-column-order {
   box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1) !important;
 }
 
-/* Responsividade para telas menores */
 @media (max-width: 768px) {
   .top {
     flex-direction: column !important;
@@ -836,9 +780,6 @@ thead th .dt-column-order {
   }
 }
 
-/* ===== ESTILOS PARA PAGINAÇÃO E INFORMAÇÕES ===== */
-
-/* Container da paginação */
 .bottom {
   display: flex !important;
   justify-content: space-between !important;
@@ -850,7 +791,6 @@ thead th .dt-column-order {
   gap: 16px !important;
 }
 
-/* Informações de registros */
 .dt-info {
   font-size: 13px !important;
   color: #666 !important;
@@ -859,21 +799,18 @@ thead th .dt-column-order {
   flex-shrink: 0 !important;
 }
 
-/* Container da paginação */
 .dt-paging {
   display: flex !important;
   align-items: center !important;
   flex-shrink: 0 !important;
 }
 
-/* Nav da paginação */
 .dt-paging nav {
   display: flex !important;
   align-items: center !important;
   gap: 4px !important;
 }
 
-/* Botões de paginação */
 .dt-paging-button {
   padding: 6px 12px !important;
   border: 1px solid #ddd !important;
@@ -903,7 +840,6 @@ thead th .dt-column-order {
   box-shadow: 0 0 0 2px rgba(36, 118, 117, 0.1) !important;
 }
 
-/* Botão atual/página ativa */
 .dt-paging-button.current {
   background: #247675 !important;
   border-color: #247675 !important;
@@ -917,7 +853,6 @@ thead th .dt-column-order {
   color: #ffffff !important;
 }
 
-/* Botões desabilitados */
 .dt-paging-button.disabled {
   background: #f8f9fa !important;
   border-color: #e9ecef !important;
@@ -932,7 +867,6 @@ thead th .dt-column-order {
   color: #999 !important;
 }
 
-/* Botões especiais (Primeiro, Anterior, Próximo, Último) */
 .dt-paging-button.first,
 .dt-paging-button.previous,
 .dt-paging-button.next,
@@ -941,7 +875,6 @@ thead th .dt-column-order {
   font-weight: 500 !important;
 }
 
-/* Responsividade para paginação */
 @media (max-width: 768px) {
   .bottom {
     flex-direction: column !important;
@@ -1022,7 +955,6 @@ thead th .dt-column-order {
   display: block;
 }
 
-/* Dropdown de filtros avançados */
 .dtcc-dropdown {
   background: white;
   border: 1px solid #ddd;
@@ -1133,7 +1065,6 @@ thead th .dt-column-order {
   margin-bottom: 0;
 }
 
-/* Responsividade para filtros avançados */
 @media (max-width: 768px) {
   .dtcc-button-text {
     display: none;

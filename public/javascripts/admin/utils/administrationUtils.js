@@ -1,9 +1,4 @@
-// Administration Utils - Notificações e utilitários
 window.Administration = window.Administration || {};
-
-// ============================================================================
-// NOTIFICAÇÕES
-// ============================================================================
 
 window.Administration.showSuccess = function (message) {
   window.Administration.showNotification(message, "success");
@@ -48,4 +43,3 @@ window.Administration.showNotification = function (message, type = "info") {
     setTimeout(() => notification.remove(), 300);
   }, 3000);
 };
-

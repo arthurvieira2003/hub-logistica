@@ -1,14 +1,5 @@
-/**
- * Gerenciador de Eventos
- * Contém funções para gerenciar eventos da interface de rastreamento
- */
-
-// Namespace para eventos
 window.RastreamentoEvents = window.RastreamentoEvents || {};
 
-/**
- * Aplica filtros na tabela (compatível com DataTables)
- */
 window.RastreamentoEvents.aplicarFiltros = function () {
   const searchTerm =
     document.getElementById("searchNota")?.value.toLowerCase() ||
@@ -29,14 +20,11 @@ window.RastreamentoEvents.aplicarFiltros = function () {
     .filter((checkbox) => checkbox.checked)
     .map((checkbox) => checkbox.value);
 
-  // Se DataTables está disponível, usar filtros do DataTables
   if (window.RastreamentoDataTablesRenderer && window.dataTableInstance) {
-    // Aplicar filtro de busca
     if (searchTerm) {
       window.RastreamentoDataTablesRenderer.aplicarFiltro("busca", searchTerm);
     }
 
-    // Aplicar filtros de status
     if (statusFiltros.length > 0) {
       window.RastreamentoDataTablesRenderer.aplicarFiltro(
         "status",
@@ -44,7 +32,6 @@ window.RastreamentoEvents.aplicarFiltros = function () {
       );
     }
 
-    // Aplicar filtros de transportadora
     if (transportadorasFiltros.length > 0) {
       window.RastreamentoDataTablesRenderer.aplicarFiltro(
         "transportadora",
@@ -55,11 +42,9 @@ window.RastreamentoEvents.aplicarFiltros = function () {
     return;
   }
 
-  // Fallback para sistema de cards (compatibilidade)
   const notaCards = document.querySelectorAll(".nota-card");
   const transportadoraCards = document.querySelectorAll(".transportadora-card");
 
-  // Filtrar notas nos cards
   notaCards.forEach((notaCard) => {
     const notaNumero = notaCard.dataset.numero.toLowerCase();
     const notaStatus = notaCard.dataset.status;
@@ -80,7 +65,6 @@ window.RastreamentoEvents.aplicarFiltros = function () {
     }
   });
 
-  // Atualizar visibilidade dos cards de transportadoras
   transportadoraCards.forEach((card) => {
     const visibleNotas = card.querySelectorAll(
       '.nota-card[style="display: block"]'
@@ -92,7 +76,6 @@ window.RastreamentoEvents.aplicarFiltros = function () {
     }
   });
 
-  // Filtrar linhas da tabela
   const notaRows = document.querySelectorAll(".tr-nota");
 
   notaRows.forEach((row) => {
@@ -115,9 +98,6 @@ window.RastreamentoEvents.aplicarFiltros = function () {
   });
 };
 
-/**
- * Anima os cards na entrada
- */
 window.RastreamentoEvents.animateCards = function () {
   const cards = document.querySelectorAll(".transportadora-card");
   cards.forEach((card, index) => {
@@ -127,10 +107,6 @@ window.RastreamentoEvents.animateCards = function () {
   });
 };
 
-/**
- * Configura eventos para os botões de detalhes
- * @param {Array} todasNotas - Array com todas as notas
- */
 window.RastreamentoEvents.configurarEventosDetalhes = function (todasNotas) {
   setTimeout(() => {
     const botoesDetalhes = document.querySelectorAll(".detalhes-btn");
@@ -155,21 +131,16 @@ window.RastreamentoEvents.configurarEventosDetalhes = function (todasNotas) {
   }, 100);
 };
 
-/**
- * Configura eventos para o seletor de data
- */
 window.RastreamentoEvents.configurarEventosData = function () {
   const dataInput = document.getElementById("dataRastreamento");
   const btnAtualizar = document.getElementById("btnAtualizarData");
 
   if (dataInput && btnAtualizar) {
-    // Event listener para o botão Atualizar
     btnAtualizar.addEventListener("click", async function () {
       const novaData = dataInput.value;
       const dataAtual = window.RastreamentoConfig.obterDataRastreamento();
 
       if (novaData && novaData !== dataAtual) {
-        // Mostrar loading no botão
         const originalText = this.innerHTML;
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
         this.disabled = true;
@@ -179,14 +150,12 @@ window.RastreamentoEvents.configurarEventosData = function () {
         } catch (error) {
           console.error("❌ Erro no recarregamento:", error);
         } finally {
-          // Restaurar botão
           this.innerHTML = originalText;
           this.disabled = false;
         }
       }
     });
 
-    // Event listener para Enter no input de data
     dataInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
         btnAtualizar.click();
@@ -197,11 +166,7 @@ window.RastreamentoEvents.configurarEventosData = function () {
   }
 };
 
-/**
- * Inicializa os eventos da interface de rastreamento
- */
 window.RastreamentoEvents.initRastreamentoEvents = function () {
-  // Eventos para os filtros
   const filterButton = document.getElementById("filterButton");
   const filterDropdown = document.getElementById("filterDropdown");
 
@@ -210,7 +175,6 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
       filterDropdown.classList.toggle("active");
     });
 
-    // Fechar dropdown ao clicar fora
     document.addEventListener("click", function (event) {
       if (
         !event.target.closest(".filter-container") &&
@@ -220,7 +184,6 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
       }
     });
 
-    // Aplicar filtros
     const applyFilters = document.getElementById("applyFilters");
     if (applyFilters) {
       applyFilters.addEventListener("click", function () {
@@ -229,7 +192,6 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
       });
     }
 
-    // Limpar filtros
     const clearFilters = document.getElementById("clearFilters");
     if (clearFilters) {
       clearFilters.addEventListener("click", function () {
@@ -244,7 +206,6 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
     }
   }
 
-  // Eventos para alternar entre visualizações
   const viewToggleButtons = document.querySelectorAll(".view-toggle-btn");
   const viewContents = document.querySelectorAll(".view-content");
 
@@ -252,11 +213,9 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
     button.addEventListener("click", function () {
       const viewType = this.dataset.view;
 
-      // Atualizar botões
       viewToggleButtons.forEach((btn) => btn.classList.remove("active"));
       this.classList.add("active");
 
-      // Atualizar conteúdo
       viewContents.forEach((content) => {
         content.classList.remove("active");
         content.style.display = "none";
@@ -270,7 +229,6 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
     });
   });
 
-  // Eventos para busca
   const searchInput =
     document.getElementById("searchNota") ||
     document.getElementById("searchInput");
@@ -280,17 +238,14 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
     });
   }
 
-  // Eventos para botões de filtrar atrasados
   const btnFiltrarAtrasados = document.querySelector(".btn-filtrar-atrasados");
   if (btnFiltrarAtrasados) {
     btnFiltrarAtrasados.addEventListener("click", function () {
-      // Se DataTables está disponível, usar filtro específico
       if (window.RastreamentoDataTablesRenderer && window.dataTableInstance) {
         window.RastreamentoDataTablesRenderer.aplicarFiltro("atrasadas", true);
         return;
       }
 
-      // Fallback para sistema de cards
       const filtroAtrasado = document.getElementById("filtroAtrasado");
       if (filtroAtrasado) {
         filtroAtrasado.checked = true;
@@ -299,17 +254,14 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
     });
   }
 
-  // Eventos para botões de limpar filtros
   const btnLimparFiltros = document.querySelector(".btn-limpar-filtros");
   if (btnLimparFiltros) {
     btnLimparFiltros.addEventListener("click", function () {
-      // Se DataTables está disponível, usar limpeza específica
       if (window.RastreamentoDataTablesRenderer && window.dataTableInstance) {
         window.RastreamentoDataTablesRenderer.limparFiltros();
         return;
       }
 
-      // Fallback para sistema de cards
       document
         .querySelectorAll('.filter-options input[type="checkbox"]')
         .forEach((checkbox) => {
@@ -319,6 +271,5 @@ window.RastreamentoEvents.initRastreamentoEvents = function () {
     });
   }
 
-  // Configurar eventos do seletor de data
   window.RastreamentoEvents.configurarEventosData();
 };

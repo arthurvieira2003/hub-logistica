@@ -15,7 +15,6 @@ window.ToolManager.initToolButtons = function () {
     button.addEventListener("click", () => {
       const tool = button.dataset.tool;
 
-      // Se for o botão de admin, abrir em nova guia sem criar aba
       if (tool === "admin") {
         window.open("/administration", "_blank");
         return;
@@ -82,7 +81,6 @@ window.ToolManager.loadToolContent = async function (tool, contentElement) {
 };
 
 window.ToolManager.loadFretesTool = async function (contentElement) {
-  // Obter data atual no formato YYYY-MM-DD
   const hoje = new Date();
   const ano = hoje.getFullYear();
   const mes = String(hoje.getMonth() + 1).padStart(2, "0");
@@ -118,20 +116,17 @@ window.ToolManager.loadFretesTool = async function (contentElement) {
     </div>
   `;
 
-  // Configurar eventos do seletor de data
   window.ToolManager.setupFretesDateSelector();
   await window.ToolManager.loadFretesData();
 };
 
 window.ToolManager.loadFretesData = async function (dataFiltro = null) {
   try {
-    // Se não fornecida, usar data do input ou data atual
     if (!dataFiltro) {
       const dataInput = document.getElementById("fretesData");
       dataFiltro = dataInput ? dataInput.value : null;
     }
 
-    // Construir URL com parâmetro de data
     let url = "http://localhost:4010/cte";
     if (dataFiltro) {
       url += `?data=${dataFiltro}`;
@@ -161,12 +156,10 @@ window.ToolManager.setupFretesDateSelector = function () {
   const btnAtualizar = document.getElementById("btnAtualizarFretesData");
 
   if (dataInput && btnAtualizar) {
-    // Event listener para o botão Atualizar
     btnAtualizar.addEventListener("click", async function () {
       const novaData = dataInput.value;
 
       if (novaData) {
-        // Mostrar loading no botão
         const originalText = this.innerHTML;
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
         this.disabled = true;
@@ -176,14 +169,12 @@ window.ToolManager.setupFretesDateSelector = function () {
         } catch (error) {
           console.error("❌ Erro ao recarregar fretes:", error);
         } finally {
-          // Restaurar botão
           this.innerHTML = originalText;
           this.disabled = false;
         }
       }
     });
 
-    // Event listener para Enter no input de data
     dataInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
         btnAtualizar.click();
@@ -218,14 +209,13 @@ window.ToolManager.renderFretesItems = async function (items) {
             <th>Destinatário</th>
             <th>Data</th>
             <th>Valor CT-e</th>
-            <th>Validação de Preço</th>
+            <th>Validação</th>
             <th>Ações</th>
           </tr>
         </thead>
         <tbody>
   `;
 
-  // Renderizar linhas inicialmente com loading
   items.forEach((item) => {
     const dateObj = new Date(item.DateAdd);
     const formattedDate = dateObj.toLocaleDateString("pt-BR");
@@ -277,7 +267,6 @@ window.ToolManager.renderFretesItems = async function (items) {
   fretesListElement.innerHTML = html;
   window.ToolManager.setupFretesButtons();
 
-  // Validar preços de todos os CT-e's
   await window.ToolManager.validarPrecosFretes(items);
 };
 
@@ -293,7 +282,6 @@ window.ToolManager.validarPrecosFretes = async function (items) {
         if (response.ok) {
           validacao = await response.json();
         } else {
-          // Tentar obter a resposta JSON mesmo em caso de erro
           try {
             validacao = await response.json();
           } catch {
@@ -321,7 +309,6 @@ window.ToolManager.validarPrecosFretes = async function (items) {
     })
   );
 
-  // Atualizar cada linha com o resultado da validação
   validacoes.forEach((result) => {
     if (result.status === "fulfilled") {
       const { serial, validacao } = result.value;
@@ -336,7 +323,28 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
   );
   if (!validationCell) return;
 
-  // Encontrar a linha da tabela para aplicar estilo
+  const existingErrorIcon = validationCell.querySelector(
+    "i[data-tooltip-error]"
+  );
+  if (
+    existingErrorIcon &&
+    typeof tippy !== "undefined" &&
+    existingErrorIcon._tippy
+  ) {
+    existingErrorIcon._tippy.destroy();
+  }
+
+  const existingValidationIcon = validationCell.querySelector(
+    "i[data-tooltip-validation]"
+  );
+  if (
+    existingValidationIcon &&
+    typeof tippy !== "undefined" &&
+    existingValidationIcon._tippy
+  ) {
+    existingValidationIcon._tippy.destroy();
+  }
+
   const tableRow = validationCell.closest("tr");
 
   const {
@@ -344,12 +352,10 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
     status,
     motivo,
     precoTabela,
-    precoCTE,
     diferenca,
     percentualDiferenca,
   } = validacao;
 
-  // Remover todas as classes de validação da linha
   if (tableRow) {
     tableRow.classList.remove(
       "validation-row-ok",
@@ -366,7 +372,13 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
   }
 
   if (!valido) {
-    // Identificar o tipo de erro baseado no motivo
+    if (motivo && motivo.includes("não é um CT-e")) {
+      if (tableRow) {
+        tableRow.remove();
+      }
+      return;
+    }
+
     let errorType = "error";
     let errorIcon = "fa-exclamation-circle";
 
@@ -398,17 +410,30 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
       }
     }
 
-    // Aplicar classe na linha da tabela
     if (tableRow) {
       tableRow.classList.add(`validation-row-${errorType}`);
     }
 
+    const mensagemErro = motivo || "Não foi possível validar";
+
     validationCell.innerHTML = `
       <div class="validation-error ${errorType}">
-        <i class="fas ${errorIcon}"></i>
-        <span>${motivo || "Não foi possível validar"}</span>
+        <i class="fas ${errorIcon}" data-tooltip-error="${mensagemErro}"></i>
       </div>
     `;
+
+    const iconElement = validationCell.querySelector("i[data-tooltip-error]");
+    if (iconElement && typeof tippy !== "undefined") {
+      tippy(iconElement, {
+        content: mensagemErro,
+        placement: "top",
+        delay: [0, 0],
+        theme: "error-tooltip",
+        arrow: true,
+        allowHTML: false,
+      });
+    }
+
     return;
   }
 
@@ -417,7 +442,6 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
     currency: "BRL",
   }).format(precoTabela || 0);
 
-  // Formatar diferença em R$
   const diferencaFormatada = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -440,7 +464,6 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
     statusText = "Abaixo";
   }
 
-  // Aplicar classe na linha da tabela
   if (tableRow) {
     tableRow.classList.remove(
       "validation-row-ok",
@@ -450,29 +473,38 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
     tableRow.classList.add(rowClass);
   }
 
-  // Se não houver diferença, mostrar apenas o valor da tabela
   const temDiferenca =
     diferenca !== null && diferenca !== 0 && Math.abs(diferenca) > 0.01;
 
+  let tooltipContent = `Preço da tabela: ${precoTabelaFormatado}`;
+  if (temDiferenca) {
+    const sinal = diferenca > 0 ? "+" : "-";
+    tooltipContent += `<br>Diferença: ${sinal}${diferencaFormatada} (${sinal}${percentualDiferenca.toFixed(
+      2
+    )}%)`;
+  } else {
+    tooltipContent += "<br>Preço está de acordo com a tabela";
+  }
+
   validationCell.innerHTML = `
     <div class="validation-result ${statusClass}">
-      <div class="validation-content-horizontal">
-        <span class="validation-price">${precoTabelaFormatado}</span>
-        ${
-          temDiferenca
-            ? `
-          <span class="validation-diff-amount">${
-            diferenca > 0 ? "+" : "-"
-          }${diferencaFormatada}</span>
-          <span class="validation-diff-percent">${
-            diferenca > 0 ? "+" : ""
-          }${percentualDiferenca.toFixed(2)}%</span>
-        `
-            : ""
-        }
-      </div>
+      <i class="fas ${statusIcon}" data-tooltip-validation="${tooltipContent}"></i>
     </div>
   `;
+
+  const iconElement = validationCell.querySelector(
+    "i[data-tooltip-validation]"
+  );
+  if (iconElement && typeof tippy !== "undefined") {
+    tippy(iconElement, {
+      content: tooltipContent,
+      placement: "top",
+      delay: [0, 0],
+      theme: "validation-tooltip",
+      arrow: true,
+      allowHTML: true,
+    });
+  }
 };
 
 window.ToolManager.setupFretesButtons = function () {

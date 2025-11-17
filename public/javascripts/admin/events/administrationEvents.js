@@ -1,4 +1,3 @@
-// Administration Events - Gerenciamento de eventos e busca
 window.Administration = window.Administration || {};
 
 window.Administration.initSearch = function () {
@@ -9,7 +8,6 @@ window.Administration.initSearch = function () {
   userSearch?.addEventListener("input", (e) => {
     const searchTerm = e.target.value.toLowerCase();
     if (!searchTerm) {
-      // Se busca vazia, limpar filtro e mostrar todos
       window.Administration.state.filteredData.users = null;
       window.Administration.resetPagination("users");
       window.Administration.renderUsers(window.Administration.state.users);
@@ -30,7 +28,9 @@ window.Administration.initSearch = function () {
     if (!searchTerm) {
       window.Administration.state.filteredData.sessions = null;
       window.Administration.resetPagination("sessions");
-      window.Administration.renderSessions(window.Administration.state.sessions);
+      window.Administration.renderSessions(
+        window.Administration.state.sessions
+      );
       return;
     }
     const filtered = window.Administration.state.sessions.filter((session) => {
@@ -49,7 +49,6 @@ window.Administration.initSearch = function () {
     window.Administration.loadSessions();
   });
 
-  // Busca para outras entidades
   document
     .getElementById("estadoSearchInput")
     ?.addEventListener("input", (e) => {
@@ -57,7 +56,9 @@ window.Administration.initSearch = function () {
       if (!searchTerm) {
         window.Administration.state.filteredData.estados = null;
         window.Administration.resetPagination("estados");
-        window.Administration.renderEstados(window.Administration.state.estados);
+        window.Administration.renderEstados(
+          window.Administration.state.estados
+        );
         return;
       }
       const filtered = window.Administration.state.estados.filter(
@@ -77,7 +78,9 @@ window.Administration.initSearch = function () {
       if (!searchTerm) {
         window.Administration.state.filteredData.cidades = null;
         window.Administration.resetPagination("cidades");
-        window.Administration.renderCidades(window.Administration.state.cidades);
+        window.Administration.renderCidades(
+          window.Administration.state.cidades
+        );
         return;
       }
       const filtered = window.Administration.state.cidades.filter(
@@ -98,7 +101,9 @@ window.Administration.initSearch = function () {
       if (!searchTerm) {
         window.Administration.state.filteredData.transportadoras = null;
         window.Administration.resetPagination("transportadoras");
-        window.Administration.renderTransportadoras(window.Administration.state.transportadoras);
+        window.Administration.renderTransportadoras(
+          window.Administration.state.transportadoras
+        );
         return;
       }
       const filtered = window.Administration.state.transportadoras.filter(
@@ -119,7 +124,9 @@ window.Administration.initSearch = function () {
       if (!searchTerm) {
         window.Administration.state.filteredData.faixasPeso = null;
         window.Administration.resetPagination("faixasPeso");
-        window.Administration.renderFaixasPeso(window.Administration.state.faixasPeso);
+        window.Administration.renderFaixasPeso(
+          window.Administration.state.faixasPeso
+        );
         return;
       }
       const filtered = window.Administration.state.faixasPeso.filter(
@@ -161,7 +168,9 @@ window.Administration.initSearch = function () {
       if (!searchTerm) {
         window.Administration.state.filteredData.precosFaixas = null;
         window.Administration.resetPagination("precosFaixas");
-        window.Administration.renderPrecosFaixas(window.Administration.state.precosFaixas);
+        window.Administration.renderPrecosFaixas(
+          window.Administration.state.precosFaixas
+        );
         return;
       }
       const filtered = window.Administration.state.precosFaixas.filter(
@@ -186,7 +195,6 @@ window.Administration.initSearch = function () {
 };
 
 window.Administration.initEntityEvents = function () {
-  // Event listeners para botões de criar
   document.getElementById("createEstadoBtn")?.addEventListener("click", () => {
     window.Administration.openEstadoModal();
   });
@@ -217,7 +225,6 @@ window.Administration.initEntityEvents = function () {
       window.Administration.openPrecoFaixaModal();
     });
 
-  // Event listeners para modais de estados
   document.getElementById("estadoForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
     window.Administration.saveEstado();
@@ -229,7 +236,6 @@ window.Administration.initEntityEvents = function () {
     document.getElementById("estadoModal")?.classList.remove("active");
   });
 
-  // Event listeners para modais de cidades
   document.getElementById("cidadeForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
     window.Administration.saveCidade();
@@ -241,7 +247,6 @@ window.Administration.initEntityEvents = function () {
     document.getElementById("cidadeModal")?.classList.remove("active");
   });
 
-  // Event listeners para modais de transportadoras
   document
     .getElementById("transportadoraForm")
     ?.addEventListener("submit", (e) => {
@@ -263,7 +268,6 @@ window.Administration.initEntityEvents = function () {
         ?.classList.remove("active");
     });
 
-  // Event listeners para modais de faixas de peso
   document.getElementById("faixaPesoForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
     window.Administration.saveFaixaPeso();
@@ -279,7 +283,6 @@ window.Administration.initEntityEvents = function () {
       document.getElementById("faixaPesoModal")?.classList.remove("active");
     });
 
-  // Event listeners para modais de rotas
   document.getElementById("rotaForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
     window.Administration.saveRota();
@@ -291,7 +294,6 @@ window.Administration.initEntityEvents = function () {
     document.getElementById("rotaModal")?.classList.remove("active");
   });
 
-  // Event listeners para modais de preços de faixas
   document.getElementById("precoFaixaForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
     window.Administration.savePrecoFaixa();
@@ -307,4 +309,3 @@ window.Administration.initEntityEvents = function () {
       document.getElementById("precoFaixaModal")?.classList.remove("active");
     });
 };
-

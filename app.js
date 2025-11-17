@@ -3,20 +3,12 @@ const path = require("path");
 const fs = require("fs");
 const app = express();
 
-// Middleware para verificar se arquivos JavaScript existem
 app.use("/javascripts", (req, res, next) => {
-  console.log(`📁 [Servidor] Requisição para: ${req.path}`);
-
   if (req.path.endsWith(".js")) {
     const filePath = path.join(__dirname, "public", "javascripts", req.path);
-    console.log(`[Servidor] Verificando arquivo: ${filePath}`);
 
     if (fs.existsSync(filePath)) {
-      console.log(`✅ [Servidor] Arquivo encontrado: ${req.path}`);
       res.setHeader("Content-Type", "application/javascript");
-    } else {
-      console.error(`❌ [Servidor] Arquivo não encontrado: ${req.path}`);
-      console.error(`❌ [Servidor] Caminho completo: ${filePath}`);
     }
   }
   next();

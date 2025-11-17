@@ -1,4 +1,3 @@
-// Administration Users - Gerenciamento de usuários
 window.Administration = window.Administration || {};
 
 window.Administration.loadUsers = async function () {
@@ -6,7 +5,6 @@ window.Administration.loadUsers = async function () {
     const users = await window.Administration.apiRequest("/user/users");
     if (users) {
       window.Administration.state.users = users;
-      // Limpar dados filtrados ao recarregar
       window.Administration.state.filteredData.users = null;
       window.Administration.resetPagination("users");
       window.Administration.renderUsers(users);
@@ -21,11 +19,15 @@ window.Administration.renderUsers = function (users) {
   const tbody = document.querySelector("#usersTable tbody");
   if (!tbody) return;
 
-  // Se users não foi passado, usar dados do state (pode ser filtrado)
-  const dataToRender = users || window.Administration.state.filteredData.users || window.Administration.state.users;
+  const dataToRender =
+    users ||
+    window.Administration.state.filteredData.users ||
+    window.Administration.state.users;
 
-  // Aplicar paginação
-  const { items, pagination } = window.Administration.getPaginatedData(dataToRender, "users");
+  const { items } = window.Administration.getPaginatedData(
+    dataToRender,
+    "users"
+  );
 
   if (items.length === 0) {
     tbody.innerHTML = `
@@ -75,7 +77,6 @@ window.Administration.renderUsers = function (users) {
     )
     .join("");
 
-  // Adicionar event listeners
   document.querySelectorAll(".edit-user").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       const userId = e.currentTarget.getAttribute("data-user-id");
@@ -90,9 +91,10 @@ window.Administration.renderUsers = function (users) {
     });
   });
 
-  // Renderizar controles de paginação
   window.Administration.renderPagination("usersPagination", "users", () => {
-    const dataToRender = window.Administration.state.filteredData.users || window.Administration.state.users;
+    const dataToRender =
+      window.Administration.state.filteredData.users ||
+      window.Administration.state.users;
     window.Administration.renderUsers(dataToRender);
   });
 };
@@ -118,7 +120,6 @@ window.Administration.deleteUser = async function (userId) {
   if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
 
   try {
-    // Aqui você pode implementar a exclusão se houver endpoint
     window.Administration.showSuccess("Usuário excluído com sucesso");
     window.Administration.loadUsers();
   } catch (error) {
@@ -134,7 +135,6 @@ window.Administration.initUserModal = function () {
   const saveBtn = document.getElementById("saveUserBtn");
   const createBtn = document.getElementById("createUserBtn");
 
-  // Fechar modal
   const closeModal = () => {
     modal.classList.remove("active");
     window.Administration.state.editingUserId = null;
@@ -144,7 +144,6 @@ window.Administration.initUserModal = function () {
   closeBtn?.addEventListener("click", closeModal);
   cancelBtn?.addEventListener("click", closeModal);
 
-  // Criar novo usuário
   createBtn?.addEventListener("click", () => {
     window.Administration.state.editingUserId = null;
     document.getElementById("userModalTitle").textContent = "Novo Usuário";
@@ -154,12 +153,10 @@ window.Administration.initUserModal = function () {
     modal.classList.add("active");
   });
 
-  // Salvar usuário
   saveBtn?.addEventListener("click", async () => {
     await window.Administration.saveUser();
   });
 
-  // Fechar ao clicar fora
   modal?.addEventListener("click", (e) => {
     if (e.target === modal) {
       closeModal();
@@ -191,7 +188,6 @@ window.Administration.saveUser = async function () {
 
   try {
     if (userId) {
-      // Atualizar usuário existente
       await window.Administration.apiRequest("/user/update-name-and-email", {
         method: "POST",
         body: JSON.stringify({
@@ -227,7 +223,6 @@ window.Administration.saveUser = async function () {
         }),
       });
     } else {
-      // Criar novo usuário
       await window.Administration.apiRequest("/user/create", {
         method: "POST",
         body: JSON.stringify(userData),
@@ -245,4 +240,3 @@ window.Administration.saveUser = async function () {
     window.Administration.showError("Erro ao salvar usuário");
   }
 };
-

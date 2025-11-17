@@ -1,16 +1,5 @@
-/**
- * Componente Modal
- * Gerencia a criação e controle do modal de detalhes
- */
-
-// Namespace para componentes
 window.RastreamentoComponents = window.RastreamentoComponents || {};
-
-/**
- * Cria CSS do modal (executada apenas uma vez)
- */
 function criarCSSModal() {
-  // Verificar se o CSS já foi adicionado
   if (document.getElementById("modalCSS")) {
     return;
   }
@@ -18,7 +7,6 @@ function criarCSSModal() {
   const style = document.createElement("style");
   style.id = "modalCSS";
   style.textContent = `
-    /* Estilos para o modal independente */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -97,12 +85,10 @@ function criarCSSModal() {
       padding: 24px;
     }
     
-    /* Bloquear scroll do body quando modal estiver aberto */
     body.modal-open {
       overflow: hidden;
     }
     
-    /* Estilos para timeline horizontal */
     .timeline-container {
       position: relative;
     }
@@ -200,7 +186,6 @@ function criarCSSModal() {
       transition: all 0.3s ease;
     }
 
-    /* Responsivo */
     @media (max-width: 768px) {
       .modal-container {
         width: 90%;
@@ -319,28 +304,20 @@ function criarCSSModal() {
   document.head.appendChild(style);
 }
 
-/**
- * Cria modal independente
- */
 function criarModalIndependente() {
-  // Criar CSS do modal primeiro
   criarCSSModal();
 
-  // Verificar se o modal já existe
   if (document.getElementById("modalOverlay")) {
     return;
   }
 
-  // Criar o overlay do modal
   const modalOverlay = document.createElement("div");
   modalOverlay.id = "modalOverlay";
   modalOverlay.className = "modal-overlay";
 
-  // Criar o container do modal
   const modalContainer = document.createElement("div");
   modalContainer.className = "modal-container";
 
-  // Criar o cabeçalho
   const modalHeader = document.createElement("div");
   modalHeader.className = "modal-header";
   modalHeader.innerHTML = `
@@ -348,20 +325,16 @@ function criarModalIndependente() {
     <button id="modalCloseBtn" class="modal-close">&times;</button>
   `;
 
-  // Criar o corpo
   const modalBody = document.createElement("div");
   modalBody.className = "modal-body";
   modalBody.id = "modalBody";
 
-  // Montar a estrutura
   modalContainer.appendChild(modalHeader);
   modalContainer.appendChild(modalBody);
   modalOverlay.appendChild(modalContainer);
 
-  // Adicionar ao body
   document.body.appendChild(modalOverlay);
 
-  // Adicionar eventos
   const closeBtn = document.getElementById("modalCloseBtn");
   closeBtn.addEventListener("click", window.RastreamentoComponents.fecharModal);
 
@@ -371,7 +344,6 @@ function criarModalIndependente() {
     }
   });
 
-  // Fechar com ESC
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && modalOverlay.classList.contains("active")) {
       window.RastreamentoComponents.fecharModal();
@@ -379,11 +351,7 @@ function criarModalIndependente() {
   });
 }
 
-/**
- * Inicializa os controles de navegação do timeline
- */
 window.RastreamentoComponents.inicializarControlesTimeline = function () {
-  // Aguardar um pouco para garantir que o DOM foi atualizado
   setTimeout(() => {
     const timelineContainer = document.querySelector(
       ".timeline-scroll-container"
@@ -395,22 +363,19 @@ window.RastreamentoComponents.inicializarControlesTimeline = function () {
     const totalSpan = document.querySelector(".timeline-total");
 
     if (!timelineHorizontal || !leftBtn || !rightBtn || !timelineContainer) {
-      return; // Elementos não encontrados
+      return;
     }
 
     const containerWidth = timelineContainer.offsetWidth;
     const totalWidth = timelineHorizontal.scrollWidth;
     const maxScroll = totalWidth - containerWidth;
 
-    // Função para atualizar controles
     function updateControls() {
       const scrollLeft = timelineHorizontal.scrollLeft;
 
-      // Contar ocorrências visíveis na tela
       const timelineSteps = document.querySelectorAll(".timeline-step");
       const realTotalOccurrences = timelineSteps.length;
 
-      // Calcular quantas ocorrências estão visíveis
       let visibleCount = 0;
       let firstVisibleIndex = 0;
 
@@ -418,34 +383,29 @@ window.RastreamentoComponents.inicializarControlesTimeline = function () {
         const stepRect = step.getBoundingClientRect();
         const containerRect = timelineContainer.getBoundingClientRect();
 
-        // Verificar se o step está pelo menos parcialmente visível
         if (
           stepRect.left < containerRect.right &&
           stepRect.right > containerRect.left
         ) {
           if (visibleCount === 0) {
-            firstVisibleIndex = index + 1; // +1 porque começamos do 1
+            firstVisibleIndex = index + 1;
           }
           visibleCount++;
         }
       });
 
-      // Atualizar o contador
       if (currentSpan && totalSpan) {
         if (visibleCount > 1) {
-          // Mostrar range quando múltiplas ocorrências estão visíveis
           const lastVisibleIndex = firstVisibleIndex + visibleCount - 1;
           currentSpan.textContent = `${firstVisibleIndex}-${lastVisibleIndex}`;
         } else {
-          // Mostrar apenas o número quando uma ocorrência está visível
           currentSpan.textContent = firstVisibleIndex || 1;
         }
         totalSpan.textContent = realTotalOccurrences;
       }
 
-      // Atualizar estado dos botões
-      const isAtStart = scrollLeft <= 5; // 5px de tolerância
-      const isAtEnd = scrollLeft >= maxScroll - 5; // 5px de tolerância
+      const isAtStart = scrollLeft <= 5;
+      const isAtEnd = scrollLeft >= maxScroll - 5;
 
       leftBtn.disabled = isAtStart;
       rightBtn.disabled = isAtEnd;
@@ -454,7 +414,6 @@ window.RastreamentoComponents.inicializarControlesTimeline = function () {
       rightBtn.style.opacity = isAtEnd ? "0.5" : "1";
     }
 
-    // Event listeners
     leftBtn.addEventListener("click", function () {
       if (this.disabled) return;
       timelineHorizontal.scrollBy({
@@ -471,24 +430,16 @@ window.RastreamentoComponents.inicializarControlesTimeline = function () {
       });
     });
 
-    // Atualizar controles quando scroll mudar
     timelineHorizontal.addEventListener("scroll", updateControls);
 
-    // Inicializar controles
     updateControls();
   }, 100);
 };
 
-/**
- * Abre o modal
- * @param {string} conteudo - Conteúdo HTML do modal
- * @param {string} titulo - Título do modal
- */
 window.RastreamentoComponents.abrirModal = function (
   conteudo,
   titulo = "Detalhes da Nota"
 ) {
-  // Garantir que o modal existe
   window.RastreamentoComponents.inicializarModal();
 
   const modalOverlay = document.getElementById("modalOverlay");
@@ -500,41 +451,29 @@ window.RastreamentoComponents.abrirModal = function (
     return;
   }
 
-  // Bloquear scroll do body
   document.body.classList.add("modal-open");
 
-  // Definir conteúdo
   modalNotaNumero.textContent = titulo;
   modalBody.innerHTML = conteudo;
 
-  // Mostrar modal
   modalOverlay.classList.add("active");
 
-  // Inicializar controles do timeline após abrir o modal
   window.RastreamentoComponents.inicializarControlesTimeline();
 };
 
-/**
- * Fecha o modal
- */
 window.RastreamentoComponents.fecharModal = function () {
   const modalOverlay = document.getElementById("modalOverlay");
   if (modalOverlay) {
     modalOverlay.classList.remove("active");
-    // Remover bloqueio de scroll
     document.body.classList.remove("modal-open");
   }
 };
 
-/**
- * Inicializa o modal globalmente
- */
 window.RastreamentoComponents.inicializarModal = function () {
   criarCSSModal();
   criarModalIndependente();
 };
 
-// Inicializar modal quando o script carregar
 document.addEventListener(
   "DOMContentLoaded",
   window.RastreamentoComponents.inicializarModal
