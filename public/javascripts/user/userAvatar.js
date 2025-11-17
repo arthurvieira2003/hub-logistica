@@ -9,8 +9,11 @@ window.UserAvatar.getUserAvatar = async function () {
     }
     const userEmail = userData.email;
 
+    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
+                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
+                         "http://localhost:4010";
     const response = await fetch(
-      `http://localhost:4010/user/get-picture/${userEmail}`
+      `${API_BASE_URL}/user/get-picture/${userEmail}`
     );
     const userAvatar = await response.json();
 
@@ -48,8 +51,11 @@ window.UserAvatar.updateProfilePicture = async function (imageData) {
     const userData = await window.UserAuth.validateTokenExpiration();
     const email = userData.email;
 
+    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
+                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
+                         "http://localhost:4010";
     const response = await window.UserAuth.authenticatedFetch(
-      "http://localhost:4010/user/update-picture",
+      `${API_BASE_URL}/user/update-picture`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -87,8 +93,11 @@ window.UserAvatar.removeProfilePicture = async function () {
     const userData = await window.UserAuth.validateTokenExpiration();
     const email = userData.email;
 
+    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
+                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
+                         "http://localhost:4010";
     const response = await window.UserAuth.authenticatedFetch(
-      "http://localhost:4010/user/update-picture",
+      `${API_BASE_URL}/user/update-picture`,
       {
         method: "POST",
         body: JSON.stringify({

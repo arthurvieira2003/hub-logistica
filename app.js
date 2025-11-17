@@ -3,6 +3,39 @@ const path = require("path");
 const fs = require("fs");
 const app = express();
 
+require("dotenv").config();
+
+// Gerar arquivo de configuração com a URL da API
+// Se API_BASE_URL não estiver definida, detecta automaticamente
+let API_BASE_URL = process.env.API_BASE_URL;
+
+if (!API_BASE_URL) {
+  // Se estiver rodando em produção, requer VPS_IP configurado
+  if (process.env.NODE_ENV === "production") {
+    const VPS_IP = process.env.VPS_IP;
+    const BACKEND_PORT = process.env.BACKEND_PORT || "4010";
+
+    if (!VPS_IP) {
+      console.error(
+        "❌ Erro: VPS_IP não está definido. Configure a variável de ambiente VPS_IP em produção."
+      );
+      process.exit(1);
+    }
+
+    API_BASE_URL = `http://${VPS_IP}:${BACKEND_PORT}`;
+  } else {
+    // Fallback para localhost em desenvolvimento
+    API_BASE_URL = "http://localhost:4010";
+  }
+}
+
+const configContent = `window.APP_CONFIG = {
+  API_BASE_URL: "${API_BASE_URL}"
+};`;
+
+const configPath = path.join(__dirname, "public", "javascripts", "config.js");
+fs.writeFileSync(configPath, configContent, "utf8");
+
 app.use("/javascripts", (req, res, next) => {
   if (req.path.endsWith(".js")) {
     const filePath = path.join(__dirname, "public", "javascripts", req.path);
@@ -30,6 +63,8 @@ app.get("/administration", (req, res) => {
   res.sendFile(__dirname + "/public/html/administration.html");
 });
 
-app.listen(3060, () => {
-  console.log("Servidor rodando na porta 3060");
+const PORT = process.env.PORT || 3060;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`API Base URL: ${API_BASE_URL}`);
 });

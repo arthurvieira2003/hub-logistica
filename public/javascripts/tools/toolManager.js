@@ -127,7 +127,10 @@ window.ToolManager.loadFretesData = async function (dataFiltro = null) {
       dataFiltro = dataInput ? dataInput.value : null;
     }
 
-    let url = "http://localhost:4010/cte";
+    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
+                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
+                         "http://localhost:4010";
+    let url = `${API_BASE_URL}/cte`;
     if (dataFiltro) {
       url += `?data=${dataFiltro}`;
     }
@@ -274,8 +277,11 @@ window.ToolManager.validarPrecosFretes = async function (items) {
   const validacoes = await Promise.allSettled(
     items.map(async (item) => {
       try {
+        const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
+                             (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
+                             "http://localhost:4010";
         const response = await fetch(
-          `http://localhost:4010/cte/${item.Serial}/validar-preco`
+          `${API_BASE_URL}/cte/${item.Serial}/validar-preco`
         );
 
         let validacao;
@@ -604,7 +610,10 @@ window.ToolManager.viewCTEDetails = async function (serial) {
 
   const modalBody = document.getElementById("cteModalBody");
   try {
-    const response = await fetch(`http://localhost:4010/cte/${serial}`);
+    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
+                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
+                         "http://localhost:4010";
+    const response = await fetch(`${API_BASE_URL}/cte/${serial}`);
     if (!response.ok) {
       throw new Error("Erro ao buscar detalhes do CT-E");
     }
@@ -1008,7 +1017,10 @@ window.ToolManager.closeCTEModal = function () {
 };
 
 window.ToolManager.downloadCTEXML = function (serial) {
-  window.open(`http://localhost:4010/cte/${serial}/xml`, "_blank");
+  const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
+                       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
+                       "http://localhost:4010";
+  window.open(`${API_BASE_URL}/cte/${serial}/xml`, "_blank");
 };
 
 window.ToolManager.loadRastreamentoTool = async function (contentElement) {

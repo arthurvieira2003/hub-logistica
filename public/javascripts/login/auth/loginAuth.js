@@ -99,7 +99,11 @@ window.LoginAuth.authenticateUser = function (email, password) {
     return;
   }
 
-  fetch("http://localhost:4010/user/authenticate", {
+  const API_BASE_URL =
+    (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
+    (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+    "http://localhost:4010";
+  fetch(`${API_BASE_URL}/user/authenticate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -137,7 +141,11 @@ window.LoginAuth.registerUser = function (email, password, confirmPassword) {
     return;
   }
 
-  fetch("http://localhost:4010/user/register", {
+  const API_BASE_URL =
+    (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
+    (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+    "http://localhost:4010";
+  fetch(`${API_BASE_URL}/user/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
