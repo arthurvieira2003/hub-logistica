@@ -398,11 +398,79 @@ window.RastreamentoDataTablesRenderer.limparFiltros = function () {
   window.dataTableInstance.search("").columns().search("").draw();
 };
 
-window.RastreamentoDataTablesRenderer.inicializarDataTable = function (
+// Função auxiliar para garantir que o DataTables esteja carregado
+window.RastreamentoDataTablesRenderer.aguardarDataTables = function () {
+  return new Promise((resolve, reject) => {
+    // Verifica se já está disponível
+    if (
+      typeof $ !== "undefined" &&
+      typeof $.fn !== "undefined" &&
+      $.fn.DataTable
+    ) {
+      resolve();
+      return;
+    }
+
+    // Verifica se o script já está no DOM
+    const existingScript = document.querySelector(
+      'script[src*="datatables.net"]'
+    );
+
+    // Se não existe, tenta carregar dinamicamente
+    if (!existingScript) {
+      const script = document.createElement("script");
+      script.src = "https://cdn.datatables.net/2.3.4/js/dataTables.min.js";
+      script.onerror = () => {
+        reject(new Error("Erro ao carregar DataTables"));
+      };
+      document.head.appendChild(script);
+    }
+
+    // Aguarda o DataTables estar disponível (independente de como foi carregado)
+    let attempts = 0;
+    const maxAttempts = 50; // 5 segundos máximo
+    const checkInterval = setInterval(() => {
+      attempts++;
+      if (
+        typeof $ !== "undefined" &&
+        typeof $.fn !== "undefined" &&
+        $.fn.DataTable
+      ) {
+        clearInterval(checkInterval);
+        resolve();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+        reject(
+          new Error(
+            "DataTables não foi carregado após 5 segundos de espera. Verifique se o script está incluído no HTML."
+          )
+        );
+      }
+    }, 100);
+  });
+};
+
+window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
   todasNotas
 ) {
   if (typeof $ === "undefined") {
     console.error("❌ jQuery não está disponível");
+    return;
+  }
+
+  // Aguarda o DataTables estar disponível
+  try {
+    await window.RastreamentoDataTablesRenderer.aguardarDataTables();
+  } catch (error) {
+    console.error("❌ Erro ao aguardar DataTables:", error);
+    return;
+  }
+
+  // Verifica se o DataTables está disponível
+  if (typeof $.fn.DataTable === "undefined") {
+    console.error(
+      "❌ DataTables não está disponível. Verifique se o script foi carregado corretamente."
+    );
     return;
   }
 

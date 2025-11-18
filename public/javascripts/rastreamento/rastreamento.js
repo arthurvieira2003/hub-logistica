@@ -134,7 +134,7 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
 
       trackingView.appendChild(tabelaSimples);
 
-      window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
+      await window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
 
       window.RastreamentoEvents.configurarEventosData();
     } else {
@@ -213,7 +213,7 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
 
     trackingView.appendChild(tabelaSimples);
 
-    window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
+    await window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
 
     window.RastreamentoEvents.configurarEventosData();
   } else {

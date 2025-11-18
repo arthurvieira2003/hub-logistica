@@ -1,0 +1,5 @@
+{
+  "ignore": ["public/javascripts/config.js", "node_modules/**", "*.log"],
+  "watch": ["app.js", "routes/**", "public/**/*.html", "public/**/*.css"],
+  "ext": "js,json,html,css"
+}
