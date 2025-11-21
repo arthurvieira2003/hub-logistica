@@ -16,7 +16,7 @@ jobs:
     name: Build and Push Frontend Image
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -50,3 +50,38 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/hub-logistica-frontend:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/hub-logistica-frontend:buildcache,mode=max
 
+  deploy-frontend:
+    name: Deploy Frontend to VPS via Portainer
+    runs-on: ubuntu-latest
+    needs: [build-frontend]
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy frontend via Portainer script
+        env:
+          PORTAINER_URL: ${{ secrets.PORTAINER_URL }}
+          PORTAINER_ENDPOINT_ID: ${{ secrets.PORTAINER_ENDPOINT_ID }}
+          PORTAINER_USERNAME: ${{ secrets.PORTAINER_USERNAME }}
+          PORTAINER_PASSWORD: ${{ secrets.PORTAINER_PASSWORD }}
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_AUTH: ${{ secrets.DOCKER_AUTH }}
+          VPS_IP: ${{ secrets.VPS_IP }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          BACKEND_PORT: "4010"
+        run: node portainer-deploy-script.js
+
+      - name: Verify deployment
+        run: |
+          echo "✅ Deploy do frontend concluído via Portainer API!"
