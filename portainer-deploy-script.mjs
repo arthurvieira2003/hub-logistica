@@ -313,6 +313,31 @@ class DeployPortainer {
   };
 
   criarContainer = async () => {
+    // Valida variáveis obrigatórias para o frontend
+    if (!process.env.VPS_IP || process.env.VPS_IP.trim() === "") {
+      throw new Error(
+        "VPS_IP é obrigatório para o frontend. Configure o secret VPS_IP no GitHub Actions."
+      );
+    }
+
+    // Prepara variáveis de ambiente
+    const envVars = [
+      `PORT=${this.ExposedPorts}`,
+      `NODE_ENV=production`,
+      `VPS_IP=${process.env.VPS_IP}`,
+      `BACKEND_PORT=${process.env.BACKEND_PORT || "4010"}`,
+    ];
+
+    if (process.env.API_BASE_URL) {
+      envVars.push(`API_BASE_URL=${process.env.API_BASE_URL}`);
+    }
+
+    console.log("Variáveis de ambiente que serão configuradas no container:");
+    envVars.forEach((env) => {
+      const [key] = env.split("=");
+      console.log(`  - ${key}`);
+    });
+
     try {
       const listContainersConfig = {
         method: "get",
@@ -390,17 +415,7 @@ class DeployPortainer {
           PortBindings: { "3060/tcp": [{ HostPort: this.ExposedPorts }] },
           RestartPolicy: { Name: "unless-stopped" },
         },
-        Env: [
-          `PORT=${this.ExposedPorts}`,
-          `NODE_ENV=production`,
-          process.env.VPS_IP ? `VPS_IP=${process.env.VPS_IP}` : null,
-          process.env.BACKEND_PORT
-            ? `BACKEND_PORT=${process.env.BACKEND_PORT}`
-            : "4010",
-          process.env.API_BASE_URL
-            ? `API_BASE_URL=${process.env.API_BASE_URL}`
-            : null,
-        ].filter(Boolean),
+        Env: envVars,
       },
       httpsAgent: agent,
     };

@@ -8,10 +8,9 @@ on:
     branches:
       - main
       - master
-  workflow_dispatch: # Permite execução manual
+  workflow_dispatch:
 
 jobs:
-  # Job para construir e fazer push da imagem do frontend
   build-frontend:
     name: Build and Push Frontend Image
     runs-on: ubuntu-latest
