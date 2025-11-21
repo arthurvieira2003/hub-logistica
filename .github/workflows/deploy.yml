@@ -80,7 +80,7 @@ jobs:
           VPS_IP: ${{ secrets.VPS_IP }}
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
           BACKEND_PORT: "4010"
-        run: node portainer-deploy-script.js
+        run: node portainer-deploy-script.mjs
 
       - name: Verify deployment
         run: |
