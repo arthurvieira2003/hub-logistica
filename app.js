@@ -36,7 +36,10 @@ const configContent = `window.APP_CONFIG = {
 const configPath = path.join(__dirname, "public", "javascripts", "config.js");
 
 // Só escreve o arquivo se o conteúdo for diferente (evita loop infinito do nodemon)
-if (!fs.existsSync(configPath) || fs.readFileSync(configPath, "utf8") !== configContent) {
+if (
+  !fs.existsSync(configPath) ||
+  fs.readFileSync(configPath, "utf8") !== configContent
+) {
   fs.writeFileSync(configPath, configContent, "utf8");
 }
 
