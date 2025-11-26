@@ -1,17 +1,86 @@
 window.Administration = window.Administration || {};
 
-window.Administration.loadRotas = async function () {
+window.Administration.loadRotas = async function (page = 1, limit = 50, search = null) {
+  // Cancela requisição anterior se existir
+  if (window.Administration.state.requestControllers.rotas) {
+    window.Administration.state.requestControllers.rotas.abort();
+  }
+
+  // Cria novo AbortController para esta requisição
+  const controller = new AbortController();
+  window.Administration.state.requestControllers.rotas = controller;
+
+  // Incrementa o contador de sequência para esta requisição
+  if (!window.Administration.state.requestSequence.rotas) {
+    window.Administration.state.requestSequence.rotas = 0;
+  }
+  window.Administration.state.requestSequence.rotas += 1;
+  const currentSequence = window.Administration.state.requestSequence.rotas;
+
   try {
-    const rotas = await window.Administration.apiRequest("/rotas");
-    if (rotas) {
-      window.Administration.state.rotas = rotas;
-      window.Administration.state.filteredData.rotas = null;
-      window.Administration.resetPagination("rotas");
-      window.Administration.renderRotas(rotas);
+    window.Administration.initPagination("rotas", limit);
+    
+    // Armazena o termo de busca atual
+    const searchTerm = search && search.trim() !== "" ? search.trim() : null;
+    window.Administration.state.currentSearch = searchTerm;
+    
+    let url = `/rotas?page=${page}&limit=${limit}`;
+    if (searchTerm) {
+      url += `&search=${encodeURIComponent(searchTerm)}`;
+    }
+    
+    const response = await window.Administration.apiRequest(url, {
+      signal: controller.signal,
+    });
+    
+    // Verifica se esta ainda é a requisição mais recente
+    if (window.Administration.state.requestSequence.rotas !== currentSequence) {
+      // Esta requisição foi substituída por uma mais recente, ignora o resultado
+      return;
+    }
+
+    // Verifica se a requisição foi cancelada
+    if (controller.signal.aborted) {
+      return;
+    }
+    
+    if (response && response.data) {
+      // Atualiza o estado de paginação com os dados do servidor
+      const pagination = window.Administration.state.pagination["rotas"];
+      if (pagination) {
+        pagination.currentPage = response.pagination.page;
+        pagination.totalItems = response.pagination.total;
+        pagination.totalPages = response.pagination.totalPages;
+        pagination.itemsPerPage = response.pagination.limit;
+      }
+      
+      // Armazena apenas os dados da página atual
+      window.Administration.state.rotas = response.data;
+      // Se há busca, não usa filteredData (a busca já vem do servidor)
+      if (!window.Administration.state.currentSearch) {
+        window.Administration.state.filteredData.rotas = null;
+      }
+      
+      window.Administration.renderRotas(response.data);
     }
   } catch (error) {
+    // Ignora erros de requisições canceladas
+    if (error.name === 'AbortError' || controller.signal.aborted) {
+      return;
+    }
+    
+    // Verifica se esta ainda é a requisição mais recente antes de mostrar erro
+    if (window.Administration.state.requestSequence.rotas !== currentSequence) {
+      return;
+    }
+    
     console.error("❌ Erro ao carregar rotas:", error);
     window.Administration.showError("Erro ao carregar rotas");
+  } finally {
+    // Limpa o controller se esta ainda for a requisição atual
+    if (window.Administration.state.requestSequence.rotas === currentSequence) {
+      window.Administration.state.requestControllers.rotas = null;
+    }
   }
 };
 
@@ -19,68 +88,138 @@ window.Administration.renderRotas = function (rotas) {
   const tbody = document.querySelector("#rotasTable tbody");
   if (!tbody) return;
 
-  const dataToRender =
-    rotas ||
-    window.Administration.state.filteredData.rotas ||
-    window.Administration.state.rotas;
+  // Se há dados filtrados, usa paginação client-side
+  const dataToRender = window.Administration.state.filteredData.rotas;
+  
+  if (dataToRender) {
+    // Paginação client-side para dados filtrados
+    const { items, pagination } = window.Administration.getPaginatedData(
+      dataToRender,
+      "rotas"
+    );
 
-  const { items, pagination } = window.Administration.getPaginatedData(
-    dataToRender,
-    "rotas"
-  );
+    if (items.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="loading-data">Nenhuma rota encontrada</td>
+        </tr>
+      `;
+      window.Administration.renderPagination("rotasPagination", "rotas", () => {
+        window.Administration.renderRotas();
+      });
+      return;
+    }
 
-  if (items.length === 0) {
-    tbody.innerHTML = `
+    tbody.innerHTML = items
+      .map((rota) => {
+        const origem = rota.Cidade || rota.CidadeOrigem;
+        const destino = rota.CidadeDestino;
+        const origemNome = origem
+          ? `${origem.nome_cidade}${
+              origem.Estado ? ` (${origem.Estado.uf})` : ""
+            }`
+          : "N/A";
+        const destinoNome = destino
+          ? `${destino.nome_cidade}${
+              destino.Estado ? ` (${destino.Estado.uf})` : ""
+            }`
+          : "N/A";
+
+        return `
       <tr>
-        <td colspan="5" class="loading-data">Nenhuma rota encontrada</td>
+        <td>${origemNome}</td>
+        <td>${destinoNome}</td>
+        <td><span class="status-badge ${rota.ativa ? "active" : "inactive"}">${
+          rota.ativa ? "Ativa" : "Inativa"
+        }</span></td>
+        <td>
+          <button class="btn-icon edit-entity" data-entity-type="rota" data-id="${
+            rota.id_rota
+          }" title="Editar">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-icon delete-entity" data-entity-type="rota" data-id="${
+            rota.id_rota
+          }" title="Excluir">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
       </tr>
     `;
+      })
+      .join("");
+
     window.Administration.renderPagination("rotasPagination", "rotas", () => {
-      window.Administration.renderRotas(window.Administration.state.rotas);
+      window.Administration.renderRotas();
     });
-    return;
+  } else {
+    // Renderização direta para dados paginados do servidor
+    const data = rotas || window.Administration.state.rotas || [];
+
+    if (data.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="loading-data">Nenhuma rota encontrada</td>
+        </tr>
+      `;
+      window.Administration.renderPagination("rotasPagination", "rotas", () => {
+        const pagination = window.Administration.state.pagination["rotas"];
+        if (pagination) {
+          window.Administration.loadRotas(pagination.currentPage, pagination.itemsPerPage);
+        }
+      });
+      return;
+    }
+
+    tbody.innerHTML = data
+      .map((rota) => {
+        const origem = rota.Cidade || rota.CidadeOrigem;
+        const destino = rota.CidadeDestino;
+        const origemNome = origem
+          ? `${origem.nome_cidade}${
+              origem.Estado ? ` (${origem.Estado.uf})` : ""
+            }`
+          : "N/A";
+        const destinoNome = destino
+          ? `${destino.nome_cidade}${
+              destino.Estado ? ` (${destino.Estado.uf})` : ""
+            }`
+          : "N/A";
+
+        return `
+      <tr>
+        <td>${origemNome}</td>
+        <td>${destinoNome}</td>
+        <td><span class="status-badge ${rota.ativa ? "active" : "inactive"}">${
+          rota.ativa ? "Ativa" : "Inativa"
+        }</span></td>
+        <td>
+          <button class="btn-icon edit-entity" data-entity-type="rota" data-id="${
+            rota.id_rota
+          }" title="Editar">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-icon delete-entity" data-entity-type="rota" data-id="${
+            rota.id_rota
+          }" title="Excluir">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+      })
+      .join("");
+
+    window.Administration.renderPagination("rotasPagination", "rotas", () => {
+      const pagination = window.Administration.state.pagination["rotas"];
+      if (pagination) {
+        const searchTerm = window.Administration.state.currentSearch || null;
+        window.Administration.loadRotas(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+      }
+    });
   }
 
-  tbody.innerHTML = items
-    .map((rota) => {
-      const origem = rota.Cidade || rota.CidadeOrigem;
-      const destino = rota.CidadeDestino;
-      const origemNome = origem
-        ? `${origem.nome_cidade}${
-            origem.Estado ? ` (${origem.Estado.uf})` : ""
-          }`
-        : "N/A";
-      const destinoNome = destino
-        ? `${destino.nome_cidade}${
-            destino.Estado ? ` (${destino.Estado.uf})` : ""
-          }`
-        : "N/A";
-
-      return `
-    <tr>
-      <td>${rota.id_rota}</td>
-      <td>${origemNome}</td>
-      <td>${destinoNome}</td>
-      <td><span class="status-badge ${rota.ativa ? "active" : "inactive"}">${
-        rota.ativa ? "Ativa" : "Inativa"
-      }</span></td>
-      <td>
-        <button class="btn-icon edit-entity" data-entity-type="rota" data-id="${
-          rota.id_rota
-        }" title="Editar">
-          <i class="fas fa-edit"></i>
-        </button>
-        <button class="btn-icon delete-entity" data-entity-type="rota" data-id="${
-          rota.id_rota
-        }" title="Excluir">
-          <i class="fas fa-trash"></i>
-        </button>
-      </td>
-    </tr>
-  `;
-    })
-    .join("");
-
+  // Adiciona event listeners aos botões
   document
     .querySelectorAll(".edit-entity[data-entity-type='rota']")
     .forEach((btn) => {
@@ -98,13 +237,6 @@ window.Administration.renderRotas = function (rotas) {
         window.Administration.deleteRota(id);
       });
     });
-
-  window.Administration.renderPagination("rotasPagination", "rotas", () => {
-    const dataToRender =
-      window.Administration.state.filteredData.rotas ||
-      window.Administration.state.rotas;
-    window.Administration.renderRotas(dataToRender);
-  });
 };
 
 window.Administration.openRotaModal = async function (id = null) {
@@ -136,7 +268,20 @@ window.Administration.openRotaModal = async function (id = null) {
   });
 
   if (id) {
-    const rota = window.Administration.state.rotas.find((r) => r.id_rota == id);
+    // Busca a rota no estado atual ou faz uma requisição se não estiver disponível
+    let rota = window.Administration.state.rotas.find((r) => r.id_rota == id);
+    
+    if (!rota) {
+      // Se a rota não estiver na página atual, busca do servidor
+      try {
+        rota = await window.Administration.apiRequest(`/rotas/${id}`);
+      } catch (error) {
+        console.error("❌ Erro ao buscar rota:", error);
+        window.Administration.showError("Erro ao carregar dados da rota");
+        return;
+      }
+    }
+    
     if (rota) {
       document.getElementById("rotaId").value = rota.id_rota;
       document.getElementById("rotaOrigem").value = rota.id_cidade_origem;
@@ -191,7 +336,15 @@ window.Administration.saveRota = async function () {
     );
     document.getElementById("rotaModal").classList.remove("active");
     form.reset();
-    window.Administration.loadRotas();
+    
+    // Recarrega a página atual mantendo a busca se houver
+    const pagination = window.Administration.state.pagination["rotas"];
+    const searchTerm = window.Administration.state.currentSearch || null;
+    if (pagination) {
+      window.Administration.loadRotas(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+    } else {
+      window.Administration.loadRotas(1, 50, searchTerm);
+    }
   } catch (error) {
     console.error("❌ Erro ao salvar rota:", error);
     window.Administration.showError("Erro ao salvar rota");
@@ -204,7 +357,20 @@ window.Administration.deleteRota = async function (id) {
       `/rotas/${id}/count-related`
     );
 
-    const rota = window.Administration.state.rotas.find((r) => r.id_rota == id);
+    // Busca a rota no estado atual ou faz uma requisição se não estiver disponível
+    let rota = window.Administration.state.rotas.find((r) => r.id_rota == id);
+    
+    if (!rota) {
+      // Se a rota não estiver na página atual, busca do servidor
+      try {
+        rota = await window.Administration.apiRequest(`/rotas/${id}`);
+      } catch (error) {
+        console.error("❌ Erro ao buscar rota:", error);
+        window.Administration.showError("Erro ao carregar dados da rota");
+        return;
+      }
+    }
+    
     let rotaNome = "esta rota";
     if (rota) {
       const origem = rota.Cidade || rota.CidadeOrigem;
@@ -227,7 +393,14 @@ window.Administration.deleteRota = async function (id) {
             method: "DELETE",
           });
           window.Administration.showSuccess("Rota desativada com sucesso");
-          window.Administration.loadRotas();
+          
+          // Recarrega a página atual
+          const pagination = window.Administration.state.pagination["rotas"];
+          if (pagination) {
+            window.Administration.loadRotas(pagination.currentPage, pagination.itemsPerPage);
+          } else {
+            window.Administration.loadRotas();
+          }
         } catch (error) {
           console.error("❌ Erro ao excluir rota:", error);
           window.Administration.showError("Erro ao excluir rota");

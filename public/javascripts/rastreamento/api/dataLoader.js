@@ -5,9 +5,10 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
     const token = window.RastreamentoUtils.obterToken();
     const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
-    const API_BASE_URL = (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) || 
-                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                         "http://localhost:4010";
+    const API_BASE_URL =
+      (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
+      (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+      "http://localhost:4010";
     const response = await fetch(
       `${API_BASE_URL}/generic/track/${dataRastreamento}`,
       {
@@ -219,9 +220,10 @@ window.RastreamentoAPI.carregarDadosOuroNegro = async function () {
     const token = window.RastreamentoUtils.obterToken();
     const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
-    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                         "http://localhost:4010";
+    const API_BASE_URL =
+      (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+      (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+      "http://localhost:4010";
     const response = await fetch(
       `${API_BASE_URL}/ouroNegro/track/${dataRastreamento}`,
       {
@@ -353,9 +355,10 @@ window.RastreamentoAPI.carregarDadosPrincesa = async function () {
     const token = window.RastreamentoUtils.obterToken();
     const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
-    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                         "http://localhost:4010";
+    const API_BASE_URL =
+      (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+      (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+      "http://localhost:4010";
     const response = await fetch(
       `${API_BASE_URL}/princesa/track/${dataRastreamento}`,
       {

@@ -455,7 +455,7 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
 ) {
   if (typeof $ === "undefined") {
     console.error("❌ jQuery não está disponível");
-    return;
+    return Promise.resolve();
   }
 
   // Aguarda o DataTables estar disponível
@@ -463,7 +463,7 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
     await window.RastreamentoDataTablesRenderer.aguardarDataTables();
   } catch (error) {
     console.error("❌ Erro ao aguardar DataTables:", error);
-    return;
+    return Promise.resolve();
   }
 
   // Verifica se o DataTables está disponível
@@ -471,18 +471,18 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
     console.error(
       "❌ DataTables não está disponível. Verifique se o script foi carregado corretamente."
     );
-    return;
+    return Promise.resolve();
   }
 
   const tabelaElement = $("#rastreamentoDataTable");
   if (tabelaElement.length === 0) {
     console.error("❌ Tabela #rastreamentoDataTable não encontrada");
-    return;
+    return Promise.resolve();
   }
 
   if (!Array.isArray(todasNotas)) {
     console.error("❌ todasNotas não é um array válido:", todasNotas);
-    return;
+    return Promise.resolve();
   }
 
   if (window.dataTableInstance) {
@@ -520,117 +520,136 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
           `❌ Campo obrigatório '${campo}' não encontrado no registro:`,
           primeiroRegistro
         );
-        return;
+        return Promise.resolve();
       }
     }
   }
 
-  try {
-    window.dataTableInstance = $("#rastreamentoDataTable").DataTable({
-      data: dadosDataTables,
-      columns: [
-        {
-          data: "numero",
-          title: "NF",
-          className: "dt-type-numeric",
-        },
-        {
-          data: "transportadora",
-          title: "Transp.",
-        },
-        {
-          data: "status",
-          title: "Status",
-        },
-        {
-          data: "cliente",
-          title: "Cliente",
-        },
-        {
-          data: "origem",
-          title: "Origem",
-        },
-        {
-          data: "destino",
-          title: "Destino",
-        },
-        {
-          data: "faturamento",
-          title: "Faturamento",
-          className: "dt-type-date",
-        },
-        {
-          data: "dataEnvio",
-          title: "Envio",
-          className: "dt-type-date",
-        },
-        {
-          data: "previsao",
-          title: "Previsão",
-          className: "dt-type-date",
-        },
-        {
-          data: "acoes",
-          title: "Detalhes",
-          orderable: false,
-          searchable: false,
-          className: "dt-actions",
-        },
-      ],
-      order: [[6, "desc"]],
-      pageLength: 100,
-      lengthMenu: [
-        [10, 25, 50, 100],
-        [10, 25, 50, 100],
-      ],
-      language: {
-        sEmptyTable: "Nenhum registro encontrado",
-        sInfo: "Mostrando de _START_ até _END_ de _TOTAL_ registros",
-        sInfoEmpty: "Mostrando 0 até 0 de 0 registros",
-        sInfoFiltered: "(Filtrados de _MAX_ registros)",
-        sInfoPostFix: "",
-        sInfoThousands: ".",
-        sLengthMenu: "_MENU_ resultados por página",
-        sLoadingRecords: "Carregando...",
-        sProcessing: "Processando...",
-        sZeroRecords: "Nenhum registro encontrado",
-        sSearch: "Buscar:",
-        oPaginate: {
-          sNext: "Próximo",
-          sPrevious: "Anterior",
-          sFirst: "Primeiro",
-          sLast: "Último",
-        },
-        oAria: {
-          sSortAscending: ": Ordenar colunas de forma ascendente",
-          sSortDescending: ": Ordenar colunas de forma descendente",
-        },
-      },
-      responsive: true,
-      dom: '<"top"lf>rt<"bottom"ip><"clear">',
-      columnDefs: [
-        {
-          targets: [0, 6, 7, 8],
-          type: "string",
-        },
-      ],
-      initComplete: function () {
-        if (
-          window.RastreamentoEvents &&
-          window.RastreamentoEvents.configurarEventosDetalhes
-        ) {
-          window.RastreamentoEvents.configurarEventosDetalhes(todasNotas);
-        }
+  // Se não houver dados, retorna uma Promise resolvida
+  if (dadosDataTables.length === 0) {
+    return Promise.resolve();
+  }
 
-        window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados(
-          $(this).DataTable()
-        );
-      },
+  try {
+    // Cria uma Promise que resolve quando o DataTable estiver completamente inicializado
+    return new Promise((resolve, reject) => {
+      try {
+        window.dataTableInstance = $("#rastreamentoDataTable").DataTable({
+          data: dadosDataTables,
+          columns: [
+            {
+              data: "numero",
+              title: "NF",
+              className: "dt-type-numeric",
+            },
+            {
+              data: "transportadora",
+              title: "Transp.",
+            },
+            {
+              data: "status",
+              title: "Status",
+            },
+            {
+              data: "cliente",
+              title: "Cliente",
+            },
+            {
+              data: "origem",
+              title: "Origem",
+            },
+            {
+              data: "destino",
+              title: "Destino",
+            },
+            {
+              data: "faturamento",
+              title: "Faturamento",
+              className: "dt-type-date",
+            },
+            {
+              data: "dataEnvio",
+              title: "Envio",
+              className: "dt-type-date",
+            },
+            {
+              data: "previsao",
+              title: "Previsão",
+              className: "dt-type-date",
+            },
+            {
+              data: "acoes",
+              title: "Detalhes",
+              orderable: false,
+              searchable: false,
+              className: "dt-actions",
+            },
+          ],
+          order: [[6, "desc"]],
+          pageLength: 100,
+          lengthMenu: [
+            [10, 25, 50, 100],
+            [10, 25, 50, 100],
+          ],
+          language: {
+            sEmptyTable: "Nenhum registro encontrado",
+            sInfo: "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+            sInfoEmpty: "Mostrando 0 até 0 de 0 registros",
+            sInfoFiltered: "(Filtrados de _MAX_ registros)",
+            sInfoPostFix: "",
+            sInfoThousands: ".",
+            sLengthMenu: "_MENU_ resultados por página",
+            sLoadingRecords: "Carregando...",
+            sProcessing: "Processando...",
+            sZeroRecords: "Nenhum registro encontrado",
+            sSearch: "Buscar:",
+            oPaginate: {
+              sNext: "Próximo",
+              sPrevious: "Anterior",
+              sFirst: "Primeiro",
+              sLast: "Último",
+            },
+            oAria: {
+              sSortAscending: ": Ordenar colunas de forma ascendente",
+              sSortDescending: ": Ordenar colunas de forma descendente",
+            },
+          },
+          responsive: true,
+          dom: '<"top"lf>rt<"bottom"ip><"clear">',
+          columnDefs: [
+            {
+              targets: [0, 6, 7, 8],
+              type: "string",
+            },
+          ],
+          initComplete: function () {
+            if (
+              window.RastreamentoEvents &&
+              window.RastreamentoEvents.configurarEventosDetalhes
+            ) {
+              window.RastreamentoEvents.configurarEventosDetalhes(todasNotas);
+            }
+
+            window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados(
+              $(this).DataTable()
+            );
+
+            // Resolve a Promise quando a inicialização estiver completa
+            resolve();
+          },
+        });
+      } catch (error) {
+        console.error("❌ Erro ao inicializar DataTable:", error);
+        console.error("❌ Dados recebidos:", dadosDataTables);
+        console.error("❌ Elemento da tabela:", tabelaElement);
+        reject(error);
+      }
     });
   } catch (error) {
     console.error("❌ Erro ao inicializar DataTable:", error);
     console.error("❌ Dados recebidos:", dadosDataTables);
     console.error("❌ Elemento da tabela:", tabelaElement);
+    throw error;
   }
 };
 

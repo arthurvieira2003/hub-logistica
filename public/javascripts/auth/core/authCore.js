@@ -1,26 +1,25 @@
 window.AuthCore = window.AuthCore || {};
 
-// Cache de validação de token para evitar requisições duplicadas
 window.AuthCore.tokenCache = {
   data: null,
   timestamp: null,
-  ttl: 5000, // 5 segundos de cache
-  isValid: function() {
+  ttl: 5000,
+  isValid: function () {
     if (!this.data || !this.timestamp) return false;
     const now = Date.now();
-    return (now - this.timestamp) < this.ttl;
+    return now - this.timestamp < this.ttl;
   },
-  set: function(data) {
+  set: function (data) {
     this.data = data;
     this.timestamp = Date.now();
   },
-  get: function() {
+  get: function () {
     return this.isValid() ? this.data : null;
   },
-  clear: function() {
+  clear: function () {
     this.data = null;
     this.timestamp = null;
-  }
+  },
 };
 
 window.AuthCore.getToken = function () {
@@ -36,7 +35,6 @@ window.AuthCore.setToken = function (token) {
 
 window.AuthCore.removeToken = function () {
   document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  // Limpar cache ao remover token
   window.AuthCore.tokenCache.clear();
 };
 
@@ -60,20 +58,20 @@ window.AuthCore.checkAuth = function () {
 };
 
 window.AuthCore.validateToken = async function (token) {
-  // Verificar cache primeiro
   const cachedData = window.AuthCore.tokenCache.get();
   if (cachedData) {
     return cachedData;
   }
-  
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
-      const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                           (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                           "http://localhost:4010";
+      const API_BASE_URL =
+        (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+        (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+        "http://localhost:4010";
       const response = await fetch(`${API_BASE_URL}/session/validate`, {
         method: "GET",
         headers: {
@@ -92,10 +90,9 @@ window.AuthCore.validateToken = async function (token) {
       }
 
       const data = await response.json();
-      
-      // Armazenar no cache
+
       window.AuthCore.tokenCache.set(data);
-      
+
       return data;
     } catch (fetchError) {
       clearTimeout(timeoutId);

@@ -2,16 +2,16 @@ window.UserAvatar = window.UserAvatar || {};
 
 window.UserAvatar.getUserAvatar = async function () {
   try {
-    // Tentar usar dados do usuário já carregados primeiro (evita validação duplicada)
     let userData = window.UserProfile?.state?.userData;
     if (!userData) {
       userData = await window.UserAuth.validateTokenExpiration();
     }
     const userEmail = userData.email;
 
-    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                         "http://localhost:4010";
+    const API_BASE_URL =
+      (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+      (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+      "http://localhost:4010";
     const response = await fetch(
       `${API_BASE_URL}/user/get-picture/${userEmail}`
     );
@@ -51,9 +51,10 @@ window.UserAvatar.updateProfilePicture = async function (imageData) {
     const userData = await window.UserAuth.validateTokenExpiration();
     const email = userData.email;
 
-    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                         "http://localhost:4010";
+    const API_BASE_URL =
+      (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+      (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+      "http://localhost:4010";
     const response = await window.UserAuth.authenticatedFetch(
       `${API_BASE_URL}/user/update-picture`,
       {
@@ -93,9 +94,10 @@ window.UserAvatar.removeProfilePicture = async function () {
     const userData = await window.UserAuth.validateTokenExpiration();
     const email = userData.email;
 
-    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                         "http://localhost:4010";
+    const API_BASE_URL =
+      (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+      (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+      "http://localhost:4010";
     const response = await window.UserAuth.authenticatedFetch(
       `${API_BASE_URL}/user/update-picture`,
       {

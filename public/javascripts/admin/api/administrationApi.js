@@ -1,8 +1,9 @@
 window.Administration = window.Administration || {};
 
-const API_BASE_URL = (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) || 
-                     (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                     "http://localhost:4010";
+const API_BASE_URL =
+  (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
+  (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+  "http://localhost:4010";
 
 function getToken() {
   const cookies = document.cookie.split("; ");
@@ -21,9 +22,14 @@ window.Administration.apiRequest = async function (url, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
+  // Suporta AbortController para cancelar requisições
+  const controller = options.signal || new AbortController();
+  const signal = controller.signal;
+
   const response = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
+    signal,
   });
 
   if (!response.ok) {

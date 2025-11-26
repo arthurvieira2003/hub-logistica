@@ -131,11 +131,52 @@ window.RastreamentoEvents.configurarEventosDetalhes = function (todasNotas) {
   }, 100);
 };
 
+window.RastreamentoEvents.mostrarOverlayLoading = function () {
+  const trackingView = document.getElementById("trackingView");
+  if (!trackingView) return;
+
+  // Remove overlay existente se houver
+  const overlayExistente = document.querySelector(".rastreamento-loading-overlay");
+  if (overlayExistente) {
+    overlayExistente.remove();
+  }
+
+  // Garante que o trackingView tenha position relative
+  if (getComputedStyle(trackingView).position === "static") {
+    trackingView.style.position = "relative";
+  }
+
+  // Cria o overlay
+  const overlay = document.createElement("div");
+  overlay.className = "rastreamento-loading-overlay";
+  overlay.innerHTML = `
+    <div class="rastreamento-loading-content">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Carregando dados...</p>
+    </div>
+  `;
+
+  trackingView.appendChild(overlay);
+};
+
+window.RastreamentoEvents.esconderOverlayLoading = function () {
+  const overlay = document.querySelector(".rastreamento-loading-overlay");
+  if (overlay) {
+    overlay.remove();
+  }
+};
+
 window.RastreamentoEvents.configurarEventosData = function () {
   const dataInput = document.getElementById("dataRastreamento");
   const btnAtualizar = document.getElementById("btnAtualizarData");
 
   if (dataInput && btnAtualizar) {
+    // Verifica se o event listener já foi adicionado
+    if (btnAtualizar.hasAttribute("data-event-configured")) {
+      return;
+    }
+    btnAtualizar.setAttribute("data-event-configured", "true");
+
     btnAtualizar.addEventListener("click", async function () {
       const novaData = dataInput.value;
       const dataAtual = window.RastreamentoConfig.obterDataRastreamento();
@@ -145,11 +186,19 @@ window.RastreamentoEvents.configurarEventosData = function () {
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
         this.disabled = true;
 
+        // Mostra o overlay de loading
+        window.RastreamentoEvents.mostrarOverlayLoading();
+
         try {
           await window.RastreamentoAPI.recarregarDadosComNovaData(novaData);
+          
+          // Aguarda um pequeno delay para garantir que a renderização esteja completa
+          await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
           console.error("❌ Erro no recarregamento:", error);
         } finally {
+          // Esconde o overlay de loading
+          window.RastreamentoEvents.esconderOverlayLoading();
           this.innerHTML = originalText;
           this.disabled = false;
         }
@@ -158,7 +207,7 @@ window.RastreamentoEvents.configurarEventosData = function () {
 
     dataInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
-        btnAtualizar.click();
+        novoBtnAtualizar.click();
       }
     });
   } else {

@@ -1,17 +1,86 @@
 window.Administration = window.Administration || {};
 
-window.Administration.loadPrecosFaixas = async function () {
+window.Administration.loadPrecosFaixas = async function (page = 1, limit = 50, search = null) {
+  // Cancela requisição anterior se existir
+  if (window.Administration.state.requestControllers.precosFaixas) {
+    window.Administration.state.requestControllers.precosFaixas.abort();
+  }
+
+  // Cria novo AbortController para esta requisição
+  const controller = new AbortController();
+  window.Administration.state.requestControllers.precosFaixas = controller;
+
+  // Incrementa o contador de sequência para esta requisição
+  if (!window.Administration.state.requestSequence.precosFaixas) {
+    window.Administration.state.requestSequence.precosFaixas = 0;
+  }
+  window.Administration.state.requestSequence.precosFaixas += 1;
+  const currentSequence = window.Administration.state.requestSequence.precosFaixas;
+
   try {
-    const precos = await window.Administration.apiRequest("/precos-faixas");
-    if (precos) {
-      window.Administration.state.precosFaixas = precos;
-      window.Administration.state.filteredData.precosFaixas = null;
-      window.Administration.resetPagination("precosFaixas");
-      window.Administration.renderPrecosFaixas(precos);
+    window.Administration.initPagination("precosFaixas", limit);
+    
+    // Armazena o termo de busca atual
+    const searchTerm = search && search.trim() !== "" ? search.trim() : null;
+    window.Administration.state.currentSearchPrecosFaixas = searchTerm;
+    
+    let url = `/precos-faixas?page=${page}&limit=${limit}`;
+    if (searchTerm) {
+      url += `&search=${encodeURIComponent(searchTerm)}`;
+    }
+    
+    const response = await window.Administration.apiRequest(url, {
+      signal: controller.signal,
+    });
+    
+    // Verifica se esta ainda é a requisição mais recente
+    if (window.Administration.state.requestSequence.precosFaixas !== currentSequence) {
+      // Esta requisição foi substituída por uma mais recente, ignora o resultado
+      return;
+    }
+
+    // Verifica se a requisição foi cancelada
+    if (controller.signal.aborted) {
+      return;
+    }
+    
+    if (response && response.data) {
+      // Atualiza o estado de paginação com os dados do servidor
+      const pagination = window.Administration.state.pagination["precosFaixas"];
+      if (pagination) {
+        pagination.currentPage = response.pagination.page;
+        pagination.totalItems = response.pagination.total;
+        pagination.totalPages = response.pagination.totalPages;
+        pagination.itemsPerPage = response.pagination.limit;
+      }
+      
+      // Armazena apenas os dados da página atual
+      window.Administration.state.precosFaixas = response.data;
+      // Se há busca, não usa filteredData (a busca já vem do servidor)
+      if (!searchTerm) {
+        window.Administration.state.filteredData.precosFaixas = null;
+      }
+      
+      window.Administration.renderPrecosFaixas(response.data);
     }
   } catch (error) {
+    // Ignora erros de requisições canceladas
+    if (error.name === 'AbortError' || controller.signal.aborted) {
+      return;
+    }
+    
+    // Verifica se esta ainda é a requisição mais recente antes de mostrar erro
+    if (window.Administration.state.requestSequence.precosFaixas !== currentSequence) {
+      return;
+    }
+    
     console.error("❌ Erro ao carregar preços de faixas:", error);
     window.Administration.showError("Erro ao carregar preços de faixas");
+  } finally {
+    // Limpa o controller se esta ainda for a requisição atual
+    if (window.Administration.state.requestSequence.precosFaixas === currentSequence) {
+      window.Administration.state.requestControllers.precosFaixas = null;
+    }
   }
 };
 
@@ -19,78 +88,163 @@ window.Administration.renderPrecosFaixas = function (precos) {
   const tbody = document.querySelector("#precosFaixasTable tbody");
   if (!tbody) return;
 
-  const dataToRender =
-    precos ||
-    window.Administration.state.filteredData.precosFaixas ||
-    window.Administration.state.precosFaixas;
+  // Se há dados filtrados, usa paginação client-side
+  const dataToRender = window.Administration.state.filteredData.precosFaixas;
+  
+  if (dataToRender) {
+    // Paginação client-side para dados filtrados
+    const { items, pagination } = window.Administration.getPaginatedData(
+      dataToRender,
+      "precosFaixas"
+    );
 
-  const { items, pagination } = window.Administration.getPaginatedData(
-    dataToRender,
-    "precosFaixas"
-  );
+    if (items.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="loading-data">Nenhum preço encontrado</td>
+        </tr>
+      `;
+      window.Administration.renderPagination(
+        "precosFaixasPagination",
+        "precosFaixas",
+        () => {
+          window.Administration.renderPrecosFaixas();
+        }
+      );
+      return;
+    }
 
-  if (items.length === 0) {
-    tbody.innerHTML = `
+    tbody.innerHTML = items
+      .map((preco) => {
+        const rota = preco.Rota;
+        const faixa = preco.FaixasPeso;
+        const transp = preco.Transportadora;
+        const origem = rota?.Cidade || rota?.CidadeOrigem;
+        const destino = rota?.CidadeDestino;
+        const rotaNome =
+          origem && destino
+            ? `${origem.nome_cidade} → ${destino.nome_cidade}`
+            : "N/A";
+
+        const vigenciaInicio = preco.data_vigencia_inicio
+          ? new Date(preco.data_vigencia_inicio).toLocaleDateString("pt-BR")
+          : "N/A";
+
+        return `
       <tr>
-        <td colspan="8" class="loading-data">Nenhum preço encontrado</td>
+        <td>${rotaNome}</td>
+        <td>${faixa ? faixa.descricao : "N/A"}</td>
+        <td>${transp ? transp.nome_transportadora : "N/A"}</td>
+        <td>R$ ${parseFloat(preco.preco || 0).toFixed(2)}</td>
+        <td>${vigenciaInicio}</td>
+        <td><span class="status-badge ${preco.ativo ? "active" : "inactive"}">${
+          preco.ativo ? "Ativo" : "Inativo"
+        }</span></td>
+        <td>
+          <button class="btn-icon edit-entity" data-entity-type="preco-faixa" data-id="${
+            preco.id_preco
+          }" title="Editar">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-icon delete-entity" data-entity-type="preco-faixa" data-id="${
+            preco.id_preco
+          }" title="Excluir">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
       </tr>
     `;
+      })
+      .join("");
+
     window.Administration.renderPagination(
       "precosFaixasPagination",
       "precosFaixas",
       () => {
-        window.Administration.renderPrecosFaixas(
-          window.Administration.state.precosFaixas
-        );
+        window.Administration.renderPrecosFaixas();
       }
     );
-    return;
-  }
+  } else {
+    // Renderização direta para dados paginados do servidor
+    const data = precos || window.Administration.state.precosFaixas || [];
 
-  tbody.innerHTML = items
-    .map((preco) => {
-      const rota = preco.Rota;
-      const faixa = preco.FaixasPeso;
-      const transp = preco.Transportadora;
-      const origem = rota?.Cidade || rota?.CidadeOrigem;
-      const destino = rota?.CidadeDestino;
-      const rotaNome =
-        origem && destino
-          ? `${origem.nome_cidade} → ${destino.nome_cidade}`
+    if (data.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="loading-data">Nenhum preço encontrado</td>
+        </tr>
+      `;
+      window.Administration.renderPagination(
+        "precosFaixasPagination",
+        "precosFaixas",
+        () => {
+          const pagination = window.Administration.state.pagination["precosFaixas"];
+          if (pagination) {
+            const searchTerm = window.Administration.state.currentSearchPrecosFaixas || null;
+            window.Administration.loadPrecosFaixas(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+          }
+        }
+      );
+      return;
+    }
+
+    tbody.innerHTML = data
+      .map((preco) => {
+        const rota = preco.Rota;
+        const faixa = preco.FaixasPeso;
+        const transp = preco.Transportadora;
+        const origem = rota?.Cidade || rota?.CidadeOrigem;
+        const destino = rota?.CidadeDestino;
+        const rotaNome =
+          origem && destino
+            ? `${origem.nome_cidade} → ${destino.nome_cidade}`
+            : "N/A";
+
+        const vigenciaInicio = preco.data_vigencia_inicio
+          ? new Date(preco.data_vigencia_inicio).toLocaleDateString("pt-BR")
           : "N/A";
 
-      const vigenciaInicio = preco.data_vigencia_inicio
-        ? new Date(preco.data_vigencia_inicio).toLocaleDateString("pt-BR")
-        : "N/A";
+        return `
+      <tr>
+        <td>${rotaNome}</td>
+        <td>${faixa ? faixa.descricao : "N/A"}</td>
+        <td>${transp ? transp.nome_transportadora : "N/A"}</td>
+        <td>R$ ${parseFloat(preco.preco || 0).toFixed(2)}</td>
+        <td>${vigenciaInicio}</td>
+        <td><span class="status-badge ${preco.ativo ? "active" : "inactive"}">${
+          preco.ativo ? "Ativo" : "Inativo"
+        }</span></td>
+        <td>
+          <button class="btn-icon edit-entity" data-entity-type="preco-faixa" data-id="${
+            preco.id_preco
+          }" title="Editar">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-icon delete-entity" data-entity-type="preco-faixa" data-id="${
+            preco.id_preco
+          }" title="Excluir">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+      })
+      .join("");
 
-      return `
-    <tr>
-      <td>${preco.id_preco}</td>
-      <td>${rotaNome}</td>
-      <td>${faixa ? faixa.descricao : "N/A"}</td>
-      <td>${transp ? transp.nome_transportadora : "N/A"}</td>
-      <td>R$ ${parseFloat(preco.preco || 0).toFixed(2)}</td>
-      <td>${vigenciaInicio}</td>
-      <td><span class="status-badge ${preco.ativo ? "active" : "inactive"}">${
-        preco.ativo ? "Ativo" : "Inativo"
-      }</span></td>
-      <td>
-        <button class="btn-icon edit-entity" data-entity-type="preco-faixa" data-id="${
-          preco.id_preco
-        }" title="Editar">
-          <i class="fas fa-edit"></i>
-        </button>
-        <button class="btn-icon delete-entity" data-entity-type="preco-faixa" data-id="${
-          preco.id_preco
-        }" title="Excluir">
-          <i class="fas fa-trash"></i>
-        </button>
-      </td>
-    </tr>
-  `;
-    })
-    .join("");
+    window.Administration.renderPagination(
+      "precosFaixasPagination",
+      "precosFaixas",
+      () => {
+        const pagination = window.Administration.state.pagination["precosFaixas"];
+        if (pagination) {
+          const searchTerm = window.Administration.state.currentSearchPrecosFaixas || null;
+          window.Administration.loadPrecosFaixas(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+        }
+      }
+    );
+  }
 
+  // Adiciona event listeners aos botões
   document
     .querySelectorAll(".edit-entity[data-entity-type='preco-faixa']")
     .forEach((btn) => {
@@ -108,17 +262,6 @@ window.Administration.renderPrecosFaixas = function (precos) {
         window.Administration.deletePrecoFaixa(id);
       });
     });
-
-  window.Administration.renderPagination(
-    "precosFaixasPagination",
-    "precosFaixas",
-    () => {
-      const dataToRender =
-        window.Administration.state.filteredData.precosFaixas ||
-        window.Administration.state.precosFaixas;
-      window.Administration.renderPrecosFaixas(dataToRender);
-    }
-  );
 };
 
 window.Administration.openPrecoFaixaModal = async function (id = null) {
@@ -128,8 +271,9 @@ window.Administration.openPrecoFaixaModal = async function (id = null) {
     return;
   }
 
+  // Carrega rotas se necessário (apenas primeira página para o select)
   if (window.Administration.state.rotas.length === 0) {
-    await window.Administration.loadRotas();
+    await window.Administration.loadRotas(1, 100); // Carrega mais rotas para o select
   }
   if (window.Administration.state.faixasPeso.length === 0) {
     await window.Administration.loadFaixasPeso();
@@ -174,9 +318,22 @@ window.Administration.openPrecoFaixaModal = async function (id = null) {
   });
 
   if (id) {
-    const preco = window.Administration.state.precosFaixas.find(
+    // Busca o preço no estado atual ou faz uma requisição se não estiver disponível
+    let preco = window.Administration.state.precosFaixas.find(
       (p) => p.id_preco == id
     );
+    
+    if (!preco) {
+      // Se o preço não estiver na página atual, busca do servidor
+      try {
+        preco = await window.Administration.apiRequest(`/precos-faixas/${id}`);
+      } catch (error) {
+        console.error("❌ Erro ao buscar preço de faixa:", error);
+        window.Administration.showError("Erro ao carregar dados do preço de faixa");
+        return;
+      }
+    }
+    
     if (preco) {
       document.getElementById("precoFaixaId").value = preco.id_preco;
       document.getElementById("precoFaixaRota").value = preco.id_rota;
@@ -274,7 +431,15 @@ window.Administration.savePrecoFaixa = async function () {
     );
     document.getElementById("precoFaixaModal").classList.remove("active");
     form.reset();
-    window.Administration.loadPrecosFaixas();
+    
+    // Recarrega a página atual mantendo a busca se houver
+    const pagination = window.Administration.state.pagination["precosFaixas"];
+    const searchTerm = window.Administration.state.currentSearchPrecosFaixas || null;
+    if (pagination) {
+      window.Administration.loadPrecosFaixas(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+    } else {
+      window.Administration.loadPrecosFaixas(1, 50, searchTerm);
+    }
   } catch (error) {
     console.error("❌ Erro ao salvar preço de faixa:", error);
     window.Administration.showError("Erro ao salvar preço de faixa");
@@ -285,9 +450,22 @@ window.Administration.deletePrecoFaixa = async function (id) {
   try {
     const counts = {};
 
-    const preco = window.Administration.state.precosFaixas.find(
+    // Busca o preço no estado atual ou faz uma requisição se não estiver disponível
+    let preco = window.Administration.state.precosFaixas.find(
       (p) => p.id_preco == id
     );
+    
+    if (!preco) {
+      // Se o preço não estiver na página atual, busca do servidor
+      try {
+        preco = await window.Administration.apiRequest(`/precos-faixas/${id}`);
+      } catch (error) {
+        console.error("❌ Erro ao buscar preço de faixa:", error);
+        window.Administration.showError("Erro ao carregar dados do preço de faixa");
+        return;
+      }
+    }
+    
     let precoNome = "este preço de faixa";
     if (preco) {
       const rota = preco.Rota;
@@ -319,7 +497,15 @@ window.Administration.deletePrecoFaixa = async function (id) {
           window.Administration.showSuccess(
             "Preço de faixa desativado com sucesso"
           );
-          window.Administration.loadPrecosFaixas();
+          
+          // Recarrega a página atual mantendo a busca se houver
+          const pagination = window.Administration.state.pagination["precosFaixas"];
+          const searchTerm = window.Administration.state.currentSearchPrecosFaixas || null;
+          if (pagination) {
+            window.Administration.loadPrecosFaixas(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+          } else {
+            window.Administration.loadPrecosFaixas(1, 50, searchTerm);
+          }
         } catch (error) {
           console.error("❌ Erro ao excluir preço de faixa:", error);
           window.Administration.showError("Erro ao excluir preço de faixa");

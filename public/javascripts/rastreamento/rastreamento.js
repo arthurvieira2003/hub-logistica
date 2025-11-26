@@ -134,7 +134,9 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
 
       trackingView.appendChild(tabelaSimples);
 
-      await window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
+      await window.RastreamentoDataTablesRenderer.inicializarDataTable(
+        todasNotas
+      );
 
       window.RastreamentoEvents.configurarEventosData();
     } else {
@@ -175,7 +177,15 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
     return;
   }
 
+  // Preserva o overlay de loading se existir
+  const overlay = trackingView.querySelector(".rastreamento-loading-overlay");
+  
   trackingView.innerHTML = "";
+  
+  // Restaura o overlay se existia antes
+  if (overlay) {
+    trackingView.appendChild(overlay);
+  }
 
   const transportadoras = window.RastreamentoConfig.transportadoras;
   let todasNotas = [];
@@ -213,7 +223,9 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
 
     trackingView.appendChild(tabelaSimples);
 
-    await window.RastreamentoDataTablesRenderer.inicializarDataTable(todasNotas);
+    await window.RastreamentoDataTablesRenderer.inicializarDataTable(
+      todasNotas
+    );
 
     window.RastreamentoEvents.configurarEventosData();
   } else {

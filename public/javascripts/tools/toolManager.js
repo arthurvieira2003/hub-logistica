@@ -45,11 +45,11 @@ window.ToolManager.initToolButtons = function () {
 };
 
 window.ToolManager.loadToolContent = async function (tool, contentElement) {
+  const loader = contentElement.querySelector(".loader");
+  
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    contentElement.querySelector(".loader").remove();
-
     if (tool === "admin") {
+      if (loader) loader.remove();
       window.open("/administration", "_blank");
       return;
     }
@@ -62,15 +62,23 @@ window.ToolManager.loadToolContent = async function (tool, contentElement) {
         await window.ToolManager.loadRastreamentoTool(contentElement);
         break;
       default:
+        if (loader) loader.remove();
         contentElement.innerHTML = `
           <div class="tool-header">
             <h2>Ferramenta não encontrada</h2>
             <p>A ferramenta solicitada não está disponível.</p>
           </div>
         `;
+        return;
+    }
+
+    // Remove o loader apenas após o carregamento completo da ferramenta
+    if (loader) {
+      loader.remove();
     }
   } catch (error) {
     console.error("❌ Erro ao carregar conteúdo da ferramenta:", error);
+    if (loader) loader.remove();
     contentElement.innerHTML = `
       <div class="tool-header error">
         <h2>Erro ao carregar</h2>
@@ -127,9 +135,10 @@ window.ToolManager.loadFretesData = async function (dataFiltro = null) {
       dataFiltro = dataInput ? dataInput.value : null;
     }
 
-    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                         "http://localhost:4010";
+    const API_BASE_URL =
+      (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+      (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+      "http://localhost:4010";
     let url = `${API_BASE_URL}/cte`;
     if (dataFiltro) {
       url += `?data=${dataFiltro}`;
@@ -277,9 +286,10 @@ window.ToolManager.validarPrecosFretes = async function (items) {
   const validacoes = await Promise.allSettled(
     items.map(async (item) => {
       try {
-        const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                             (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                             "http://localhost:4010";
+        const API_BASE_URL =
+          (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+          (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+          "http://localhost:4010";
         const response = await fetch(
           `${API_BASE_URL}/cte/${item.Serial}/validar-preco`
         );
@@ -610,9 +620,10 @@ window.ToolManager.viewCTEDetails = async function (serial) {
 
   const modalBody = document.getElementById("cteModalBody");
   try {
-    const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                         (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                         "http://localhost:4010";
+    const API_BASE_URL =
+      (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+      (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+      "http://localhost:4010";
     const response = await fetch(`${API_BASE_URL}/cte/${serial}`);
     if (!response.ok) {
       throw new Error("Erro ao buscar detalhes do CT-E");
@@ -1017,9 +1028,10 @@ window.ToolManager.closeCTEModal = function () {
 };
 
 window.ToolManager.downloadCTEXML = function (serial) {
-  const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                       "http://localhost:4010";
+  const API_BASE_URL =
+    (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+    (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+    "http://localhost:4010";
   window.open(`${API_BASE_URL}/cte/${serial}/xml`, "_blank");
 };
 
@@ -1047,20 +1059,65 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     </div>
   `;
 
+  // Função auxiliar para mostrar overlay (caso RastreamentoEvents ainda não esteja disponível)
+  const mostrarOverlay = () => {
+    const trackingView = document.getElementById("trackingView");
+    if (!trackingView) return;
+
+    const overlayExistente = document.querySelector(".rastreamento-loading-overlay");
+    if (overlayExistente) {
+      overlayExistente.remove();
+    }
+
+    if (getComputedStyle(trackingView).position === "static") {
+      trackingView.style.position = "relative";
+    }
+
+    const overlay = document.createElement("div");
+    overlay.className = "rastreamento-loading-overlay";
+    overlay.innerHTML = `
+      <div class="rastreamento-loading-content">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Carregando dados...</p>
+      </div>
+    `;
+
+    trackingView.appendChild(overlay);
+  };
+
+  // Função auxiliar para esconder overlay
+  const esconderOverlay = () => {
+    const overlay = document.querySelector(".rastreamento-loading-overlay");
+    if (overlay) {
+      overlay.remove();
+    }
+  };
+
+  // Mostra o overlay de loading
+  mostrarOverlay();
+
   if (window.RastreamentoMain && window.RastreamentoMain.initRastreamento) {
     try {
       const trackingView = document.getElementById("trackingView");
       await window.RastreamentoMain.initRastreamento(trackingView);
+      
+      // Esconde o overlay de loading após o carregamento completo
+      await new Promise(resolve => setTimeout(resolve, 100));
+      esconderOverlay();
     } catch (error) {
       console.error(
         "❌ Erro ao executar RastreamentoMain.initRastreamento:",
         error
       );
+      // Esconde o overlay mesmo em caso de erro
+      esconderOverlay();
     }
   } else {
     console.error(
       "❌ window.RastreamentoMain.initRastreamento não encontrado!"
     );
+    // Esconde o overlay se não conseguir inicializar
+    esconderOverlay();
   }
 
   window.ToolManager.setupRastreamentoEvents();
