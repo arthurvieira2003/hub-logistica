@@ -398,10 +398,8 @@ window.RastreamentoDataTablesRenderer.limparFiltros = function () {
   window.dataTableInstance.search("").columns().search("").draw();
 };
 
-// Função auxiliar para garantir que o DataTables esteja carregado
 window.RastreamentoDataTablesRenderer.aguardarDataTables = function () {
   return new Promise((resolve, reject) => {
-    // Verifica se já está disponível
     if (
       typeof $ !== "undefined" &&
       typeof $.fn !== "undefined" &&
@@ -411,12 +409,10 @@ window.RastreamentoDataTablesRenderer.aguardarDataTables = function () {
       return;
     }
 
-    // Verifica se o script já está no DOM
     const existingScript = document.querySelector(
       'script[src*="datatables.net"]'
     );
 
-    // Se não existe, tenta carregar dinamicamente
     if (!existingScript) {
       const script = document.createElement("script");
       script.src = "https://cdn.datatables.net/2.3.4/js/dataTables.min.js";
@@ -426,9 +422,8 @@ window.RastreamentoDataTablesRenderer.aguardarDataTables = function () {
       document.head.appendChild(script);
     }
 
-    // Aguarda o DataTables estar disponível (independente de como foi carregado)
     let attempts = 0;
-    const maxAttempts = 50; // 5 segundos máximo
+    const maxAttempts = 50;
     const checkInterval = setInterval(() => {
       attempts++;
       if (
@@ -458,7 +453,6 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
     return Promise.resolve();
   }
 
-  // Aguarda o DataTables estar disponível
   try {
     await window.RastreamentoDataTablesRenderer.aguardarDataTables();
   } catch (error) {
@@ -466,7 +460,6 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
     return Promise.resolve();
   }
 
-  // Verifica se o DataTables está disponível
   if (typeof $.fn.DataTable === "undefined") {
     console.error(
       "❌ DataTables não está disponível. Verifique se o script foi carregado corretamente."
@@ -525,13 +518,11 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
     }
   }
 
-  // Se não houver dados, retorna uma Promise resolvida
   if (dadosDataTables.length === 0) {
     return Promise.resolve();
   }
 
   try {
-    // Cria uma Promise que resolve quando o DataTable estiver completamente inicializado
     return new Promise((resolve, reject) => {
       try {
         window.dataTableInstance = $("#rastreamentoDataTable").DataTable({
@@ -634,7 +625,6 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
               $(this).DataTable()
             );
 
-            // Resolve a Promise quando a inicialização estiver completa
             resolve();
           },
         });
@@ -644,12 +634,18 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
         console.error("❌ Elemento da tabela:", tabelaElement);
         reject(error);
       }
+    }).catch((error) => {
+      console.error("❌ Erro ao inicializar DataTable:", error);
+      console.error("❌ Dados recebidos:", dadosDataTables);
+      console.error("❌ Elemento da tabela:", tabelaElement);
+
+      return Promise.resolve();
     });
   } catch (error) {
     console.error("❌ Erro ao inicializar DataTable:", error);
     console.error("❌ Dados recebidos:", dadosDataTables);
     console.error("❌ Elemento da tabela:", tabelaElement);
-    throw error;
+    return Promise.resolve();
   }
 };
 
