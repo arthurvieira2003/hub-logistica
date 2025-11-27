@@ -436,6 +436,11 @@ describe("AuthValidators", () => {
   });
 
   describe("validateToken", () => {
+    beforeEach(() => {
+      delete window.getApiBaseUrl;
+      delete window.APP_CONFIG;
+    });
+
     test("deve retornar userData quando token é válido", async () => {
       const mockUserData = {
         user: "test",
@@ -458,6 +463,38 @@ describe("AuthValidators", () => {
             Authorization: "test-token",
           },
         }
+      );
+    });
+
+    test("deve usar getApiBaseUrl quando disponível", async () => {
+      window.getApiBaseUrl = jest.fn(() => "https://custom-api.com");
+      const mockUserData = { user: "test" };
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockUserData,
+      });
+
+      await window.AuthValidators.validateToken("test-token");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "https://custom-api.com/session/validate",
+        expect.any(Object)
+      );
+    });
+
+    test("deve usar APP_CONFIG.API_BASE_URL quando getApiBaseUrl não está disponível", async () => {
+      window.APP_CONFIG = { API_BASE_URL: "https://app-config-api.com" };
+      const mockUserData = { user: "test" };
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockUserData,
+      });
+
+      await window.AuthValidators.validateToken("test-token");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "https://app-config-api.com/session/validate",
+        expect.any(Object)
       );
     });
 
@@ -491,6 +528,24 @@ describe("AuthValidators", () => {
       window.AuthValidators.redirectToHome("Erro");
 
       expect(window.AuthUI.hideLoading).toHaveBeenCalled();
+    });
+
+    test("deve esconder loading do AdminAuthUI quando disponível", () => {
+      window.AdminAuthUI = {
+        hideLoading: jest.fn(),
+      };
+
+      window.AuthValidators.redirectToHome("Erro");
+
+      expect(window.AdminAuthUI.hideLoading).toHaveBeenCalled();
+    });
+
+    test("deve funcionar quando AdminAuthUI não está disponível", () => {
+      delete window.AdminAuthUI;
+
+      expect(() => {
+        window.AuthValidators.redirectToHome("Erro");
+      }).not.toThrow();
     });
   });
 });
