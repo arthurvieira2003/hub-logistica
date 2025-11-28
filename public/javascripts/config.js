@@ -1,3 +1,3 @@
 window.APP_CONFIG = {
-  API_BASE_URL: "http://localhost:4010"
+  API_BASE_URL: "https://logistica.copapel.com.br",
 };

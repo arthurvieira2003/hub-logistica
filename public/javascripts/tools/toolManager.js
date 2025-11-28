@@ -46,7 +46,7 @@ window.ToolManager.initToolButtons = function () {
 
 window.ToolManager.loadToolContent = async function (tool, contentElement) {
   const loader = contentElement.querySelector(".loader");
-  
+
   try {
     if (tool === "admin") {
       if (loader) loader.remove();
@@ -138,7 +138,7 @@ window.ToolManager.loadFretesData = async function (dataFiltro = null) {
     const API_BASE_URL =
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-      "http://localhost:4010";
+      "https://logistica.copapel.com.br";
     let url = `${API_BASE_URL}/cte`;
     if (dataFiltro) {
       url += `?data=${dataFiltro}`;
@@ -289,7 +289,7 @@ window.ToolManager.validarPrecosFretes = async function (items) {
         const API_BASE_URL =
           (window.getApiBaseUrl && window.getApiBaseUrl()) ||
           (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-          "http://localhost:4010";
+          "https://logistica.copapel.com.br";
         const response = await fetch(
           `${API_BASE_URL}/cte/${item.Serial}/validar-preco`
         );
@@ -623,7 +623,7 @@ window.ToolManager.viewCTEDetails = async function (serial) {
     const API_BASE_URL =
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-      "http://localhost:4010";
+      "https://logistica.copapel.com.br";
     const response = await fetch(`${API_BASE_URL}/cte/${serial}`);
     if (!response.ok) {
       throw new Error("Erro ao buscar detalhes do CT-E");
@@ -1031,7 +1031,7 @@ window.ToolManager.downloadCTEXML = function (serial) {
   const API_BASE_URL =
     (window.getApiBaseUrl && window.getApiBaseUrl()) ||
     (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-    "http://localhost:4010";
+    "https://logistica.copapel.com.br";
   window.open(`${API_BASE_URL}/cte/${serial}/xml`, "_blank");
 };
 
@@ -1064,7 +1064,9 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     const trackingView = document.getElementById("trackingView");
     if (!trackingView) return;
 
-    const overlayExistente = document.querySelector(".rastreamento-loading-overlay");
+    const overlayExistente = document.querySelector(
+      ".rastreamento-loading-overlay"
+    );
     if (overlayExistente) {
       overlayExistente.remove();
     }
@@ -1100,9 +1102,9 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     try {
       const trackingView = document.getElementById("trackingView");
       await window.RastreamentoMain.initRastreamento(trackingView);
-      
+
       // Esconde o overlay de loading após o carregamento completo
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       esconderOverlay();
     } catch (error) {
       console.error(

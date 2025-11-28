@@ -3,7 +3,7 @@ window.Administration = window.Administration || {};
 const API_BASE_URL =
   (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
   (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-  "http://localhost:4010";
+  "https://logistica.copapel.com.br";
 
 function getToken() {
   const cookies = document.cookie.split("; ");

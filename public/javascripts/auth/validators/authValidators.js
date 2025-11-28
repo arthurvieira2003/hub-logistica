@@ -208,9 +208,10 @@ window.AuthValidators.getToken = function () {
 };
 
 window.AuthValidators.validateToken = async function (token) {
-  const API_BASE_URL = (window.getApiBaseUrl && window.getApiBaseUrl()) || 
-                       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 
-                       "http://localhost:4010";
+  const API_BASE_URL =
+    (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+    (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+    "https://logistica.copapel.com.br";
   const response = await fetch(`${API_BASE_URL}/session/validate`, {
     method: "GET",
     headers: {

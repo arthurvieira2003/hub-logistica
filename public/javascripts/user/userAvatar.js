@@ -11,7 +11,7 @@ window.UserAvatar.getUserAvatar = async function () {
     const API_BASE_URL =
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-      "http://localhost:4010";
+      "https://logistica.copapel.com.br";
     const response = await fetch(
       `${API_BASE_URL}/user/get-picture/${userEmail}`
     );
@@ -54,7 +54,7 @@ window.UserAvatar.updateProfilePicture = async function (imageData) {
     const API_BASE_URL =
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-      "http://localhost:4010";
+      "https://logistica.copapel.com.br";
     const response = await window.UserAuth.authenticatedFetch(
       `${API_BASE_URL}/user/update-picture`,
       {
@@ -97,7 +97,7 @@ window.UserAvatar.removeProfilePicture = async function () {
     const API_BASE_URL =
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-      "http://localhost:4010";
+      "https://logistica.copapel.com.br";
     const response = await window.UserAuth.authenticatedFetch(
       `${API_BASE_URL}/user/update-picture`,
       {
