@@ -102,7 +102,7 @@ window.LoginAuth.authenticateUser = function (email, password) {
   const API_BASE_URL =
     (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
     (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-    "https://logistica.copapel.com.br";
+    "https://logistica.copapel.com.br/api";
   fetch(`${API_BASE_URL}/user/authenticate`, {
     method: "POST",
     headers: {
@@ -144,7 +144,7 @@ window.LoginAuth.registerUser = function (email, password, confirmPassword) {
   const API_BASE_URL =
     (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
     (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-    "https://logistica.copapel.com.br";
+    "https://logistica.copapel.com.br/api";
   fetch(`${API_BASE_URL}/user/register`, {
     method: "POST",
     headers: {

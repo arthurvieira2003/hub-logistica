@@ -138,7 +138,7 @@ window.ToolManager.loadFretesData = async function (dataFiltro = null) {
     const API_BASE_URL =
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-      "https://logistica.copapel.com.br";
+      "https://logistica.copapel.com.br/api";
     let url = `${API_BASE_URL}/cte`;
     if (dataFiltro) {
       url += `?data=${dataFiltro}`;
@@ -289,7 +289,7 @@ window.ToolManager.validarPrecosFretes = async function (items) {
         const API_BASE_URL =
           (window.getApiBaseUrl && window.getApiBaseUrl()) ||
           (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-          "https://logistica.copapel.com.br";
+          "https://logistica.copapel.com.br/api";
         const response = await fetch(
           `${API_BASE_URL}/cte/${item.Serial}/validar-preco`
         );
@@ -623,7 +623,7 @@ window.ToolManager.viewCTEDetails = async function (serial) {
     const API_BASE_URL =
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-      "https://logistica.copapel.com.br";
+      "https://logistica.copapel.com.br/api";
     const response = await fetch(`${API_BASE_URL}/cte/${serial}`);
     if (!response.ok) {
       throw new Error("Erro ao buscar detalhes do CT-E");
@@ -1031,7 +1031,7 @@ window.ToolManager.downloadCTEXML = function (serial) {
   const API_BASE_URL =
     (window.getApiBaseUrl && window.getApiBaseUrl()) ||
     (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-    "https://logistica.copapel.com.br";
+    "https://logistica.copapel.com.br/api";
   window.open(`${API_BASE_URL}/cte/${serial}/xml`, "_blank");
 };
 

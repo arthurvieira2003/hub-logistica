@@ -3,7 +3,7 @@ window.API_CONFIG = window.API_CONFIG || {
     if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
       return window.APP_CONFIG.API_BASE_URL;
     }
-    return "https://logistica.copapel.com.br";
+    return "https://logistica.copapel.com.br/api";
   },
 };
 

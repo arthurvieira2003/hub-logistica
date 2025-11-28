@@ -211,7 +211,7 @@ window.AuthValidators.validateToken = async function (token) {
   const API_BASE_URL =
     (window.getApiBaseUrl && window.getApiBaseUrl()) ||
     (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-    "https://logistica.copapel.com.br";
+    "https://logistica.copapel.com.br/api";
   const response = await fetch(`${API_BASE_URL}/session/validate`, {
     method: "GET",
     headers: {

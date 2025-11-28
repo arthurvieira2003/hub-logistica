@@ -25,7 +25,7 @@ if (!API_BASE_URL) {
     API_BASE_URL = `http://${VPS_IP}:${BACKEND_PORT}`;
   } else {
     // Fallback para localhost em desenvolvimento
-    API_BASE_URL = "https://logistica.copapel.com.br";
+    API_BASE_URL = "https://logistica.copapel.com.br/api";
   }
 }
 
