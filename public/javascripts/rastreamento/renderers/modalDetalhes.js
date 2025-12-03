@@ -122,11 +122,7 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
   const extrairCidadeDePalavras = (palavras) => {
     let cidade = "";
 
-    for (
-      let i = Math.max(0, palavras.length - 4);
-      i < palavras.length;
-      i++
-    ) {
+    for (let i = Math.max(0, palavras.length - 4); i < palavras.length; i++) {
       const palavra = palavras[i];
       if (palavra.length === 0) continue;
 
@@ -290,19 +286,27 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
           <div class="timeline-track" style="position: relative; display: flex; min-width: max-content; gap: 15px; padding: 0 15px; justify-content: flex-start; align-items: center;">
         ${historicoOrdenado
           .map((ocorrencia, index) => {
-            // Funções auxiliares para determinar status e ícone
             const getStatusFromDescricao = (descricao) => {
               const descLower = descricao.toLowerCase();
-              if (descLower.includes("entrega") && descLower.includes("realizada")) {
+              if (
+                descLower.includes("entrega") &&
+                descLower.includes("realizada")
+              ) {
                 return { statusColor: "#4caf50", icon: "fas fa-check-circle" };
               }
               if (descLower.includes("manifestado")) {
                 return { statusColor: "#ff9800", icon: "fas fa-truck" };
               }
-              if (descLower.includes("transferencia") && descLower.includes("iniciada")) {
+              if (
+                descLower.includes("transferencia") &&
+                descLower.includes("iniciada")
+              ) {
                 return { statusColor: "#2196f3", icon: "fas fa-arrow-right" };
               }
-              if (descLower.includes("transferencia") && descLower.includes("finalizada")) {
+              if (
+                descLower.includes("transferencia") &&
+                descLower.includes("finalizada")
+              ) {
                 return { statusColor: "#03a9f4", icon: "fas fa-exchange-alt" };
               }
               if (descLower.includes("emissao")) {
@@ -329,9 +333,15 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                 case "71":
                 case "80":
                 case "74":
-                  return { statusColor: "#9c27b0", icon: "fas fa-file-invoice" };
+                  return {
+                    statusColor: "#9c27b0",
+                    icon: "fas fa-file-invoice",
+                  };
                 case "000":
-                  return { statusColor: "#ff9800", icon: "fas fa-truck-loading" };
+                  return {
+                    statusColor: "#ff9800",
+                    icon: "fas fa-truck-loading",
+                  };
                 case "104":
                 case "105":
                 case "83":
@@ -346,7 +356,10 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                 case "108":
                 case "001":
                 case "01":
-                  return { statusColor: "#4caf50", icon: "fas fa-check-circle" };
+                  return {
+                    statusColor: "#4caf50",
+                    icon: "fas fa-check-circle",
+                  };
                 default:
                   return { statusColor: "#757575", icon: "fas fa-clock" };
               }
@@ -371,16 +384,21 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
 
             const { statusColor, icon } = determineStatusAndIcon(ocorrencia);
 
-            // Funções auxiliares para formatação
             const formatTimelineData = (ocorrencia) => {
               if (ocorrencia.DATAOCORRENCIA) {
-                return window.RastreamentoUtils.formatarData(ocorrencia.DATAOCORRENCIA);
+                return window.RastreamentoUtils.formatarData(
+                  ocorrencia.DATAOCORRENCIA
+                );
               }
               if (ocorrencia.data_hora) {
-                return window.RastreamentoUtils.formatarData(ocorrencia.data_hora.split("T")[0]);
+                return window.RastreamentoUtils.formatarData(
+                  ocorrencia.data_hora.split("T")[0]
+                );
               }
               if (ocorrencia.data) {
-                return window.RastreamentoUtils.formatarData(ocorrencia.data.split(" ")[0]);
+                return window.RastreamentoUtils.formatarData(
+                  ocorrencia.data.split(" ")[0]
+                );
               }
               return "-";
             };
@@ -393,7 +411,9 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                 return ocorrencia.HORAOCORRENCIA;
               }
               if (ocorrencia.data_hora) {
-                return ocorrencia.data_hora.split("T")[1]?.substring(0, 5) || "-";
+                return (
+                  ocorrencia.data_hora.split("T")[1]?.substring(0, 5) || "-"
+                );
               }
               if (ocorrencia.data) {
                 return ocorrencia.data.split(" ")[1]?.substring(0, 5) || "-";
@@ -421,8 +441,7 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                 nota.destino?.split(", ")[0] ||
                 "-";
 
-              let estado =
-                ocorrencia.UF || nota.destino?.split(", ")[1] || "-";
+              let estado = ocorrencia.UF || nota.destino?.split(", ")[1] || "-";
 
               if (cidade.includes(" / ")) {
                 const partes = cidade.split(" / ");
@@ -443,7 +462,9 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
               const proximaOcorrencia = historicoOrdenado[index + 1];
               const isDashed =
                 proximaOcorrencia?.isPrevisao &&
-                !ocorrencia.DESCOCORRENCIA?.includes("EM TRANSITO PARA ENTREGA");
+                !ocorrencia.DESCOCORRENCIA?.includes(
+                  "EM TRANSITO PARA ENTREGA"
+                );
 
               const connectorStyle = isDashed
                 ? `border-top: 2px dashed ${statusColor}; background: none;`
@@ -465,10 +486,14 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                 <div class="timeline-content" style="text-align: center; background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid ${statusColor}20; height: 120px; display: flex; flex-direction: column; justify-content: center; width: 100%; box-sizing: border-box;">
                   <h5 style="margin: 0 0 6px 0; color: ${
                     ocorrencia.isPrevisao ? "#999" : "#333"
-                  }; font-size: 13px; font-weight: 600; line-height: 1.2;">${formatTimelineTitulo(ocorrencia)}</h5>
+                  }; font-size: 13px; font-weight: 600; line-height: 1.2;">${formatTimelineTitulo(
+              ocorrencia
+            )}</h5>
                   <p style="margin: 0 0 4px 0; color: ${
                     ocorrencia.isPrevisao ? "#999" : "#666"
-                  }; font-size: 11px; font-weight: 500;">${formatTimelineData(ocorrencia)}</p>
+                  }; font-size: 11px; font-weight: 500;">${formatTimelineData(
+              ocorrencia
+            )}</p>
                   <p style="margin: 0 0 6px 0; color: ${
                     ocorrencia.isPrevisao ? "#ccc" : "#888"
                   }; font-size: 10px;">${formatTimelineHora(ocorrencia)}</p>
@@ -476,7 +501,10 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
                     ocorrencia.isPrevisao ? "#999" : "#666"
                   }; margin-top: auto;">
                     <i class="fas fa-map-marker-alt" style="color: ${statusColor}; font-size: 9px;"></i>
-                    <span style="text-align: center; line-height: 1.1;">${formatTimelineLocation(ocorrencia, nota)}</span>
+                    <span style="text-align: center; line-height: 1.1;">${formatTimelineLocation(
+                      ocorrencia,
+                      nota
+                    )}</span>
                   </div>
                 </div>
               </div>
@@ -491,6 +519,90 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
 };
 
 window.RastreamentoModalRenderers.renderizarConteudoModal = function (nota) {
+  const getStatusColor = (status, atrasada) => {
+    if (atrasada) return "#f44336";
+    if (status === "Aguardando coleta") return "#ff9800";
+    if (status === "Em trânsito") return "#03a9f4";
+    if (status === "Entregue") return "#4caf50";
+    if (status === "Em processamento") return "#9c27b0";
+    if (status === "Em rota de entrega") return "#00bcd4";
+    return "#757575";
+  };
+
+  const renderInfoItem = (label, value, options = {}) => {
+    const {
+      isHighlighted = false,
+      isAtrasado = false,
+      customStyle = "",
+    } = options;
+    const valueStyle = isHighlighted
+      ? "color: #247675; font-weight: 600;"
+      : isAtrasado
+      ? "color: #dc3545; font-weight: 600;"
+      : "color: #333;";
+    const valueClass = isAtrasado ? "atrasado" : "";
+
+    return `
+        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
+          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">${label}:</div>
+          <div class="info-value-rastreamento ${valueClass}" style="${valueStyle} ${customStyle}">${value}</div>
+        </div>
+    `;
+  };
+
+  const renderStatusBadge = (status, atrasada) => {
+    const statusColor = getStatusColor(status, atrasada);
+    return `
+            <span style="display: inline-block; padding: 4px 8px; border-radius: 50px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: white; background: ${statusColor};">
+              ${status}
+            </span>
+    `;
+  };
+
+  const renderNotaInfoSection = (nota) => {
+    return `
+      <div class="info-card-rastreamento" style="background-color: #f8f9fa; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+        <h4 style="margin: 0 0 16px 0; color: #333; font-size: 18px; font-weight: 600; padding-bottom: 8px; border-bottom: 2px solid #247675;">Informações da Nota</h4>
+        ${renderInfoItem("Número", nota.numero, {
+          customStyle: "font-weight: 600;",
+        })}
+        ${renderInfoItem(
+          "Status",
+          renderStatusBadge(nota.status, nota.atrasada)
+        )}
+        ${renderInfoItem("Cliente", nota.cliente || "-")}
+        ${renderInfoItem("CT-e", nota.cte || "-")}
+        ${renderInfoItem("Transportadora", nota.transportadora.nome, {
+          isHighlighted: true,
+        })}
+      </div>
+    `;
+  };
+
+  const renderTransporteInfoSection = (nota) => {
+    return `
+      <div class="info-card-rastreamento" style="background-color: #f8f9fa; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+        <h4 style="margin: 0 0 16px 0; color: #333; font-size: 18px; font-weight: 600; padding-bottom: 8px; border-bottom: 2px solid #247675;">Informações de Transporte</h4>
+        ${renderInfoItem("Origem", nota.origem)}
+        ${renderInfoItem("Destino", nota.destino)}
+        ${renderInfoItem(
+          "Data de Faturamento",
+          window.RastreamentoUtils.formatarData(nota.docDate)
+        )}
+        ${renderInfoItem(
+          "Data de Envio",
+          window.RastreamentoUtils.formatarData(nota.dataEnvio)
+        )}
+        ${renderInfoItem(
+          "Previsão",
+          window.RastreamentoUtils.formatarData(nota.previsaoEntrega),
+          { isAtrasado: nota.atrasada }
+        )}
+        ${renderInfoItem("Última Atualização", nota.ultimaAtualizacao)}
+      </div>
+    `;
+  };
+
   const timelineHTML = window.RastreamentoModalRenderers.renderizarTimeline(
     nota.historico,
     nota
@@ -498,96 +610,8 @@ window.RastreamentoModalRenderers.renderizarConteudoModal = function (nota) {
 
   return `
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-      <div class="info-card-rastreamento" style="background-color: #f8f9fa; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s ease;">
-        <h4 style="margin: 0 0 16px 0; color: #333; font-size: 18px; font-weight: 600; padding-bottom: 8px; border-bottom: 2px solid #247675;">Informações da Nota</h4>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Número:</div>
-          <div class="info-value-rastreamento" style="color: #333; font-weight: 600;">${
-            nota.numero
-          }</div>
-        </div>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Status:</div>
-          <div class="info-value-rastreamento" style="color: #333;">
-            <span style="display: inline-block; padding: 4px 8px; border-radius: 50px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: white; background: ${
-              nota.status === "Aguardando coleta"
-                ? "#ff9800"
-                : nota.status === "Em trânsito"
-                ? "#03a9f4"
-                : nota.status === "Entregue"
-                ? "#4caf50"
-                : nota.status === "Em processamento"
-                ? "#9c27b0"
-                : nota.status === "Em rota de entrega"
-                ? "#00bcd4"
-                : nota.atrasada
-                ? "#f44336"
-                : "#757575"
-            };">
-              ${nota.status}
-            </span>
-          </div>
-        </div>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Cliente:</div>
-          <div class="info-value-rastreamento" style="color: #333;">${
-            nota.cliente || "-"
-          }</div>
-        </div>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">CT-e:</div>
-          <div class="info-value-rastreamento" style="color: #333;">${
-            nota.cte || "-"
-          }</div>
-        </div>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Transportadora:</div>
-          <div class="info-value-rastreamento destaque" style="color: #247675; font-weight: 600;">${
-            nota.transportadora.nome
-          }</div>
-        </div>
-      </div>
-      <div class="info-card-rastreamento" style="background-color: #f8f9fa; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s ease;">
-        <h4 style="margin: 0 0 16px 0; color: #333; font-size: 18px; font-weight: 600; padding-bottom: 8px; border-bottom: 2px solid #247675;">Informações de Transporte</h4>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Origem:</div>
-          <div class="info-value-rastreamento" style="color: #333;">${
-            nota.origem
-          }</div>
-        </div>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Destino:</div>
-          <div class="info-value-rastreamento" style="color: #333;">${
-            nota.destino
-          }</div>
-        </div>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Data de Faturamento:</div>
-          <div class="info-value-rastreamento" style="color: #333;">${window.RastreamentoUtils.formatarData(
-            nota.docDate
-          )}</div>
-        </div>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Data de Envio:</div>
-          <div class="info-value-rastreamento" style="color: #333;">${window.RastreamentoUtils.formatarData(
-            nota.dataEnvio
-          )}</div>
-        </div>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Previsão:</div>
-          <div class="info-value-rastreamento ${
-            nota.atrasada ? "atrasado" : ""
-          }" style="color: ${nota.atrasada ? "#dc3545" : "#333"}; ${
-    nota.atrasada ? "font-weight: 600;" : ""
-  }">${window.RastreamentoUtils.formatarData(nota.previsaoEntrega)}</div>
-        </div>
-        <div class="info-item-rastreamento" style="display: flex; margin-bottom: 12px;">
-          <div class="info-label-rastreamento" style="font-weight: 600; color: #555; min-width: 120px;">Última Atualização:</div>
-          <div class="info-value-rastreamento" style="color: #333;">${
-            nota.ultimaAtualizacao
-          }</div>
-        </div>
-      </div>
+      ${renderNotaInfoSection(nota)}
+      ${renderTransporteInfoSection(nota)}
     </div>
     ${timelineHTML}
   `;

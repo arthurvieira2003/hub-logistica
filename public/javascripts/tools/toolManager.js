@@ -72,7 +72,6 @@ window.ToolManager.loadToolContent = async function (tool, contentElement) {
         return;
     }
 
-    // Remove o loader apenas após o carregamento completo da ferramenta
     if (loader) {
       loader.remove();
     }
@@ -339,7 +338,6 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
   );
   if (!validationCell) return;
 
-  // Funções auxiliares
   const destroyTippyIfExists = (element) => {
     if (element && typeof tippy !== "undefined" && element._tippy) {
       element._tippy.destroy();
@@ -488,7 +486,8 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
   ) => {
     const precoTabelaFormatado = formatPrice(precoTabela);
     const diferencaFormatada = formatPrice(Math.abs(diferenca || 0));
-    const { statusClass, rowClass, statusIcon } = determineStatusClasses(status);
+    const { statusClass, rowClass, statusIcon } =
+      determineStatusClasses(status);
 
     if (tableRow) {
       tableRow.classList.remove(
@@ -527,7 +526,6 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
     }
   };
 
-  // Destruir tooltips existentes
   const existingErrorIcon = validationCell.querySelector(
     "i[data-tooltip-error]"
   );
@@ -699,7 +697,6 @@ window.ToolManager.renderCTEDetails = function (cte) {
     modalHeader.textContent = `CT-E ${cte.numero || cte.serial}`;
   }
 
-  // Funções auxiliares de formatação
   const formatCurrency = (value) => {
     if (!value) return "R$ 0,00";
     const num = parseFloat(value);
@@ -772,7 +769,6 @@ window.ToolManager.renderCTEDetails = function (cte) {
     `;
   };
 
-  // Funções auxiliares para renderizar seções
   const renderICMSValue = (icms) => {
     if (!icms?.valor) return "";
     return `
@@ -801,7 +797,9 @@ window.ToolManager.renderCTEDetails = function (cte) {
               (comp) => `
             <div class="cte-component-item">
               <span class="cte-component-name">${comp.nome || "-"}</span>
-              <span class="cte-component-value">${formatCurrency(comp.valor)}</span>
+              <span class="cte-component-value">${formatCurrency(
+                comp.valor
+              )}</span>
             </div>
           `
             )
@@ -821,7 +819,9 @@ window.ToolManager.renderCTEDetails = function (cte) {
       return `
         <div class="cte-value-item">
           <span class="cte-detail-label">Base de Cálculo ICMS</span>
-          <span class="cte-detail-value">${formatCurrency(icms.baseCalculo)}</span>
+          <span class="cte-detail-value">${formatCurrency(
+            icms.baseCalculo
+          )}</span>
         </div>
       `;
     };
@@ -831,7 +831,9 @@ window.ToolManager.renderCTEDetails = function (cte) {
       return `
         <div class="cte-value-item">
           <span class="cte-detail-label">Alíquota ICMS</span>
-          <span class="cte-detail-value">${parseFloat(icms.aliquota).toFixed(2)}%</span>
+          <span class="cte-detail-value">${parseFloat(icms.aliquota).toFixed(
+            2
+          )}%</span>
         </div>
       `;
     };
@@ -865,7 +867,9 @@ window.ToolManager.renderCTEDetails = function (cte) {
       return `
         <div class="cte-detail-item">
           <span class="cte-detail-label">Quantidade</span>
-          <span class="cte-detail-value">${carga.quantidade} ${carga.especie || ""}</span>
+          <span class="cte-detail-value">${carga.quantidade} ${
+        carga.especie || ""
+      }</span>
         </div>
       `;
     };
@@ -875,7 +879,9 @@ window.ToolManager.renderCTEDetails = function (cte) {
       return `
         <div class="cte-detail-item">
           <span class="cte-detail-label">Valor da Carga</span>
-          <span class="cte-detail-value">${formatCurrency(carga.valorCarga)}</span>
+          <span class="cte-detail-value">${formatCurrency(
+            carga.valorCarga
+          )}</span>
         </div>
       `;
     };
@@ -885,7 +891,9 @@ window.ToolManager.renderCTEDetails = function (cte) {
       return `
         <div class="cte-detail-item">
           <span class="cte-detail-label">Valor da Carga Averbado</span>
-          <span class="cte-detail-value">${formatCurrency(carga.valorCargaAverb)}</span>
+          <span class="cte-detail-value">${formatCurrency(
+            carga.valorCargaAverb
+          )}</span>
         </div>
       `;
     };
@@ -1108,7 +1116,6 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     </div>
   `;
 
-  // Função auxiliar para mostrar overlay (caso RastreamentoEvents ainda não esteja disponível)
   const mostrarOverlay = () => {
     const trackingView = document.getElementById("trackingView");
     if (!trackingView) return;
@@ -1136,7 +1143,6 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     trackingView.appendChild(overlay);
   };
 
-  // Função auxiliar para esconder overlay
   const esconderOverlay = () => {
     const overlay = document.querySelector(".rastreamento-loading-overlay");
     if (overlay) {
@@ -1144,7 +1150,6 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     }
   };
 
-  // Mostra o overlay de loading
   mostrarOverlay();
 
   if (window.RastreamentoMain && window.RastreamentoMain.initRastreamento) {
@@ -1152,7 +1157,6 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
       const trackingView = document.getElementById("trackingView");
       await window.RastreamentoMain.initRastreamento(trackingView);
 
-      // Esconde o overlay de loading após o carregamento completo
       await new Promise((resolve) => setTimeout(resolve, 100));
       esconderOverlay();
     } catch (error) {
@@ -1160,14 +1164,12 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
         "❌ Erro ao executar RastreamentoMain.initRastreamento:",
         error
       );
-      // Esconde o overlay mesmo em caso de erro
       esconderOverlay();
     }
   } else {
     console.error(
       "❌ window.RastreamentoMain.initRastreamento não encontrado!"
     );
-    // Esconde o overlay se não conseguir inicializar
     esconderOverlay();
   }
 
@@ -1189,8 +1191,8 @@ window.ToolManager.setupRastreamentoEvents = function () {
       });
 
     document.querySelectorAll(".view-tracking-button").forEach((button) => {
-      if (!button.getAttribute("data-event-attached")) {
-        button.setAttribute("data-event-attached", "true");
+      if (!button.dataset.eventAttached) {
+        button.dataset.eventAttached = "true";
 
         button.addEventListener("click", () => {
           if (window.showTracking) {
