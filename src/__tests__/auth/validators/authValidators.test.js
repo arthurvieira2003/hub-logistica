@@ -455,7 +455,7 @@ describe("AuthValidators", () => {
 
       expect(result).toEqual(mockUserData);
       expect(global.fetch).toHaveBeenCalledWith(
-        "http://localhost:4010/session/validate",
+        "https://logistica.copapel.com.br/api/session/validate",
         {
           method: "GET",
           headers: {

@@ -27,7 +27,7 @@ describe("API_CONFIG", () => {
 
       const url = window.API_CONFIG.getBaseUrl();
 
-      expect(url).toBe("http://localhost:4010");
+      expect(url).toBe("https://logistica.copapel.com.br/api");
     });
 
     test("deve retornar URL padrão quando APP_CONFIG não tem API_BASE_URL", () => {
@@ -35,7 +35,7 @@ describe("API_CONFIG", () => {
 
       const url = window.API_CONFIG.getBaseUrl();
 
-      expect(url).toBe("http://localhost:4010");
+      expect(url).toBe("https://logistica.copapel.com.br/api");
     });
   });
 
@@ -55,7 +55,7 @@ describe("API_CONFIG", () => {
 
       const url = window.getApiBaseUrl();
 
-      expect(url).toBe("http://localhost:4010");
+      expect(url).toBe("https://logistica.copapel.com.br/api");
     });
   });
 });
