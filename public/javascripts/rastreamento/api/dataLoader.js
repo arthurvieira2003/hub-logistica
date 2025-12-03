@@ -1,5 +1,202 @@
 window.RastreamentoAPI = window.RastreamentoAPI || {};
 
+function shouldSkipItem(carrierName) {
+  return carrierName === "Expresso Princesa Dos Campos S/A";
+}
+
+function formatDateTimeSafely(dateTime) {
+  try {
+    return window.RastreamentoUtils.formatarDataHora(dateTime);
+  } catch (error) {
+    return dateTime;
+  }
+}
+
+function hasValidTracking(rastreamento) {
+  return (
+    rastreamento &&
+    rastreamento.success &&
+    rastreamento.tracking &&
+    rastreamento.tracking.length > 0
+  );
+}
+
+function sortOcorrenciasByDate(ocorrencias) {
+  return [...ocorrencias].sort((a, b) => {
+    const dataA = new Date(a.data_hora);
+    const dataB = new Date(b.data_hora);
+    return dataB - dataA;
+  });
+}
+
+function determineStatusFromCodigo(codigoOcorrencia) {
+  switch (codigoOcorrencia) {
+    case "71":
+    case "80":
+    case "74":
+      return "Em processamento";
+    case "82":
+    case "76":
+    case "83":
+    case "77":
+    case "84":
+      return "Em trânsito";
+    case "85":
+      return "Em rota de entrega";
+    case "01":
+      return "Entregue";
+    default:
+      return "Em trânsito";
+  }
+}
+
+function processTrackingData(item) {
+  if (!hasValidTracking(item.rastreamento)) {
+    return {
+      status: "Aguardando coleta",
+      ultimaAtualizacao: formatDateTimeSafely(item.docDate),
+      ultimaOcorrencia: null,
+    };
+  }
+
+  const ocorrencias = sortOcorrenciasByDate(item.rastreamento.tracking);
+  const ultimaOcorrencia = ocorrencias[0];
+  const status = determineStatusFromCodigo(ultimaOcorrencia.codigo_ocorrencia);
+  const ultimaAtualizacao = formatDateTimeSafely(ultimaOcorrencia.data_hora);
+
+  return {
+    status,
+    ultimaAtualizacao,
+    ultimaOcorrencia,
+  };
+}
+
+function calculatePrevisaoEntrega(item, ultimaOcorrencia) {
+  let previsaoEntrega = item.docDate.split(" ")[0];
+
+  if (!hasValidTracking(item.rastreamento)) {
+    return previsaoEntrega;
+  }
+
+  const foiEntregue = item.rastreamento.tracking.some(
+    (oc) =>
+      oc.codigo_ocorrencia === "01" ||
+      (oc.descricao && oc.descricao.toLowerCase().includes("entregue"))
+  );
+
+  if (!foiEntregue) {
+    const dataEnvio = new Date(item.docDate.split(" ")[0]);
+    const prazoMedio = 3;
+    dataEnvio.setDate(dataEnvio.getDate() + prazoMedio);
+    previsaoEntrega = dataEnvio.toISOString().split("T")[0];
+  } else if (ultimaOcorrencia) {
+    const dataEntrega = new Date(ultimaOcorrencia.data_hora);
+    previsaoEntrega = dataEntrega.toISOString().split("T")[0];
+  }
+
+  return previsaoEntrega;
+}
+
+function cleanOcorrencia(ocorrencia) {
+  const ocorrenciaLimpa = { ...ocorrencia };
+
+  if (ocorrenciaLimpa.descricao) {
+    ocorrenciaLimpa.descricao = ocorrenciaLimpa.descricao
+      .replace(/\s*\(\d+\)\s*$/, "")
+      .trim();
+  }
+
+  if (ocorrenciaLimpa.ocorrencia) {
+    ocorrenciaLimpa.ocorrencia = ocorrenciaLimpa.ocorrencia
+      .replace(/\s*\(\d+\)\s*$/, "")
+      .trim();
+  }
+
+  return ocorrenciaLimpa;
+}
+
+function buildHistorico(rastreamento) {
+  if (!rastreamento || !rastreamento.tracking) {
+    return [];
+  }
+  return rastreamento.tracking.map(cleanOcorrencia);
+}
+
+function getTransportadoraColor(carrierName) {
+  const coresGenericas = window.RastreamentoConfig.coresGenericas;
+  const colorMap = {
+    "Expresso Leomar LTDA": coresGenericas["Expresso Leomar LTDA"],
+    "Schreiber Logística LTDA": coresGenericas["Schreiber Logística LTDA"],
+    "Mengue Express transportes LTDA":
+      coresGenericas["Mengue Express transportes LTDA"],
+    "Transportes Expresso Santa Catarina LTDA":
+      coresGenericas["Transportes Expresso Santa Catarina LTDA"],
+  };
+
+  return colorMap[carrierName] || "52, 152, 219";
+}
+
+function findOrCreateTransportadora(transportadoras, carrierName) {
+  let transportadoraIndex = transportadoras.findIndex(
+    (t) => t.nome === carrierName
+  );
+
+  if (transportadoraIndex === -1) {
+    const novaTransportadora = {
+      id: transportadoras.length + 1,
+      nome: carrierName,
+      cor: getTransportadoraColor(carrierName),
+      logo: "fas fa-truck",
+      notas: [],
+    };
+    transportadoras.push(novaTransportadora);
+    transportadoraIndex = transportadoras.length - 1;
+  }
+
+  return transportadoraIndex;
+}
+
+function buildNotaObject(item, status, ultimaAtualizacao, previsaoEntrega) {
+  return {
+    numero: item.serial.toString(),
+    status: status,
+    origem: `${item.cidadeOrigem}, ${item.estadoOrigem}`,
+    destino: `${item.cidadeDestino}, ${item.estadoDestino}`,
+    docDate: item.docDate.split(" ")[0],
+    dataEnvio: item.docDate.split(" ")[0],
+    previsaoEntrega: previsaoEntrega,
+    ultimaAtualizacao: ultimaAtualizacao,
+    cliente: item.cardName,
+    cte: "",
+    historico: buildHistorico(item.rastreamento),
+    transportadoraNome: item.carrierName,
+  };
+}
+
+function processItem(item, transportadoras) {
+  if (shouldSkipItem(item.carrierName)) {
+    return;
+  }
+
+  const trackingData = processTrackingData(item);
+  const previsaoEntrega = calculatePrevisaoEntrega(
+    item,
+    trackingData.ultimaOcorrencia
+  );
+  const nota = buildNotaObject(
+    item,
+    trackingData.status,
+    trackingData.ultimaAtualizacao,
+    previsaoEntrega
+  );
+
+  const transportadoraIndex = findOrCreateTransportadora(
+    transportadoras,
+    item.carrierName
+  );
+  transportadoras[transportadoraIndex].notas.push(nota);
+}
+
 window.RastreamentoAPI.carregarDadosGenericos = async function () {
   try {
     const token = window.RastreamentoUtils.obterToken();
@@ -39,173 +236,7 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
 
     const transportadoras = window.RastreamentoConfig.transportadoras;
     data.forEach((item) => {
-      if (item.carrierName === "Expresso Princesa Dos Campos S/A") {
-        return;
-      }
-      let status = "Aguardando coleta";
-      let ultimaAtualizacao = "";
-      let ultimaOcorrencia = null;
-
-      try {
-        ultimaAtualizacao = window.RastreamentoUtils.formatarDataHora(
-          item.docDate
-        );
-      } catch (error) {
-        ultimaAtualizacao = item.docDate;
-      }
-
-      if (
-        item.rastreamento &&
-        item.rastreamento.success &&
-        item.rastreamento.tracking &&
-        item.rastreamento.tracking.length > 0
-      ) {
-        const ocorrencias = [...item.rastreamento.tracking].sort((a, b) => {
-          const dataA = new Date(a.data_hora);
-          const dataB = new Date(b.data_hora);
-          return dataB - dataA;
-        });
-
-        ultimaOcorrencia = ocorrencias[0];
-
-        switch (ultimaOcorrencia.codigo_ocorrencia) {
-          case "71":
-          case "80":
-          case "74":
-            status = "Em processamento";
-            break;
-          case "82":
-          case "76":
-            status = "Em trânsito";
-            break;
-          case "83":
-          case "77":
-          case "84":
-            status = "Em trânsito";
-            break;
-          case "85":
-            status = "Em rota de entrega";
-            break;
-          case "01":
-            status = "Entregue";
-            break;
-          default:
-            status = "Em trânsito";
-        }
-
-        try {
-          ultimaAtualizacao = window.RastreamentoUtils.formatarDataHora(
-            ultimaOcorrencia.data_hora
-          );
-        } catch (error) {
-          ultimaAtualizacao = ultimaOcorrencia.data_hora;
-        }
-      }
-
-      let previsaoEntrega = item.docDate.split(" ")[0];
-
-      if (
-        item.rastreamento &&
-        item.rastreamento.tracking &&
-        item.rastreamento.tracking.length > 0
-      ) {
-        const foiEntregue = item.rastreamento.tracking.some(
-          (oc) =>
-            oc.codigo_ocorrencia === "01" ||
-            (oc.descricao && oc.descricao.toLowerCase().includes("entregue"))
-        );
-
-        if (!foiEntregue) {
-          const dataEnvio = new Date(item.docDate.split(" ")[0]);
-          const prazoMedio = 3;
-          dataEnvio.setDate(dataEnvio.getDate() + prazoMedio);
-          previsaoEntrega = dataEnvio.toISOString().split("T")[0];
-        } else {
-          const dataEntrega = new Date(ultimaOcorrencia.data_hora);
-          previsaoEntrega = dataEntrega.toISOString().split("T")[0];
-        }
-      }
-
-      const nota = {
-        numero: item.serial.toString(),
-        status: status,
-        origem: `${item.cidadeOrigem}, ${item.estadoOrigem}`,
-        destino: `${item.cidadeDestino}, ${item.estadoDestino}`,
-        docDate: item.docDate.split(" ")[0],
-        dataEnvio: item.docDate.split(" ")[0],
-        previsaoEntrega: previsaoEntrega,
-        ultimaAtualizacao: ultimaAtualizacao,
-        cliente: item.cardName,
-        cte: "",
-        historico:
-          item.rastreamento && item.rastreamento.tracking
-            ? item.rastreamento.tracking.map((ocorrencia) => {
-                const ocorrenciaLimpa = { ...ocorrencia };
-
-                if (ocorrenciaLimpa.descricao) {
-                  ocorrenciaLimpa.descricao = ocorrenciaLimpa.descricao
-                    .replace(/\s*\(\d+\)\s*$/, "")
-                    .trim();
-                }
-
-                if (ocorrenciaLimpa.ocorrencia) {
-                  ocorrenciaLimpa.ocorrencia = ocorrenciaLimpa.ocorrencia
-                    .replace(/\s*\(\d+\)\s*$/, "")
-                    .trim();
-                }
-
-                return ocorrenciaLimpa;
-              })
-            : [],
-        transportadoraNome: item.carrierName,
-      };
-
-      let transportadoraIndex = transportadoras.findIndex(
-        (t) => t.nome === item.carrierName
-      );
-
-      if (transportadoraIndex === -1) {
-        let cor = "52, 152, 219";
-
-        switch (item.carrierName) {
-          case "Expresso Leomar LTDA":
-            cor =
-              window.RastreamentoConfig.coresGenericas["Expresso Leomar LTDA"];
-            break;
-          case "Schreiber Logística LTDA":
-            cor =
-              window.RastreamentoConfig.coresGenericas[
-                "Schreiber Logística LTDA"
-              ];
-            break;
-          case "Mengue Express transportes LTDA":
-            cor =
-              window.RastreamentoConfig.coresGenericas[
-                "Mengue Express transportes LTDA"
-              ];
-            break;
-          case "Transportes Expresso Santa Catarina LTDA":
-            cor =
-              window.RastreamentoConfig.coresGenericas[
-                "Transportes Expresso Santa Catarina LTDA"
-              ];
-            break;
-          default:
-            cor = "52, 152, 219";
-        }
-
-        const novaTransportadora = {
-          id: transportadoras.length + 1,
-          nome: item.carrierName,
-          cor: cor,
-          logo: "fas fa-truck",
-          notas: [],
-        };
-        transportadoras.push(novaTransportadora);
-        transportadoraIndex = transportadoras.length - 1;
-      }
-
-      transportadoras[transportadoraIndex].notas.push(nota);
+      processItem(item, transportadoras);
     });
 
     return true;

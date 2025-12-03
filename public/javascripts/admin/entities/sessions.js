@@ -103,7 +103,7 @@ window.Administration.renderSessions = function (sessions) {
 
   document.querySelectorAll(".terminate-session").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      const sessionId = e.currentTarget.getAttribute("data-session-id");
+      const sessionId = e.currentTarget.dataset.sessionId;
       window.Administration.terminateSession(sessionId);
     });
   });

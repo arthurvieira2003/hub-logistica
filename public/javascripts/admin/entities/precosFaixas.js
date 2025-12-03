@@ -1,84 +1,113 @@
 window.Administration = window.Administration || {};
 
-window.Administration.loadPrecosFaixas = async function (page = 1, limit = 50, search = null) {
-  // Cancela requisição anterior se existir
+function cancelPreviousPrecosFaixasRequest() {
   if (window.Administration.state.requestControllers.precosFaixas) {
     window.Administration.state.requestControllers.precosFaixas.abort();
   }
+}
 
-  // Cria novo AbortController para esta requisição
+function createNewPrecosFaixasRequestController() {
   const controller = new AbortController();
   window.Administration.state.requestControllers.precosFaixas = controller;
+  return controller;
+}
 
-  // Incrementa o contador de sequência para esta requisição
+function incrementPrecosFaixasRequestSequence() {
   if (!window.Administration.state.requestSequence.precosFaixas) {
     window.Administration.state.requestSequence.precosFaixas = 0;
   }
   window.Administration.state.requestSequence.precosFaixas += 1;
-  const currentSequence = window.Administration.state.requestSequence.precosFaixas;
+  return window.Administration.state.requestSequence.precosFaixas;
+}
+
+function normalizePrecosFaixasSearchTerm(search) {
+  return search && search.trim() !== "" ? search.trim() : null;
+}
+
+function buildPrecosFaixasUrl(page, limit, searchTerm) {
+  let url = `/precos-faixas?page=${page}&limit=${limit}`;
+  if (searchTerm) {
+    url += `&search=${encodeURIComponent(searchTerm)}`;
+  }
+  return url;
+}
+
+function isPrecosFaixasRequestStillValid(currentSequence) {
+  return (
+    window.Administration.state.requestSequence.precosFaixas === currentSequence
+  );
+}
+
+function updatePrecosFaixasPaginationFromResponse(response) {
+  const pagination = window.Administration.state.pagination["precosFaixas"];
+  if (pagination && response.pagination) {
+    pagination.currentPage = response.pagination.page;
+    pagination.totalItems = response.pagination.total;
+    pagination.totalPages = response.pagination.totalPages;
+    pagination.itemsPerPage = response.pagination.limit;
+  }
+}
+
+function handlePrecosFaixasResponseData(response, searchTerm) {
+  if (!response?.data) {
+    return;
+  }
+
+  updatePrecosFaixasPaginationFromResponse(response);
+  window.Administration.state.precosFaixas = response.data;
+
+  if (!searchTerm) {
+    window.Administration.state.filteredData.precosFaixas = null;
+  }
+
+  window.Administration.renderPrecosFaixas(response.data);
+}
+
+function isPrecosFaixasAbortError(error, controller) {
+  return error.name === "AbortError" || controller.signal.aborted;
+}
+
+function handleLoadPrecosFaixasError(error, controller, currentSequence) {
+  if (
+    isPrecosFaixasAbortError(error, controller) ||
+    !isPrecosFaixasRequestStillValid(currentSequence)
+  ) {
+    return;
+  }
+
+  console.error("❌ Erro ao carregar preços de faixas:", error);
+  window.Administration.showError("Erro ao carregar preços de faixas");
+}
+
+window.Administration.loadPrecosFaixas = async function (
+  page = 1,
+  limit = 50,
+  search = null
+) {
+  cancelPreviousPrecosFaixasRequest();
+  const controller = createNewPrecosFaixasRequestController();
+  const currentSequence = incrementPrecosFaixasRequestSequence();
 
   try {
     window.Administration.initPagination("precosFaixas", limit);
-    
-    // Armazena o termo de busca atual
-    const searchTerm = search && search.trim() !== "" ? search.trim() : null;
+
+    const searchTerm = normalizePrecosFaixasSearchTerm(search);
     window.Administration.state.currentSearchPrecosFaixas = searchTerm;
-    
-    let url = `/precos-faixas?page=${page}&limit=${limit}`;
-    if (searchTerm) {
-      url += `&search=${encodeURIComponent(searchTerm)}`;
-    }
-    
+
+    const url = buildPrecosFaixasUrl(page, limit, searchTerm);
     const response = await window.Administration.apiRequest(url, {
       signal: controller.signal,
     });
-    
-    // Verifica se esta ainda é a requisição mais recente
-    if (window.Administration.state.requestSequence.precosFaixas !== currentSequence) {
-      // Esta requisição foi substituída por uma mais recente, ignora o resultado
+
+    if (!isPrecosFaixasRequestStillValid(currentSequence) || controller.signal.aborted) {
       return;
     }
 
-    // Verifica se a requisição foi cancelada
-    if (controller.signal.aborted) {
-      return;
-    }
-    
-    if (response && response.data) {
-      // Atualiza o estado de paginação com os dados do servidor
-      const pagination = window.Administration.state.pagination["precosFaixas"];
-      if (pagination) {
-        pagination.currentPage = response.pagination.page;
-        pagination.totalItems = response.pagination.total;
-        pagination.totalPages = response.pagination.totalPages;
-        pagination.itemsPerPage = response.pagination.limit;
-      }
-      
-      // Armazena apenas os dados da página atual
-      window.Administration.state.precosFaixas = response.data;
-      // Se há busca, não usa filteredData (a busca já vem do servidor)
-      if (!searchTerm) {
-        window.Administration.state.filteredData.precosFaixas = null;
-      }
-      
-      window.Administration.renderPrecosFaixas(response.data);
-    }
+    handlePrecosFaixasResponseData(response, searchTerm);
   } catch (error) {
-    // Ignora erros de requisições canceladas
-    if (error.name === 'AbortError' || controller.signal.aborted) {
-      return;
-    }
-    
-    // Verifica se esta ainda é a requisição mais recente antes de mostrar erro
-    if (window.Administration.state.requestSequence.precosFaixas !== currentSequence) {
-      return;
-    }
-    
-    console.error("❌ Erro ao carregar preços de faixas:", error);
-    window.Administration.showError("Erro ao carregar preços de faixas");
+    handleLoadPrecosFaixasError(error, controller, currentSequence);
   } finally {
-    // Limpa o controller se esta ainda for a requisição atual
-    if (window.Administration.state.requestSequence.precosFaixas === currentSequence) {
+    if (isPrecosFaixasRequestStillValid(currentSequence)) {
       window.Administration.state.requestControllers.precosFaixas = null;
     }
   }
@@ -249,7 +278,7 @@ window.Administration.renderPrecosFaixas = function (precos) {
     .querySelectorAll(".edit-entity[data-entity-type='preco-faixa']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.openPrecoFaixaModal(id);
       });
     });
@@ -258,7 +287,7 @@ window.Administration.renderPrecosFaixas = function (precos) {
     .querySelectorAll(".delete-entity[data-entity-type='preco-faixa']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.deletePrecoFaixa(id);
       });
     });

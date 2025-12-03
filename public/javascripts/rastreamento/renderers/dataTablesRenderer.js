@@ -807,7 +807,7 @@ window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados = function (
 
     if (container) {
       const computedStyle = window.getComputedStyle(container);
-      containerStyles = {
+      let containerStyles = {
         display: computedStyle.display,
         justifyContent: computedStyle.justifyContent,
         alignItems: computedStyle.alignItems,
@@ -817,7 +817,7 @@ window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados = function (
 
     if (titleElement) {
       const computedStyle = window.getComputedStyle(titleElement);
-      titleStyles = {
+      let titleStyles = {
         order: computedStyle.order,
         textAlign: computedStyle.textAlign,
         marginRight: computedStyle.marginRight,
@@ -827,7 +827,7 @@ window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados = function (
 
     if (dtccElement) {
       const computedStyle = window.getComputedStyle(dtccElement);
-      dtccStyles = {
+      let dtccStyles = {
         order: computedStyle.order,
         marginLeft: computedStyle.marginLeft,
         display: computedStyle.display,

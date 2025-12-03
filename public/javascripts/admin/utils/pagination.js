@@ -45,48 +45,7 @@ window.Administration.getPaginatedData = function (data, entityType) {
   return { items, pagination };
 };
 
-window.Administration.renderPagination = function (
-  containerId,
-  entityType,
-  onPageChange
-) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const pagination = window.Administration.state.pagination?.[entityType];
-  if (!pagination || pagination.totalPages <= 1) {
-    container.innerHTML = "";
-    return;
-  }
-
-  const { currentPage, totalPages, totalItems, itemsPerPage } = pagination;
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-
-  let paginationHTML = `
-    <div class="admin-pagination">
-      <div class="pagination-info">
-        Mostrando ${startItem} - ${endItem} de ${totalItems} registros
-      </div>
-      <div class="pagination-controls">
-        <button 
-          class="pagination-btn" 
-          data-action="first"
-          ${currentPage === 1 ? "disabled" : ""}
-          title="Primeira página">
-          <i class="fas fa-angle-double-left"></i>
-        </button>
-        <button 
-          class="pagination-btn" 
-          data-action="prev"
-          ${currentPage === 1 ? "disabled" : ""}
-          title="Página anterior">
-          <i class="fas fa-angle-left"></i>
-        </button>
-        <div class="pagination-pages">
-  `;
-
-  const maxVisiblePages = 5;
+function calculatePageRange(currentPage, totalPages, maxVisiblePages = 5) {
   let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
   let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
@@ -94,17 +53,47 @@ window.Administration.renderPagination = function (
     startPage = Math.max(1, endPage - maxVisiblePages + 1);
   }
 
+  return { startPage, endPage };
+}
+
+function buildNavigationButtons(currentPage, totalPages) {
+  const isFirstPage = currentPage === 1;
+  const isLastPage = currentPage === totalPages;
+  const disabledAttr = (condition) => (condition ? "disabled" : "");
+
+  return `
+    <button 
+      class="pagination-btn" 
+      data-action="first"
+      ${disabledAttr(isFirstPage)}
+      title="Primeira página">
+      <i class="fas fa-angle-double-left"></i>
+    </button>
+    <button 
+      class="pagination-btn" 
+      data-action="prev"
+      ${disabledAttr(isFirstPage)}
+      title="Página anterior">
+      <i class="fas fa-angle-left"></i>
+    </button>
+  `;
+}
+
+function buildPageNumbers(currentPage, startPage, endPage, totalPages) {
+  let html = "";
+
   if (startPage > 1) {
-    paginationHTML += `
-      <button class="pagination-page" data-page="1">1</button>
-      ${startPage > 2 ? '<span class="pagination-ellipsis">...</span>' : ""}
-    `;
+    html += `<button class="pagination-page" data-page="1">1</button>`;
+    if (startPage > 2) {
+      html += '<span class="pagination-ellipsis">...</span>';
+    }
   }
 
   for (let i = startPage; i <= endPage; i++) {
-    paginationHTML += `
+    const activeClass = i === currentPage ? "active" : "";
+    html += `
       <button 
-        class="pagination-page ${i === currentPage ? "active" : ""}" 
+        class="pagination-page ${activeClass}" 
         data-page="${i}">
         ${i}
       </button>
@@ -112,17 +101,30 @@ window.Administration.renderPagination = function (
   }
 
   if (endPage < totalPages) {
-    paginationHTML += `
-      ${
-        endPage < totalPages - 1
-          ? '<span class="pagination-ellipsis">...</span>'
-          : ""
-      }
-      <button class="pagination-page" data-page="${totalPages}">${totalPages}</button>
-    `;
+    if (endPage < totalPages - 1) {
+      html += '<span class="pagination-ellipsis">...</span>';
+    }
+    html += `<button class="pagination-page" data-page="${totalPages}">${totalPages}</button>`;
   }
 
-  paginationHTML += `
+  return html;
+}
+
+function buildPaginationHTML(pagination) {
+  const { currentPage, totalPages, totalItems, itemsPerPage } = pagination;
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  const { startPage, endPage } = calculatePageRange(currentPage, totalPages);
+
+  return `
+    <div class="admin-pagination">
+      <div class="pagination-info">
+        Mostrando ${startItem} - ${endItem} de ${totalItems} registros
+      </div>
+      <div class="pagination-controls">
+        ${buildNavigationButtons(currentPage, totalPages)}
+        <div class="pagination-pages">
+          ${buildPageNumbers(currentPage, startPage, endPage, totalPages)}
         </div>
         <button 
           class="pagination-btn" 
@@ -141,42 +143,50 @@ window.Administration.renderPagination = function (
       </div>
     </div>
   `;
+}
 
-  container.innerHTML = paginationHTML;
+function handlePaginationClick(btn, entityType, currentPage, totalPages, onPageChange) {
+  const action = btn.dataset.action;
+  const page = btn.dataset.page;
 
+  if (btn.disabled) return;
+
+  if (action === "first") {
+    window.Administration.goToPage(entityType, 1, onPageChange);
+  } else if (action === "prev") {
+    window.Administration.goToPage(entityType, currentPage - 1, onPageChange);
+  } else if (action === "next") {
+    window.Administration.goToPage(entityType, currentPage + 1, onPageChange);
+  } else if (action === "last") {
+    window.Administration.goToPage(entityType, totalPages, onPageChange);
+  } else if (page) {
+    window.Administration.goToPage(entityType, parseInt(page), onPageChange);
+  }
+}
+
+window.Administration.renderPagination = function (
+  containerId,
+  entityType,
+  onPageChange
+) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const pagination = window.Administration.state.pagination?.[entityType];
+  if (!pagination || pagination.totalPages <= 1) {
+    container.innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = buildPaginationHTML(pagination);
+
+  const { currentPage, totalPages } = pagination;
   container
     .querySelectorAll(".pagination-btn, .pagination-page")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.preventDefault();
-        const action = btn.getAttribute("data-action");
-        const page = btn.getAttribute("data-page");
-
-        if (btn.disabled) return;
-
-        if (action === "first") {
-          window.Administration.goToPage(entityType, 1, onPageChange);
-        } else if (action === "prev") {
-          window.Administration.goToPage(
-            entityType,
-            currentPage - 1,
-            onPageChange
-          );
-        } else if (action === "next") {
-          window.Administration.goToPage(
-            entityType,
-            currentPage + 1,
-            onPageChange
-          );
-        } else if (action === "last") {
-          window.Administration.goToPage(entityType, totalPages, onPageChange);
-        } else if (page) {
-          window.Administration.goToPage(
-            entityType,
-            parseInt(page),
-            onPageChange
-          );
-        }
+        handlePaginationClick(btn, entityType, currentPage, totalPages, onPageChange);
       });
     });
 };

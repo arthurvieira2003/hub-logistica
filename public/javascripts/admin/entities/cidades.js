@@ -1,84 +1,113 @@
 window.Administration = window.Administration || {};
 
-window.Administration.loadCidades = async function (page = 1, limit = 50, search = null) {
-  // Cancela requisição anterior se existir
+function cancelPreviousRequest() {
   if (window.Administration.state.requestControllers.cidades) {
     window.Administration.state.requestControllers.cidades.abort();
   }
+}
 
-  // Cria novo AbortController para esta requisição
+function createNewRequestController() {
   const controller = new AbortController();
   window.Administration.state.requestControllers.cidades = controller;
+  return controller;
+}
 
-  // Incrementa o contador de sequência para esta requisição
+function incrementRequestSequence() {
   if (!window.Administration.state.requestSequence.cidades) {
     window.Administration.state.requestSequence.cidades = 0;
   }
   window.Administration.state.requestSequence.cidades += 1;
-  const currentSequence = window.Administration.state.requestSequence.cidades;
+  return window.Administration.state.requestSequence.cidades;
+}
+
+function normalizeSearchTerm(search) {
+  return search && search.trim() !== "" ? search.trim() : null;
+}
+
+function buildCidadesUrl(page, limit, searchTerm) {
+  let url = `/cidades?page=${page}&limit=${limit}`;
+  if (searchTerm) {
+    url += `&search=${encodeURIComponent(searchTerm)}`;
+  }
+  return url;
+}
+
+function isRequestStillValid(currentSequence) {
+  return (
+    window.Administration.state.requestSequence.cidades === currentSequence
+  );
+}
+
+function updatePaginationFromResponse(response) {
+  const pagination = window.Administration.state.pagination["cidades"];
+  if (pagination && response.pagination) {
+    pagination.currentPage = response.pagination.page;
+    pagination.totalItems = response.pagination.total;
+    pagination.totalPages = response.pagination.totalPages;
+    pagination.itemsPerPage = response.pagination.limit;
+  }
+}
+
+function handleResponseData(response, searchTerm) {
+  if (!response?.data) {
+    return;
+  }
+
+  updatePaginationFromResponse(response);
+  window.Administration.state.cidades = response.data;
+
+  if (!searchTerm) {
+    window.Administration.state.filteredData.cidades = null;
+  }
+
+  window.Administration.renderCidades(response.data);
+}
+
+function isAbortError(error, controller) {
+  return error.name === "AbortError" || controller.signal.aborted;
+}
+
+function handleLoadCidadesError(error, controller, currentSequence) {
+  if (
+    isAbortError(error, controller) ||
+    !isRequestStillValid(currentSequence)
+  ) {
+    return;
+  }
+
+  console.error("❌ Erro ao carregar cidades:", error);
+  window.Administration.showError("Erro ao carregar cidades");
+}
+
+window.Administration.loadCidades = async function (
+  page = 1,
+  limit = 50,
+  search = null
+) {
+  cancelPreviousRequest();
+  const controller = createNewRequestController();
+  const currentSequence = incrementRequestSequence();
 
   try {
     window.Administration.initPagination("cidades", limit);
-    
-    // Armazena o termo de busca atual
-    const searchTerm = search && search.trim() !== "" ? search.trim() : null;
+
+    const searchTerm = normalizeSearchTerm(search);
     window.Administration.state.currentSearchCidades = searchTerm;
-    
-    let url = `/cidades?page=${page}&limit=${limit}`;
-    if (searchTerm) {
-      url += `&search=${encodeURIComponent(searchTerm)}`;
-    }
-    
+
+    const url = buildCidadesUrl(page, limit, searchTerm);
     const response = await window.Administration.apiRequest(url, {
       signal: controller.signal,
     });
-    
-    // Verifica se esta ainda é a requisição mais recente
-    if (window.Administration.state.requestSequence.cidades !== currentSequence) {
-      // Esta requisição foi substituída por uma mais recente, ignora o resultado
+
+    if (!isRequestStillValid(currentSequence) || controller.signal.aborted) {
       return;
     }
 
-    // Verifica se a requisição foi cancelada
-    if (controller.signal.aborted) {
-      return;
-    }
-    
-    if (response && response.data) {
-      // Atualiza o estado de paginação com os dados do servidor
-      const pagination = window.Administration.state.pagination["cidades"];
-      if (pagination) {
-        pagination.currentPage = response.pagination.page;
-        pagination.totalItems = response.pagination.total;
-        pagination.totalPages = response.pagination.totalPages;
-        pagination.itemsPerPage = response.pagination.limit;
-      }
-      
-      // Armazena apenas os dados da página atual
-      window.Administration.state.cidades = response.data;
-      // Se há busca, não usa filteredData (a busca já vem do servidor)
-      if (!searchTerm) {
-        window.Administration.state.filteredData.cidades = null;
-      }
-      
-      window.Administration.renderCidades(response.data);
-    }
+    handleResponseData(response, searchTerm);
   } catch (error) {
-    // Ignora erros de requisições canceladas
-    if (error.name === 'AbortError' || controller.signal.aborted) {
-      return;
-    }
-    
-    // Verifica se esta ainda é a requisição mais recente antes de mostrar erro
-    if (window.Administration.state.requestSequence.cidades !== currentSequence) {
-      return;
-    }
-    
-    console.error("❌ Erro ao carregar cidades:", error);
-    window.Administration.showError("Erro ao carregar cidades");
+    handleLoadCidadesError(error, controller, currentSequence);
   } finally {
-    // Limpa o controller se esta ainda for a requisição atual
-    if (window.Administration.state.requestSequence.cidades === currentSequence) {
+    if (isRequestStillValid(currentSequence)) {
       window.Administration.state.requestControllers.cidades = null;
     }
   }
@@ -90,7 +119,7 @@ window.Administration.renderCidades = function (cidades) {
 
   // Se há dados filtrados, usa paginação client-side
   const dataToRender = window.Administration.state.filteredData.cidades;
-  
+
   if (dataToRender) {
     // Paginação client-side para dados filtrados
     const { items, pagination } = window.Administration.getPaginatedData(
@@ -165,8 +194,13 @@ window.Administration.renderCidades = function (cidades) {
         () => {
           const pagination = window.Administration.state.pagination["cidades"];
           if (pagination) {
-            const searchTerm = window.Administration.state.currentSearchCidades || null;
-            window.Administration.loadCidades(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+            const searchTerm =
+              window.Administration.state.currentSearchCidades || null;
+            window.Administration.loadCidades(
+              pagination.currentPage,
+              pagination.itemsPerPage,
+              searchTerm
+            );
           }
         }
       );
@@ -201,13 +235,22 @@ window.Administration.renderCidades = function (cidades) {
       )
       .join("");
 
-    window.Administration.renderPagination("cidadesPagination", "cidades", () => {
-      const pagination = window.Administration.state.pagination["cidades"];
-      if (pagination) {
-        const searchTerm = window.Administration.state.currentSearchCidades || null;
-        window.Administration.loadCidades(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+    window.Administration.renderPagination(
+      "cidadesPagination",
+      "cidades",
+      () => {
+        const pagination = window.Administration.state.pagination["cidades"];
+        if (pagination) {
+          const searchTerm =
+            window.Administration.state.currentSearchCidades || null;
+          window.Administration.loadCidades(
+            pagination.currentPage,
+            pagination.itemsPerPage,
+            searchTerm
+          );
+        }
       }
-    });
+    );
   }
 
   // Adiciona event listeners aos botões
@@ -215,7 +258,7 @@ window.Administration.renderCidades = function (cidades) {
     .querySelectorAll(".edit-entity[data-entity-type='cidade']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.openCidadeModal(id);
       });
     });
@@ -224,7 +267,7 @@ window.Administration.renderCidades = function (cidades) {
     .querySelectorAll(".delete-entity[data-entity-type='cidade']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.deleteCidade(id);
       });
     });
@@ -286,7 +329,7 @@ window.Administration.openCidadeModal = async function (id = null) {
     let cidade = window.Administration.state.cidades.find(
       (c) => c.id_cidade == id
     );
-    
+
     if (!cidade) {
       // Se a cidade não estiver na página atual, busca do servidor
       try {
@@ -297,7 +340,7 @@ window.Administration.openCidadeModal = async function (id = null) {
         return;
       }
     }
-    
+
     if (cidade) {
       document.getElementById("cidadeId").value = cidade.id_cidade;
       document.getElementById("cidadeNome").value = cidade.nome_cidade;
@@ -409,12 +452,16 @@ window.Administration.saveCidade = async function () {
     );
     document.getElementById("cidadeModal").classList.remove("active");
     form.reset();
-    
+
     // Recarrega a página atual mantendo a busca se houver
     const pagination = window.Administration.state.pagination["cidades"];
     const searchTerm = window.Administration.state.currentSearchCidades || null;
     if (pagination) {
-      window.Administration.loadCidades(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+      window.Administration.loadCidades(
+        pagination.currentPage,
+        pagination.itemsPerPage,
+        searchTerm
+      );
     } else {
       window.Administration.loadCidades(1, 50, searchTerm);
     }
@@ -434,7 +481,7 @@ window.Administration.deleteCidade = async function (id) {
     let cidade = window.Administration.state.cidades.find(
       (c) => c.id_cidade == id
     );
-    
+
     if (!cidade) {
       // Se a cidade não estiver na página atual, busca do servidor
       try {
@@ -445,7 +492,7 @@ window.Administration.deleteCidade = async function (id) {
         return;
       }
     }
-    
+
     const cidadeNome = cidade ? cidade.nome_cidade : "esta cidade";
 
     const title = "Confirmar Exclusão de Cidade";
@@ -461,12 +508,17 @@ window.Administration.deleteCidade = async function (id) {
             method: "DELETE",
           });
           window.Administration.showSuccess("Cidade excluída com sucesso");
-          
+
           // Recarrega a página atual mantendo a busca se houver
           const pagination = window.Administration.state.pagination["cidades"];
-          const searchTerm = window.Administration.state.currentSearchCidades || null;
+          const searchTerm =
+            window.Administration.state.currentSearchCidades || null;
           if (pagination) {
-            window.Administration.loadCidades(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+            window.Administration.loadCidades(
+              pagination.currentPage,
+              pagination.itemsPerPage,
+              searchTerm
+            );
           } else {
             window.Administration.loadCidades(1, 50, searchTerm);
           }

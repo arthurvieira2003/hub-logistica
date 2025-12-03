@@ -22,28 +22,37 @@ window.AppInitializer.init = async function () {
   }
 };
 
-window.AppInitializer.ensureModulesLoaded = async function () {
-  const authAlreadyLoaded = !!(window.AuthCore && window.UserAuth);
-  const coreAlreadyLoaded = !!(window.UserProfile && window.UserAvatar);
+function isModuleLoaderAvailable() {
+  return !!(window.ModuleLoader && window.ModuleLoader.loadModuleGroup);
+}
 
-  if (window.ModuleLoader && window.ModuleLoader.loadModuleGroup) {
-    if (!authAlreadyLoaded) {
-      try {
-        await window.ModuleLoader.loadModuleGroup("auth");
-      } catch (error) {
-        console.error("Erro ao carregar módulos de autenticação:", error);
-      }
-    }
+function isAuthModuleLoaded() {
+  return !!(window.AuthCore && window.UserAuth);
+}
+
+function isCoreModuleLoaded() {
+  return !!(window.UserProfile && window.UserAvatar);
+}
+
+async function loadModuleGroupSafely(groupName, errorMessage) {
+  try {
+    await window.ModuleLoader.loadModuleGroup(groupName);
+  } catch (error) {
+    console.error(errorMessage, error);
+  }
+}
+
+window.AppInitializer.ensureModulesLoaded = async function () {
+  if (!isModuleLoaderAvailable()) {
+    return;
   }
 
-  if (window.ModuleLoader && window.ModuleLoader.loadModuleGroup) {
-    if (!coreAlreadyLoaded) {
-      try {
-        await window.ModuleLoader.loadModuleGroup("core");
-      } catch (error) {
-        console.error("Erro ao carregar módulos core:", error);
-      }
-    }
+  if (!isAuthModuleLoaded()) {
+    await loadModuleGroupSafely("auth", "Erro ao carregar módulos de autenticação:");
+  }
+
+  if (!isCoreModuleLoaded()) {
+    await loadModuleGroupSafely("core", "Erro ao carregar módulos core:");
   }
 };
 

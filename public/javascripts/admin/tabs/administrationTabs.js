@@ -6,7 +6,7 @@ window.Administration.initTabs = function () {
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      const tabName = tab.getAttribute("data-tab");
+      const tabName = tab.dataset.tab;
 
       tabs.forEach((t) => t.classList.remove("active"));
       contentTabs.forEach((ct) => ct.classList.remove("active"));

@@ -79,14 +79,14 @@ window.Administration.renderUsers = function (users) {
 
   document.querySelectorAll(".edit-user").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      const userId = e.currentTarget.getAttribute("data-user-id");
+      const userId = e.currentTarget.dataset.userId;
       window.Administration.editUser(userId);
     });
   });
 
   document.querySelectorAll(".delete-user").forEach((btn) => {
     btn.addEventListener("click", (e) => {
-      const userId = e.currentTarget.getAttribute("data-user-id");
+      const userId = e.currentTarget.dataset.userId;
       window.Administration.deleteUser(userId);
     });
   });

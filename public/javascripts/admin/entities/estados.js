@@ -1,84 +1,116 @@
 window.Administration = window.Administration || {};
 
-window.Administration.loadEstados = async function (page = 1, limit = 50, search = null) {
-  // Cancela requisição anterior se existir
+function cancelPreviousEstadosRequest() {
   if (window.Administration.state.requestControllers.estados) {
     window.Administration.state.requestControllers.estados.abort();
   }
+}
 
-  // Cria novo AbortController para esta requisição
+function createNewEstadosRequestController() {
   const controller = new AbortController();
   window.Administration.state.requestControllers.estados = controller;
+  return controller;
+}
 
-  // Incrementa o contador de sequência para esta requisição
+function incrementEstadosRequestSequence() {
   if (!window.Administration.state.requestSequence.estados) {
     window.Administration.state.requestSequence.estados = 0;
   }
   window.Administration.state.requestSequence.estados += 1;
-  const currentSequence = window.Administration.state.requestSequence.estados;
+  return window.Administration.state.requestSequence.estados;
+}
+
+function normalizeEstadosSearchTerm(search) {
+  return search && search.trim() !== "" ? search.trim() : null;
+}
+
+function buildEstadosUrl(page, limit, searchTerm) {
+  let url = `/estados?page=${page}&limit=${limit}`;
+  if (searchTerm) {
+    url += `&search=${encodeURIComponent(searchTerm)}`;
+  }
+  return url;
+}
+
+function isEstadosRequestStillValid(currentSequence) {
+  return (
+    window.Administration.state.requestSequence.estados === currentSequence
+  );
+}
+
+function updateEstadosPaginationFromResponse(response) {
+  const pagination = window.Administration.state.pagination["estados"];
+  if (pagination && response.pagination) {
+    pagination.currentPage = response.pagination.page;
+    pagination.totalItems = response.pagination.total;
+    pagination.totalPages = response.pagination.totalPages;
+    pagination.itemsPerPage = response.pagination.limit;
+  }
+}
+
+function handleEstadosResponseData(response, searchTerm) {
+  if (!response?.data) {
+    return;
+  }
+
+  updateEstadosPaginationFromResponse(response);
+  window.Administration.state.estados = response.data;
+
+  if (!searchTerm) {
+    window.Administration.state.filteredData.estados = null;
+  }
+
+  window.Administration.renderEstados(response.data);
+}
+
+function isEstadosAbortError(error, controller) {
+  return error.name === "AbortError" || controller.signal.aborted;
+}
+
+function handleLoadEstadosError(error, controller, currentSequence) {
+  if (
+    isEstadosAbortError(error, controller) ||
+    !isEstadosRequestStillValid(currentSequence)
+  ) {
+    return;
+  }
+
+  console.error("❌ Erro ao carregar estados:", error);
+  window.Administration.showError("Erro ao carregar estados");
+}
+
+window.Administration.loadEstados = async function (
+  page = 1,
+  limit = 50,
+  search = null
+) {
+  cancelPreviousEstadosRequest();
+  const controller = createNewEstadosRequestController();
+  const currentSequence = incrementEstadosRequestSequence();
 
   try {
     window.Administration.initPagination("estados", limit);
-    
-    // Armazena o termo de busca atual
-    const searchTerm = search && search.trim() !== "" ? search.trim() : null;
+
+    const searchTerm = normalizeEstadosSearchTerm(search);
     window.Administration.state.currentSearchEstados = searchTerm;
-    
-    let url = `/estados?page=${page}&limit=${limit}`;
-    if (searchTerm) {
-      url += `&search=${encodeURIComponent(searchTerm)}`;
-    }
-    
+
+    const url = buildEstadosUrl(page, limit, searchTerm);
     const response = await window.Administration.apiRequest(url, {
       signal: controller.signal,
     });
-    
-    // Verifica se esta ainda é a requisição mais recente
-    if (window.Administration.state.requestSequence.estados !== currentSequence) {
-      // Esta requisição foi substituída por uma mais recente, ignora o resultado
+
+    if (
+      !isEstadosRequestStillValid(currentSequence) ||
+      controller.signal.aborted
+    ) {
       return;
     }
 
-    // Verifica se a requisição foi cancelada
-    if (controller.signal.aborted) {
-      return;
-    }
-    
-    if (response && response.data) {
-      // Atualiza o estado de paginação com os dados do servidor
-      const pagination = window.Administration.state.pagination["estados"];
-      if (pagination) {
-        pagination.currentPage = response.pagination.page;
-        pagination.totalItems = response.pagination.total;
-        pagination.totalPages = response.pagination.totalPages;
-        pagination.itemsPerPage = response.pagination.limit;
-      }
-      
-      // Armazena apenas os dados da página atual
-      window.Administration.state.estados = response.data;
-      // Se há busca, não usa filteredData (a busca já vem do servidor)
-      if (!searchTerm) {
-        window.Administration.state.filteredData.estados = null;
-      }
-      
-      window.Administration.renderEstados(response.data);
-    }
+    handleEstadosResponseData(response, searchTerm);
   } catch (error) {
-    // Ignora erros de requisições canceladas
-    if (error.name === 'AbortError' || controller.signal.aborted) {
-      return;
-    }
-    
-    // Verifica se esta ainda é a requisição mais recente antes de mostrar erro
-    if (window.Administration.state.requestSequence.estados !== currentSequence) {
-      return;
-    }
-    
-    console.error("❌ Erro ao carregar estados:", error);
-    window.Administration.showError("Erro ao carregar estados");
+    handleLoadEstadosError(error, controller, currentSequence);
   } finally {
-    // Limpa o controller se esta ainda for a requisição atual
-    if (window.Administration.state.requestSequence.estados === currentSequence) {
+    if (isEstadosRequestStillValid(currentSequence)) {
       window.Administration.state.requestControllers.estados = null;
     }
   }
@@ -90,7 +122,7 @@ window.Administration.renderEstados = function (estados) {
 
   // Se há dados filtrados, usa paginação client-side
   const dataToRender = window.Administration.state.filteredData.estados;
-  
+
   if (dataToRender) {
     // Paginação client-side para dados filtrados
     const { items, pagination } = window.Administration.getPaginatedData(
@@ -114,9 +146,9 @@ window.Administration.renderEstados = function (estados) {
       return;
     }
 
-      tbody.innerHTML = items
-        .map(
-          (estado) => `
+    tbody.innerHTML = items
+      .map(
+        (estado) => `
       <tr>
         <td>${estado.uf}</td>
         <td>${estado.nome_estado}</td>
@@ -130,8 +162,8 @@ window.Administration.renderEstados = function (estados) {
         </td>
       </tr>
     `
-        )
-        .join("");
+      )
+      .join("");
 
     window.Administration.renderPagination(
       "estadosPagination",
@@ -156,8 +188,13 @@ window.Administration.renderEstados = function (estados) {
         () => {
           const pagination = window.Administration.state.pagination["estados"];
           if (pagination) {
-            const searchTerm = window.Administration.state.currentSearchEstados || null;
-            window.Administration.loadEstados(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+            const searchTerm =
+              window.Administration.state.currentSearchEstados || null;
+            window.Administration.loadEstados(
+              pagination.currentPage,
+              pagination.itemsPerPage,
+              searchTerm
+            );
           }
         }
       );
@@ -183,13 +220,22 @@ window.Administration.renderEstados = function (estados) {
       )
       .join("");
 
-    window.Administration.renderPagination("estadosPagination", "estados", () => {
-      const pagination = window.Administration.state.pagination["estados"];
-      if (pagination) {
-        const searchTerm = window.Administration.state.currentSearchEstados || null;
-        window.Administration.loadEstados(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+    window.Administration.renderPagination(
+      "estadosPagination",
+      "estados",
+      () => {
+        const pagination = window.Administration.state.pagination["estados"];
+        if (pagination) {
+          const searchTerm =
+            window.Administration.state.currentSearchEstados || null;
+          window.Administration.loadEstados(
+            pagination.currentPage,
+            pagination.itemsPerPage,
+            searchTerm
+          );
+        }
       }
-    });
+    );
   }
 
   // Adiciona event listeners aos botões
@@ -197,7 +243,7 @@ window.Administration.renderEstados = function (estados) {
     .querySelectorAll(".edit-entity[data-entity-type='estado']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.openEstadoModal(id);
       });
     });
@@ -206,7 +252,7 @@ window.Administration.renderEstados = function (estados) {
     .querySelectorAll(".delete-entity[data-entity-type='estado']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.deleteEstado(id);
       });
     });
@@ -224,7 +270,7 @@ window.Administration.openEstadoModal = async function (id = null) {
     let estado = window.Administration.state.estados.find(
       (e) => e.id_estado == id
     );
-    
+
     if (!estado) {
       // Se o estado não estiver na página atual, busca do servidor
       try {
@@ -235,7 +281,7 @@ window.Administration.openEstadoModal = async function (id = null) {
         return;
       }
     }
-    
+
     if (estado) {
       document.getElementById("estadoId").value = estado.id_estado;
       document.getElementById("estadoUf").value = estado.uf;
@@ -277,12 +323,16 @@ window.Administration.saveEstado = async function () {
     );
     document.getElementById("estadoModal").classList.remove("active");
     form.reset();
-    
+
     // Recarrega a página atual mantendo a busca se houver
     const pagination = window.Administration.state.pagination["estados"];
     const searchTerm = window.Administration.state.currentSearchEstados || null;
     if (pagination) {
-      window.Administration.loadEstados(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+      window.Administration.loadEstados(
+        pagination.currentPage,
+        pagination.itemsPerPage,
+        searchTerm
+      );
     } else {
       window.Administration.loadEstados(1, 50, searchTerm);
     }
@@ -302,7 +352,7 @@ window.Administration.deleteEstado = async function (id) {
     let estado = window.Administration.state.estados.find(
       (e) => e.id_estado == id
     );
-    
+
     if (!estado) {
       // Se o estado não estiver na página atual, busca do servidor
       try {
@@ -313,7 +363,7 @@ window.Administration.deleteEstado = async function (id) {
         return;
       }
     }
-    
+
     const estadoNome = estado
       ? `${estado.uf} - ${estado.nome_estado}`
       : "este estado";
@@ -331,12 +381,17 @@ window.Administration.deleteEstado = async function (id) {
             method: "DELETE",
           });
           window.Administration.showSuccess("Estado excluído com sucesso");
-          
+
           // Recarrega a página atual mantendo a busca se houver
           const pagination = window.Administration.state.pagination["estados"];
-          const searchTerm = window.Administration.state.currentSearchEstados || null;
+          const searchTerm =
+            window.Administration.state.currentSearchEstados || null;
           if (pagination) {
-            window.Administration.loadEstados(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+            window.Administration.loadEstados(
+              pagination.currentPage,
+              pagination.itemsPerPage,
+              searchTerm
+            );
           } else {
             window.Administration.loadEstados(1, 50, searchTerm);
           }

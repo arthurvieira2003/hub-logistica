@@ -1,31 +1,43 @@
 window.AdminAuthMain = window.AdminAuthMain || {};
 
-window.AdminAuthMain.initAdminAuth = async function () {
-  if (window.AdminAuthUI && window.AdminAuthUI.showLoading) {
+function showLoadingIfAvailable() {
+  if (window.AdminAuthUI?.showLoading) {
     window.AdminAuthUI.showLoading();
   }
+}
+
+function hideLoadingIfAvailable() {
+  if (window.AdminAuthUI?.hideLoading) {
+    window.AdminAuthUI.hideLoading();
+  }
+}
+
+function handleAuthError(error) {
+  console.error("❌ Erro crítico na autenticação administrativa:", error);
+  hideLoadingIfAvailable();
+  if (window.AdminAuthValidator?.redirectToHome) {
+    window.AdminAuthValidator.redirectToHome(
+      "Erro ao verificar suas permissões. Tente novamente."
+    );
+  }
+}
+
+window.AdminAuthMain.initAdminAuth = async function () {
+  showLoadingIfAvailable();
 
   try {
     const hasAccess = await window.AdminAuthValidator.validateAdminAccess();
 
-    if (hasAccess) {
-      if (window.AdminAuthUI && window.AdminAuthUI.hideLoading) {
-        window.AdminAuthUI.hideLoading();
-      }
+    if (!hasAccess) {
+      return;
+    }
 
-      if (window.AdminMain && window.AdminMain.initAdministrationPage) {
-        await window.AdminMain.initAdministrationPage();
-      }
+    hideLoadingIfAvailable();
+
+    if (window.AdminMain?.initAdministrationPage) {
+      await window.AdminMain.initAdministrationPage();
     }
   } catch (error) {
-    console.error("❌ Erro crítico na autenticação administrativa:", error);
-    if (window.AdminAuthUI && window.AdminAuthUI.hideLoading) {
-      window.AdminAuthUI.hideLoading();
-    }
-    if (window.AdminAuthValidator && window.AdminAuthValidator.redirectToHome) {
-      window.AdminAuthValidator.redirectToHome(
-        "Erro ao verificar suas permissões. Tente novamente."
-      );
-    }
+    handleAuthError(error);
   }
 };

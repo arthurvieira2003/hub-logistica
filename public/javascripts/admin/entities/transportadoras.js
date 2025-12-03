@@ -1,84 +1,118 @@
 window.Administration = window.Administration || {};
 
-window.Administration.loadTransportadoras = async function (page = 1, limit = 50, search = null) {
-  // Cancela requisição anterior se existir
+function cancelPreviousTransportadorasRequest() {
   if (window.Administration.state.requestControllers.transportadoras) {
     window.Administration.state.requestControllers.transportadoras.abort();
   }
+}
 
-  // Cria novo AbortController para esta requisição
+function createNewTransportadorasRequestController() {
   const controller = new AbortController();
   window.Administration.state.requestControllers.transportadoras = controller;
+  return controller;
+}
 
-  // Incrementa o contador de sequência para esta requisição
+function incrementTransportadorasRequestSequence() {
   if (!window.Administration.state.requestSequence.transportadoras) {
     window.Administration.state.requestSequence.transportadoras = 0;
   }
   window.Administration.state.requestSequence.transportadoras += 1;
-  const currentSequence = window.Administration.state.requestSequence.transportadoras;
+  return window.Administration.state.requestSequence.transportadoras;
+}
+
+function normalizeTransportadorasSearchTerm(search) {
+  return search && search.trim() !== "" ? search.trim() : null;
+}
+
+function buildTransportadorasUrl(page, limit, searchTerm) {
+  let url = `/transportadoras?page=${page}&limit=${limit}`;
+  if (searchTerm) {
+    url += `&search=${encodeURIComponent(searchTerm)}`;
+  }
+  return url;
+}
+
+function isTransportadorasRequestStillValid(currentSequence) {
+  return (
+    window.Administration.state.requestSequence.transportadoras ===
+    currentSequence
+  );
+}
+
+function updateTransportadorasPaginationFromResponse(response) {
+  const pagination =
+    window.Administration.state.pagination["transportadoras"];
+  if (pagination && response.pagination) {
+    pagination.currentPage = response.pagination.page;
+    pagination.totalItems = response.pagination.total;
+    pagination.totalPages = response.pagination.totalPages;
+    pagination.itemsPerPage = response.pagination.limit;
+  }
+}
+
+function handleTransportadorasResponseData(response, searchTerm) {
+  if (!response?.data) {
+    return;
+  }
+
+  updateTransportadorasPaginationFromResponse(response);
+  window.Administration.state.transportadoras = response.data;
+
+  if (!searchTerm) {
+    window.Administration.state.filteredData.transportadoras = null;
+  }
+
+  window.Administration.renderTransportadoras(response.data);
+}
+
+function isTransportadorasAbortError(error, controller) {
+  return error.name === "AbortError" || controller.signal.aborted;
+}
+
+function handleLoadTransportadorasError(error, controller, currentSequence) {
+  if (
+    isTransportadorasAbortError(error, controller) ||
+    !isTransportadorasRequestStillValid(currentSequence)
+  ) {
+    return;
+  }
+
+  console.error("❌ Erro ao carregar transportadoras:", error);
+  window.Administration.showError("Erro ao carregar transportadoras");
+}
+
+window.Administration.loadTransportadoras = async function (
+  page = 1,
+  limit = 50,
+  search = null
+) {
+  cancelPreviousTransportadorasRequest();
+  const controller = createNewTransportadorasRequestController();
+  const currentSequence = incrementTransportadorasRequestSequence();
 
   try {
     window.Administration.initPagination("transportadoras", limit);
-    
-    // Armazena o termo de busca atual
-    const searchTerm = search && search.trim() !== "" ? search.trim() : null;
+
+    const searchTerm = normalizeTransportadorasSearchTerm(search);
     window.Administration.state.currentSearchTransportadoras = searchTerm;
-    
-    let url = `/transportadoras?page=${page}&limit=${limit}`;
-    if (searchTerm) {
-      url += `&search=${encodeURIComponent(searchTerm)}`;
-    }
-    
+
+    const url = buildTransportadorasUrl(page, limit, searchTerm);
     const response = await window.Administration.apiRequest(url, {
       signal: controller.signal,
     });
-    
-    // Verifica se esta ainda é a requisição mais recente
-    if (window.Administration.state.requestSequence.transportadoras !== currentSequence) {
-      // Esta requisição foi substituída por uma mais recente, ignora o resultado
+
+    if (
+      !isTransportadorasRequestStillValid(currentSequence) ||
+      controller.signal.aborted
+    ) {
       return;
     }
 
-    // Verifica se a requisição foi cancelada
-    if (controller.signal.aborted) {
-      return;
-    }
-    
-    if (response && response.data) {
-      // Atualiza o estado de paginação com os dados do servidor
-      const pagination = window.Administration.state.pagination["transportadoras"];
-      if (pagination) {
-        pagination.currentPage = response.pagination.page;
-        pagination.totalItems = response.pagination.total;
-        pagination.totalPages = response.pagination.totalPages;
-        pagination.itemsPerPage = response.pagination.limit;
-      }
-      
-      // Armazena apenas os dados da página atual
-      window.Administration.state.transportadoras = response.data;
-      // Se há busca, não usa filteredData (a busca já vem do servidor)
-      if (!searchTerm) {
-        window.Administration.state.filteredData.transportadoras = null;
-      }
-      
-      window.Administration.renderTransportadoras(response.data);
-    }
+    handleTransportadorasResponseData(response, searchTerm);
   } catch (error) {
-    // Ignora erros de requisições canceladas
-    if (error.name === 'AbortError' || controller.signal.aborted) {
-      return;
-    }
-    
-    // Verifica se esta ainda é a requisição mais recente antes de mostrar erro
-    if (window.Administration.state.requestSequence.transportadoras !== currentSequence) {
-      return;
-    }
-    
-    console.error("❌ Erro ao carregar transportadoras:", error);
-    window.Administration.showError("Erro ao carregar transportadoras");
+    handleLoadTransportadorasError(error, controller, currentSequence);
   } finally {
-    // Limpa o controller se esta ainda for a requisição atual
-    if (window.Administration.state.requestSequence.transportadoras === currentSequence) {
+    if (isTransportadorasRequestStillValid(currentSequence)) {
       window.Administration.state.requestControllers.transportadoras = null;
     }
   }
@@ -217,7 +251,7 @@ window.Administration.renderTransportadoras = function (transportadoras) {
     .querySelectorAll(".edit-entity[data-entity-type='transportadora']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.openTransportadoraModal(id);
       });
     });
@@ -226,7 +260,7 @@ window.Administration.renderTransportadoras = function (transportadoras) {
     .querySelectorAll(".delete-entity[data-entity-type='transportadora']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.deleteTransportadora(id);
       });
     });

@@ -1,84 +1,113 @@
 window.Administration = window.Administration || {};
 
-window.Administration.loadFaixasPeso = async function (page = 1, limit = 50, search = null) {
-  // Cancela requisição anterior se existir
+function cancelPreviousFaixasPesoRequest() {
   if (window.Administration.state.requestControllers.faixasPeso) {
     window.Administration.state.requestControllers.faixasPeso.abort();
   }
+}
 
-  // Cria novo AbortController para esta requisição
+function createNewFaixasPesoRequestController() {
   const controller = new AbortController();
   window.Administration.state.requestControllers.faixasPeso = controller;
+  return controller;
+}
 
-  // Incrementa o contador de sequência para esta requisição
+function incrementFaixasPesoRequestSequence() {
   if (!window.Administration.state.requestSequence.faixasPeso) {
     window.Administration.state.requestSequence.faixasPeso = 0;
   }
   window.Administration.state.requestSequence.faixasPeso += 1;
-  const currentSequence = window.Administration.state.requestSequence.faixasPeso;
+  return window.Administration.state.requestSequence.faixasPeso;
+}
+
+function normalizeFaixasPesoSearchTerm(search) {
+  return search && search.trim() !== "" ? search.trim() : null;
+}
+
+function buildFaixasPesoUrl(page, limit, searchTerm) {
+  let url = `/faixas-peso?page=${page}&limit=${limit}`;
+  if (searchTerm) {
+    url += `&search=${encodeURIComponent(searchTerm)}`;
+  }
+  return url;
+}
+
+function isFaixasPesoRequestStillValid(currentSequence) {
+  return (
+    window.Administration.state.requestSequence.faixasPeso === currentSequence
+  );
+}
+
+function updateFaixasPesoPaginationFromResponse(response) {
+  const pagination = window.Administration.state.pagination["faixasPeso"];
+  if (pagination && response.pagination) {
+    pagination.currentPage = response.pagination.page;
+    pagination.totalItems = response.pagination.total;
+    pagination.totalPages = response.pagination.totalPages;
+    pagination.itemsPerPage = response.pagination.limit;
+  }
+}
+
+function handleFaixasPesoResponseData(response, searchTerm) {
+  if (!response?.data) {
+    return;
+  }
+
+  updateFaixasPesoPaginationFromResponse(response);
+  window.Administration.state.faixasPeso = response.data;
+
+  if (!searchTerm) {
+    window.Administration.state.filteredData.faixasPeso = null;
+  }
+
+  window.Administration.renderFaixasPeso(response.data);
+}
+
+function isFaixasPesoAbortError(error, controller) {
+  return error.name === "AbortError" || controller.signal.aborted;
+}
+
+function handleLoadFaixasPesoError(error, controller, currentSequence) {
+  if (
+    isFaixasPesoAbortError(error, controller) ||
+    !isFaixasPesoRequestStillValid(currentSequence)
+  ) {
+    return;
+  }
+
+  console.error("❌ Erro ao carregar faixas de peso:", error);
+  window.Administration.showError("Erro ao carregar faixas de peso");
+}
+
+window.Administration.loadFaixasPeso = async function (
+  page = 1,
+  limit = 50,
+  search = null
+) {
+  cancelPreviousFaixasPesoRequest();
+  const controller = createNewFaixasPesoRequestController();
+  const currentSequence = incrementFaixasPesoRequestSequence();
 
   try {
     window.Administration.initPagination("faixasPeso", limit);
-    
-    // Armazena o termo de busca atual
-    const searchTerm = search && search.trim() !== "" ? search.trim() : null;
+
+    const searchTerm = normalizeFaixasPesoSearchTerm(search);
     window.Administration.state.currentSearchFaixasPeso = searchTerm;
-    
-    let url = `/faixas-peso?page=${page}&limit=${limit}`;
-    if (searchTerm) {
-      url += `&search=${encodeURIComponent(searchTerm)}`;
-    }
-    
+
+    const url = buildFaixasPesoUrl(page, limit, searchTerm);
     const response = await window.Administration.apiRequest(url, {
       signal: controller.signal,
     });
-    
-    // Verifica se esta ainda é a requisição mais recente
-    if (window.Administration.state.requestSequence.faixasPeso !== currentSequence) {
-      // Esta requisição foi substituída por uma mais recente, ignora o resultado
+
+    if (!isFaixasPesoRequestStillValid(currentSequence) || controller.signal.aborted) {
       return;
     }
 
-    // Verifica se a requisição foi cancelada
-    if (controller.signal.aborted) {
-      return;
-    }
-    
-    if (response && response.data) {
-      // Atualiza o estado de paginação com os dados do servidor
-      const pagination = window.Administration.state.pagination["faixasPeso"];
-      if (pagination) {
-        pagination.currentPage = response.pagination.page;
-        pagination.totalItems = response.pagination.total;
-        pagination.totalPages = response.pagination.totalPages;
-        pagination.itemsPerPage = response.pagination.limit;
-      }
-      
-      // Armazena apenas os dados da página atual
-      window.Administration.state.faixasPeso = response.data;
-      // Se há busca, não usa filteredData (a busca já vem do servidor)
-      if (!searchTerm) {
-        window.Administration.state.filteredData.faixasPeso = null;
-      }
-      
-      window.Administration.renderFaixasPeso(response.data);
-    }
+    handleFaixasPesoResponseData(response, searchTerm);
   } catch (error) {
-    // Ignora erros de requisições canceladas
-    if (error.name === 'AbortError' || controller.signal.aborted) {
-      return;
-    }
-    
-    // Verifica se esta ainda é a requisição mais recente antes de mostrar erro
-    if (window.Administration.state.requestSequence.faixasPeso !== currentSequence) {
-      return;
-    }
-    
-    console.error("❌ Erro ao carregar faixas de peso:", error);
-    window.Administration.showError("Erro ao carregar faixas de peso");
+    handleLoadFaixasPesoError(error, controller, currentSequence);
   } finally {
-    // Limpa o controller se esta ainda for a requisição atual
-    if (window.Administration.state.requestSequence.faixasPeso === currentSequence) {
+    if (isFaixasPesoRequestStillValid(currentSequence)) {
       window.Administration.state.requestControllers.faixasPeso = null;
     }
   }
@@ -219,7 +248,7 @@ window.Administration.renderFaixasPeso = function (faixas) {
     .querySelectorAll(".edit-entity[data-entity-type='faixa-peso']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.openFaixaPesoModal(id);
       });
     });
@@ -228,7 +257,7 @@ window.Administration.renderFaixasPeso = function (faixas) {
     .querySelectorAll(".delete-entity[data-entity-type='faixa-peso']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        const id = e.currentTarget.getAttribute("data-id");
+        const id = e.currentTarget.dataset.id;
         window.Administration.deleteFaixaPeso(id);
       });
     });
