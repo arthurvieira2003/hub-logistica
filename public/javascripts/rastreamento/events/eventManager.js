@@ -113,7 +113,7 @@ window.RastreamentoEvents.configurarEventosDetalhes = function (todasNotas) {
 
     botoesDetalhes.forEach((button, index) => {
       button.addEventListener("click", function () {
-        const notaNumero = this.getAttribute("data-nota");
+        const notaNumero = this.dataset.nota;
 
         const nota = todasNotas.find((n) => n.numero === notaNumero);
         if (nota) {

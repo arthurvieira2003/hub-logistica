@@ -1,5 +1,74 @@
 window.RastreamentoRenderers = window.RastreamentoRenderers || {};
 
+function getStatusColorForTable(status, atrasada) {
+  const colorMap = {
+    "Aguardando coleta": "#ff9800",
+    "Em trânsito": "#03a9f4",
+    Entregue: "#4caf50",
+    "Em processamento": "#9c27b0",
+    "Em rota de entrega": "#00bcd4",
+  };
+
+  if (atrasada) {
+    return "#f44336";
+  }
+
+  return colorMap[status] || "#757575";
+}
+
+function getRowBackgroundColor(index) {
+  return index % 2 === 0 ? "#f9f9f9" : "#fff";
+}
+
+function renderStatusCell(nota) {
+  const statusColor = getStatusColorForTable(nota.status, nota.atrasada);
+
+  return `
+    <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
+      <span style="display: inline-block; padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: white; background: ${statusColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        ${nota.status}
+      </span>
+    </td>
+  `;
+}
+
+function renderTransportadoraCell(nota) {
+  return `
+    <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        ${window.RastreamentoUtils.renderizarLogoTransportadora(
+          nota.transportadora
+        )}
+        <span>${nota.transportadora.nome}</span>
+      </div>
+    </td>
+  `;
+}
+
+function renderPrevisaoCell(nota) {
+  const previsaoTexto =
+    nota.status === "Aguardando coleta"
+      ? "-"
+      : window.RastreamentoUtils.formatarData(nota.previsaoEntrega);
+  const previsaoColor = nota.atrasada ? "#dc3545" : "#555";
+
+  return `
+    <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: ${previsaoColor};">
+      ${previsaoTexto}
+    </td>
+  `;
+}
+
+function renderAcoesCell(nota) {
+  return `
+    <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
+      <button class="btn-detalhes detalhes-btn" data-nota="${nota.numero}" style="background: #247675; color: white; border: none; border-radius: 50px; padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <i class="fas fa-eye"></i> Detalhes
+      </button>
+    </td>
+  `;
+}
+
 window.RastreamentoRenderers.renderizarCabecalhoTabela = function (todasNotas) {
   const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
@@ -47,73 +116,23 @@ window.RastreamentoRenderers.renderizarCabecalhoTabela = function (todasNotas) {
 };
 
 window.RastreamentoRenderers.renderizarLinhaTabela = function (nota, index) {
-  let borderColor = window.RastreamentoUtils.obterCorBordaTransportadora(
+  const borderColor = window.RastreamentoUtils.obterCorBordaTransportadora(
     nota.transportadora.nome
   );
+  const backgroundColor = getRowBackgroundColor(index);
 
   return `
-    <tr style="background-color: ${
-      index % 2 === 0 ? "#f9f9f9" : "#fff"
-    }; transition: all 0.3s ease; border-left: 4px solid ${borderColor};">
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;"><strong>${
-        nota.numero
-      }</strong></td>
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          ${window.RastreamentoUtils.renderizarLogoTransportadora(
-            nota.transportadora
-          )}
-          <span>${nota.transportadora.nome}</span>
-        </div>
-      </td>
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
-        <span style="display: inline-block; padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: white; background: ${
-          nota.status === "Aguardando coleta"
-            ? "#ff9800"
-            : nota.status === "Em trânsito"
-            ? "#03a9f4"
-            : nota.status === "Entregue"
-            ? "#4caf50"
-            : nota.status === "Em processamento"
-            ? "#9c27b0"
-            : nota.status === "Em rota de entrega"
-            ? "#00bcd4"
-            : nota.atrasada
-            ? "#f44336"
-            : "#757575"
-        }; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          ${nota.status}
-        </span>
-      </td>
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${
-        nota.cliente || "-"
-      }">${nota.cliente || "-"}</td>
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
-        ${nota.origem}
-      </td>
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
-        ${nota.destino}
-      </td>
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: #555;">${window.RastreamentoUtils.formatarData(
-        nota.docDate
-      )}</td>
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: #555;">${window.RastreamentoUtils.formatarData(
-        nota.dataEnvio
-      )}</td>
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: ${
-        nota.atrasada ? "#dc3545" : "#555"
-      };">${
-    nota.status === "Aguardando coleta"
-      ? "-"
-      : window.RastreamentoUtils.formatarData(nota.previsaoEntrega)
-  }</td>
-      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">
-        <button class="btn-detalhes detalhes-btn" data-nota="${
-          nota.numero
-        }" style="background: #247675; color: white; border: none; border-radius: 50px; padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 6px;">
-          <i class="fas fa-eye"></i> Detalhes
-        </button>
-      </td>
+    <tr style="background-color: ${backgroundColor}; transition: all 0.3s ease; border-left: 4px solid ${borderColor};">
+      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;"><strong>${nota.numero}</strong></td>
+      ${renderTransportadoraCell(nota)}
+      ${renderStatusCell(nota)}
+      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${nota.cliente || "-"}">${nota.cliente || "-"}</td>
+      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">${nota.origem}</td>
+      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee;">${nota.destino}</td>
+      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: #555;">${window.RastreamentoUtils.formatarData(nota.docDate)}</td>
+      <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-family: 'Courier New', monospace; font-weight: 600; color: #555;">${window.RastreamentoUtils.formatarData(nota.dataEnvio)}</td>
+      ${renderPrevisaoCell(nota)}
+      ${renderAcoesCell(nota)}
     </tr>
   `;
 };

@@ -51,83 +51,118 @@ window.RastreamentoDataTablesRenderer.renderizarCabecalhoTabela = function (
   `;
 };
 
+function getStatusColor(status, atrasada) {
+  const colorMap = {
+    "Aguardando coleta": "#ff9800",
+    "Em trânsito": "#03a9f4",
+    Entregue: "#4caf50",
+    "Em processamento": "#9c27b0",
+    "Em rota de entrega": "#00bcd4",
+  };
+
+  if (atrasada) {
+    return "#f44336";
+  }
+
+  return colorMap[status] || "#757575";
+}
+
+function isAguardandoColeta(status) {
+  return status === "Aguardando coleta";
+}
+
+function formatDataEnvio(nota) {
+  if (isAguardandoColeta(nota.status)) {
+    return "-";
+  }
+  return window.RastreamentoUtils.formatarData(nota.dataEnvio);
+}
+
+function formatPrevisao(nota) {
+  if (isAguardandoColeta(nota.status)) {
+    return "-";
+  }
+  return window.RastreamentoUtils.formatarData(nota.previsaoEntrega);
+}
+
+function getDataEnvioForSort(nota) {
+  if (isAguardandoColeta(nota.status)) {
+    return new Date(0);
+  }
+  return new Date(nota.dataEnvio);
+}
+
+function getPrevisaoForSort(nota) {
+  if (isAguardandoColeta(nota.status)) {
+    return new Date(0);
+  }
+  return new Date(nota.previsaoEntrega);
+}
+
+function renderTransportadora(nota) {
+  const logoTransportadora =
+    window.RastreamentoUtils.renderizarLogoTransportadora(nota.transportadora);
+
+  return `
+    <div style="display: flex; align-items: center; gap: 8px;">
+      ${logoTransportadora}
+      <span>${nota.transportadora.nome}</span>
+    </div>
+  `;
+}
+
+function renderStatus(nota) {
+  const statusColor = getStatusColor(nota.status, nota.atrasada);
+
+  return `
+    <span style="display: inline-block; padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: white; background: ${statusColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      ${nota.status}
+    </span>
+  `;
+}
+
+function renderAcoes(nota) {
+  return `
+    <button class="btn-detalhes detalhes-btn" data-nota="${nota.numero}" style="background: #247675; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(36, 118, 117, 0.2); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: 0 auto;">
+      <i class="fas fa-eye"></i>
+    </button>
+  `;
+}
+
+function convertNotaToDataTable(nota) {
+  const borderColor = window.RastreamentoUtils.obterCorBordaTransportadora(
+    nota.transportadora.nome
+  );
+
+  return {
+    numero: nota.numero,
+    transportadora: renderTransportadora(nota),
+    status: renderStatus(nota),
+    cliente: nota.cliente || "-",
+    origem: nota.origem,
+    destino: nota.destino,
+    faturamento: window.RastreamentoUtils.formatarData(nota.docDate),
+    dataEnvio: formatDataEnvio(nota),
+    previsao: formatPrevisao(nota),
+    acoes: renderAcoes(nota),
+    _numero: parseInt(nota.numero) || 0,
+    _transportadora: nota.transportadora.nome,
+    _status: nota.status,
+    _cliente: nota.cliente || "",
+    _origem: nota.origem,
+    _destino: nota.destino,
+    _faturamento: new Date(nota.docDate),
+    _dataEnvio: getDataEnvioForSort(nota),
+    _previsao: getPrevisaoForSort(nota),
+    _atrasada: nota.atrasada,
+    _borderColor: borderColor,
+  };
+}
+
 window.RastreamentoDataTablesRenderer.converterDadosParaDataTables = function (
   todasNotas
 ) {
-  return todasNotas.map((nota, index) => {
-    let borderColor = window.RastreamentoUtils.obterCorBordaTransportadora(
-      nota.transportadora.nome
-    );
-
-    const logoTransportadora =
-      window.RastreamentoUtils.renderizarLogoTransportadora(
-        nota.transportadora
-      );
-
-    const statusColor =
-      nota.status === "Aguardando coleta"
-        ? "#ff9800"
-        : nota.status === "Em trânsito"
-        ? "#03a9f4"
-        : nota.status === "Entregue"
-        ? "#4caf50"
-        : nota.status === "Em processamento"
-        ? "#9c27b0"
-        : nota.status === "Em rota de entrega"
-        ? "#00bcd4"
-        : nota.atrasada
-        ? "#f44336"
-        : "#757575";
-
-    return {
-      numero: nota.numero,
-      transportadora: `
-        <div style="display: flex; align-items: center; gap: 8px;">
-          ${logoTransportadora}
-          <span>${nota.transportadora.nome}</span>
-        </div>
-      `,
-      status: `
-        <span style="display: inline-block; padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: white; background: ${statusColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          ${nota.status}
-        </span>
-      `,
-      cliente: nota.cliente || "-",
-      origem: nota.origem,
-      destino: nota.destino,
-      faturamento: window.RastreamentoUtils.formatarData(nota.docDate),
-      dataEnvio:
-        nota.status === "Aguardando coleta"
-          ? "-"
-          : window.RastreamentoUtils.formatarData(nota.dataEnvio),
-      previsao:
-        nota.status === "Aguardando coleta"
-          ? "-"
-          : window.RastreamentoUtils.formatarData(nota.previsaoEntrega),
-      acoes: `
-        <button class="btn-detalhes detalhes-btn" data-nota="${nota.numero}" style="background: #247675; color: white; border: none; border-radius: 6px; padding: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(36, 118, 117, 0.2); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: 0 auto;">
-          <i class="fas fa-eye"></i>
-        </button>
-      `,
-      _numero: parseInt(nota.numero) || 0,
-      _transportadora: nota.transportadora.nome,
-      _status: nota.status,
-      _cliente: nota.cliente || "",
-      _origem: nota.origem,
-      _destino: nota.destino,
-      _faturamento: new Date(nota.docDate),
-      _dataEnvio:
-        nota.status === "Aguardando coleta"
-          ? new Date(0)
-          : new Date(nota.dataEnvio),
-      _previsao:
-        nota.status === "Aguardando coleta"
-          ? new Date(0)
-          : new Date(nota.previsaoEntrega),
-      _atrasada: nota.atrasada,
-      _borderColor: borderColor,
-    };
-  });
+  return todasNotas.map((nota) => convertNotaToDataTable(nota));
 };
 
 window.RastreamentoDataTablesRenderer.renderizarTabela = function (todasNotas) {

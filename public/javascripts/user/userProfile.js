@@ -6,65 +6,92 @@ window.UserProfile.state = {
 };
 
 window.UserProfile.loadUserData = async function () {
-  try {
-    if (!window.AuthCore && !window.UserAuth) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+  // Funções auxiliares
+  const isAuthModuleAvailable = () => {
+    return !!(window.AuthCore || window.UserAuth);
+  };
 
-      if (!window.AuthCore && !window.UserAuth) {
-        const userNameElement = document.getElementById("userName");
-        const userEmailElement = document.getElementById("userEmail");
-        if (userNameElement) userNameElement.textContent = "Erro ao carregar";
-        if (userEmailElement)
-          userEmailElement.textContent =
-            "Módulo de autenticação não disponível";
-        return null;
-      }
+  const waitForAuthModule = async () => {
+    if (isAuthModuleAvailable()) return true;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return isAuthModuleAvailable();
+  };
+
+  const showAuthModuleError = () => {
+    const userNameElement = document.getElementById("userName");
+    const userEmailElement = document.getElementById("userEmail");
+    if (userNameElement) userNameElement.textContent = "Erro ao carregar";
+    if (userEmailElement) {
+      userEmailElement.textContent = "Módulo de autenticação não disponível";
+    }
+  };
+
+  const showUserNotFoundError = () => {
+    const userNameElement = document.getElementById("userName");
+    const userEmailElement = document.getElementById("userEmail");
+    if (userNameElement) {
+      userNameElement.textContent = "Usuário não encontrado";
+    }
+    if (userEmailElement) {
+      userEmailElement.textContent = "Faça login novamente";
+    }
+  };
+
+  const getErrorMessage = (error) => {
+    const errorMessage = error.message || "Erro desconhecido";
+    if (
+      errorMessage.includes("Timeout") ||
+      errorMessage.includes("timeout")
+    ) {
+      return "Timeout - tente novamente";
+    }
+    if (
+      errorMessage.includes("Failed to fetch") ||
+      errorMessage.includes("NetworkError")
+    ) {
+      return "Sem conexão com servidor";
+    }
+    return "Erro ao carregar dados";
+  };
+
+  const showLoadError = (error) => {
+    const userNameElement = document.getElementById("userName");
+    const userEmailElement = document.getElementById("userEmail");
+    if (userNameElement) {
+      userNameElement.textContent = "Erro ao carregar";
+    }
+    if (userEmailElement) {
+      userEmailElement.textContent = getErrorMessage(error);
+    }
+  };
+
+  const handleSuccessfulLoad = (userData) => {
+    window.UserProfile.state.userData = userData;
+    window.UserProfile.state.isLoaded = true;
+    window.UserProfile.updateUserProfile(userData);
+    return userData;
+  };
+
+  // Função principal
+  try {
+    const authModuleAvailable = await waitForAuthModule();
+    if (!authModuleAvailable) {
+      showAuthModuleError();
+      return null;
     }
 
     const authModule = window.AuthCore || window.UserAuth;
     const userData = await authModule.validateTokenExpiration();
 
     if (userData) {
-      window.UserProfile.state.userData = userData;
-      window.UserProfile.state.isLoaded = true;
-      window.UserProfile.updateUserProfile(userData);
-      return userData;
-    } else {
-      const userNameElement = document.getElementById("userName");
-      const userEmailElement = document.getElementById("userEmail");
-
-      if (userNameElement)
-        userNameElement.textContent = "Usuário não encontrado";
-      if (userEmailElement)
-        userEmailElement.textContent = "Faça login novamente";
-
-      window.UserProfile.state.isLoaded = true;
+      return handleSuccessfulLoad(userData);
     }
+
+    showUserNotFoundError();
+    window.UserProfile.state.isLoaded = true;
   } catch (error) {
     console.error("Erro ao carregar dados do usuário:", error);
-    const userNameElement = document.getElementById("userName");
-    const userEmailElement = document.getElementById("userEmail");
-
-    if (userNameElement) {
-      userNameElement.textContent = "Erro ao carregar";
-    }
-    if (userEmailElement) {
-      const errorMessage = error.message || "Erro desconhecido";
-      if (
-        errorMessage.includes("Timeout") ||
-        errorMessage.includes("timeout")
-      ) {
-        userEmailElement.textContent = "Timeout - tente novamente";
-      } else if (
-        errorMessage.includes("Failed to fetch") ||
-        errorMessage.includes("NetworkError")
-      ) {
-        userEmailElement.textContent = "Sem conexão com servidor";
-      } else {
-        userEmailElement.textContent = "Erro ao carregar dados";
-      }
-    }
-
+    showLoadError(error);
     window.UserProfile.state.isLoaded = true;
   }
 };

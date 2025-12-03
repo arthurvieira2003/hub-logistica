@@ -56,6 +56,58 @@ window.AppInitializer.ensureModulesLoaded = async function () {
   }
 };
 
+function createTimeoutPromise(stepName, timeoutMs = 15000) {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(`Timeout em ${stepName}`)), timeoutMs);
+  });
+}
+
+function recordStepSuccess(stepName) {
+  window.AppInitializer.state.initializationSteps.push({
+    name: stepName,
+    status: "success",
+    timestamp: new Date(),
+  });
+}
+
+function recordStepError(stepName, error) {
+  window.AppInitializer.state.initializationSteps.push({
+    name: stepName,
+    status: "error",
+    error: error.message,
+    timestamp: new Date(),
+  });
+}
+
+function handleUserDataLoadError(error) {
+  const userNameElement = document.getElementById("userName");
+  const userEmailElement = document.getElementById("userEmail");
+
+  if (userNameElement && userNameElement.textContent === "Carregando...") {
+    userNameElement.textContent = "Erro ao carregar";
+  }
+
+  if (userEmailElement && userEmailElement.textContent === "Carregando...") {
+    userEmailElement.textContent = error.message?.includes("Timeout")
+      ? "Timeout - tente recarregar"
+      : "Erro ao carregar dados";
+  }
+}
+
+async function executeStepWithTimeout(step) {
+  const timeoutPromise = createTimeoutPromise(step.name);
+  await Promise.race([step.func(), timeoutPromise]);
+}
+
+function handleStepError(step, error) {
+  console.error(`Erro em ${step.name}:`, error);
+  recordStepError(step.name, error);
+
+  if (step.name === "Carregar dados do usuário") {
+    handleUserDataLoadError(error);
+  }
+}
+
 window.AppInitializer.executeInitializationSteps = async function () {
   const steps = [
     {
@@ -96,42 +148,10 @@ window.AppInitializer.executeInitializationSteps = async function () {
 
   for (const step of steps) {
     try {
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(`Timeout em ${step.name}`)), 15000);
-      });
-
-      await Promise.race([step.func(), timeoutPromise]);
-      window.AppInitializer.state.initializationSteps.push({
-        name: step.name,
-        status: "success",
-        timestamp: new Date(),
-      });
+      await executeStepWithTimeout(step);
+      recordStepSuccess(step.name);
     } catch (error) {
-      console.error(`Erro em ${step.name}:`, error);
-      window.AppInitializer.state.initializationSteps.push({
-        name: step.name,
-        status: "error",
-        error: error.message,
-        timestamp: new Date(),
-      });
-      if (step.name === "Carregar dados do usuário") {
-        const userNameElement = document.getElementById("userName");
-        const userEmailElement = document.getElementById("userEmail");
-        if (
-          userNameElement &&
-          userNameElement.textContent === "Carregando..."
-        ) {
-          userNameElement.textContent = "Erro ao carregar";
-        }
-        if (
-          userEmailElement &&
-          userEmailElement.textContent === "Carregando..."
-        ) {
-          userEmailElement.textContent = error.message?.includes("Timeout")
-            ? "Timeout - tente recarregar"
-            : "Erro ao carregar dados";
-        }
-      }
+      handleStepError(step, error);
     }
   }
 };

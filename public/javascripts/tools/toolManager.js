@@ -339,41 +339,16 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
   );
   if (!validationCell) return;
 
-  const existingErrorIcon = validationCell.querySelector(
-    "i[data-tooltip-error]"
-  );
-  if (
-    existingErrorIcon &&
-    typeof tippy !== "undefined" &&
-    existingErrorIcon._tippy
-  ) {
-    existingErrorIcon._tippy.destroy();
-  }
+  // Funções auxiliares
+  const destroyTippyIfExists = (element) => {
+    if (element && typeof tippy !== "undefined" && element._tippy) {
+      element._tippy.destroy();
+    }
+  };
 
-  const existingValidationIcon = validationCell.querySelector(
-    "i[data-tooltip-validation]"
-  );
-  if (
-    existingValidationIcon &&
-    typeof tippy !== "undefined" &&
-    existingValidationIcon._tippy
-  ) {
-    existingValidationIcon._tippy.destroy();
-  }
-
-  const tableRow = validationCell.closest("tr");
-
-  const {
-    valido,
-    status,
-    motivo,
-    precoTabela,
-    diferenca,
-    percentualDiferenca,
-  } = validacao;
-
-  if (tableRow) {
-    tableRow.classList.remove(
+  const removeAllValidationClasses = (row) => {
+    if (!row) return;
+    row.classList.remove(
       "validation-row-ok",
       "validation-row-acima",
       "validation-row-abaixo",
@@ -385,53 +360,52 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
       "validation-row-error-preco",
       "validation-row-error-dados"
     );
-  }
+  };
 
-  if (!valido) {
-    if (motivo && motivo.includes("não é um CT-e")) {
-      if (tableRow) {
-        tableRow.remove();
-      }
-      return;
+  const determineErrorTypeAndIcon = (motivo) => {
+    if (!motivo) {
+      return { errorType: "error", errorIcon: "fa-exclamation-circle" };
     }
 
-    let errorType = "error";
-    let errorIcon = "fa-exclamation-circle";
-
-    if (motivo) {
-      if (
-        motivo.includes("Cidade de origem") ||
-        motivo.includes("Cidade de destino")
-      ) {
-        errorType = "error-cidade";
-        errorIcon = "fa-map-marker-alt";
-      } else if (motivo.includes("Transportadora")) {
-        errorType = "error-transportadora";
-        errorIcon = "fa-truck";
-      } else if (motivo.includes("Rota")) {
-        errorType = "error-rota";
-        errorIcon = "fa-route";
-      } else if (motivo.includes("Faixa de peso") || motivo.includes("peso")) {
-        errorType = "error-faixa";
-        errorIcon = "fa-weight";
-      } else if (
-        motivo.includes("Preço não encontrado") ||
-        motivo.includes("tabela")
-      ) {
-        errorType = "error-preco";
-        errorIcon = "fa-dollar-sign";
-      } else if (motivo.includes("Dados insuficientes")) {
-        errorType = "error-dados";
-        errorIcon = "fa-info-circle";
-      }
+    if (
+      motivo.includes("Cidade de origem") ||
+      motivo.includes("Cidade de destino")
+    ) {
+      return { errorType: "error-cidade", errorIcon: "fa-map-marker-alt" };
     }
+    if (motivo.includes("Transportadora")) {
+      return { errorType: "error-transportadora", errorIcon: "fa-truck" };
+    }
+    if (motivo.includes("Rota")) {
+      return { errorType: "error-rota", errorIcon: "fa-route" };
+    }
+    if (motivo.includes("Faixa de peso") || motivo.includes("peso")) {
+      return { errorType: "error-faixa", errorIcon: "fa-weight" };
+    }
+    if (motivo.includes("Preço não encontrado") || motivo.includes("tabela")) {
+      return { errorType: "error-preco", errorIcon: "fa-dollar-sign" };
+    }
+    if (motivo.includes("Dados insuficientes")) {
+      return { errorType: "error-dados", errorIcon: "fa-info-circle" };
+    }
+
+    return { errorType: "error", errorIcon: "fa-exclamation-circle" };
+  };
+
+  const handleInvalidCTE = (tableRow) => {
+    if (tableRow) {
+      tableRow.remove();
+    }
+  };
+
+  const renderErrorValidation = (validationCell, tableRow, motivo) => {
+    const { errorType, errorIcon } = determineErrorTypeAndIcon(motivo);
 
     if (tableRow) {
       tableRow.classList.add(`validation-row-${errorType}`);
     }
 
     const mensagemErro = motivo || "Não foi possível validar";
-
     validationCell.innerHTML = `
       <div class="validation-error ${errorType}">
         <i class="fas ${errorIcon}" data-tooltip-error="${mensagemErro}"></i>
@@ -449,78 +423,150 @@ window.ToolManager.renderValidacaoPreco = function (serial, validacao) {
         allowHTML: false,
       });
     }
+  };
 
+  const formatPrice = (value) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value || 0);
+  };
+
+  const determineStatusClasses = (status) => {
+    if (status === "acima") {
+      return {
+        statusClass: "validation-acima",
+        rowClass: "validation-row-acima",
+        statusIcon: "fa-exclamation-triangle",
+        statusText: "Acima",
+      };
+    }
+    if (status === "abaixo") {
+      return {
+        statusClass: "validation-abaixo",
+        rowClass: "validation-row-abaixo",
+        statusIcon: "fa-info-circle",
+        statusText: "Abaixo",
+      };
+    }
+    return {
+      statusClass: "validation-ok",
+      rowClass: "validation-row-ok",
+      statusIcon: "fa-check-circle",
+      statusText: "OK",
+    };
+  };
+
+  const buildTooltipContent = (
+    precoTabelaFormatado,
+    diferenca,
+    diferencaFormatada,
+    percentualDiferenca
+  ) => {
+    const temDiferenca =
+      diferenca !== null && diferenca !== 0 && Math.abs(diferenca) > 0.01;
+
+    let tooltipContent = `Preço da tabela: ${precoTabelaFormatado}`;
+    if (temDiferenca) {
+      const sinal = diferenca > 0 ? "+" : "-";
+      tooltipContent += `<br>Diferença: ${sinal}${diferencaFormatada} (${sinal}${percentualDiferenca.toFixed(
+        2
+      )}%)`;
+    } else {
+      tooltipContent += "<br>Preço está de acordo com a tabela";
+    }
+    return tooltipContent;
+  };
+
+  const renderValidValidation = (
+    validationCell,
+    tableRow,
+    status,
+    precoTabela,
+    diferenca,
+    percentualDiferenca
+  ) => {
+    const precoTabelaFormatado = formatPrice(precoTabela);
+    const diferencaFormatada = formatPrice(Math.abs(diferenca || 0));
+    const { statusClass, rowClass, statusIcon } = determineStatusClasses(status);
+
+    if (tableRow) {
+      tableRow.classList.remove(
+        "validation-row-ok",
+        "validation-row-acima",
+        "validation-row-abaixo"
+      );
+      tableRow.classList.add(rowClass);
+    }
+
+    const tooltipContent = buildTooltipContent(
+      precoTabelaFormatado,
+      diferenca,
+      diferencaFormatada,
+      percentualDiferenca
+    );
+
+    validationCell.innerHTML = `
+      <div class="validation-result ${statusClass}">
+        <i class="fas ${statusIcon}" data-tooltip-validation="${tooltipContent}"></i>
+      </div>
+    `;
+
+    const iconElement = validationCell.querySelector(
+      "i[data-tooltip-validation]"
+    );
+    if (iconElement && typeof tippy !== "undefined") {
+      tippy(iconElement, {
+        content: tooltipContent,
+        placement: "top",
+        delay: [0, 0],
+        theme: "validation-tooltip",
+        arrow: true,
+        allowHTML: true,
+      });
+    }
+  };
+
+  // Destruir tooltips existentes
+  const existingErrorIcon = validationCell.querySelector(
+    "i[data-tooltip-error]"
+  );
+  destroyTippyIfExists(existingErrorIcon);
+
+  const existingValidationIcon = validationCell.querySelector(
+    "i[data-tooltip-validation]"
+  );
+  destroyTippyIfExists(existingValidationIcon);
+
+  const tableRow = validationCell.closest("tr");
+  const {
+    valido,
+    status,
+    motivo,
+    precoTabela,
+    diferenca,
+    percentualDiferenca,
+  } = validacao;
+
+  removeAllValidationClasses(tableRow);
+
+  if (!valido) {
+    if (motivo && motivo.includes("não é um CT-e")) {
+      handleInvalidCTE(tableRow);
+      return;
+    }
+    renderErrorValidation(validationCell, tableRow, motivo);
     return;
   }
 
-  const precoTabelaFormatado = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(precoTabela || 0);
-
-  const diferencaFormatada = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(Math.abs(diferenca || 0));
-
-  let statusClass = "validation-ok";
-  let rowClass = "validation-row-ok";
-  let statusIcon = "fa-check-circle";
-  let statusText = "OK";
-
-  if (status === "acima") {
-    statusClass = "validation-acima";
-    rowClass = "validation-row-acima";
-    statusIcon = "fa-exclamation-triangle";
-    statusText = "Acima";
-  } else if (status === "abaixo") {
-    statusClass = "validation-abaixo";
-    rowClass = "validation-row-abaixo";
-    statusIcon = "fa-info-circle";
-    statusText = "Abaixo";
-  }
-
-  if (tableRow) {
-    tableRow.classList.remove(
-      "validation-row-ok",
-      "validation-row-acima",
-      "validation-row-abaixo"
-    );
-    tableRow.classList.add(rowClass);
-  }
-
-  const temDiferenca =
-    diferenca !== null && diferenca !== 0 && Math.abs(diferenca) > 0.01;
-
-  let tooltipContent = `Preço da tabela: ${precoTabelaFormatado}`;
-  if (temDiferenca) {
-    const sinal = diferenca > 0 ? "+" : "-";
-    tooltipContent += `<br>Diferença: ${sinal}${diferencaFormatada} (${sinal}${percentualDiferenca.toFixed(
-      2
-    )}%)`;
-  } else {
-    tooltipContent += "<br>Preço está de acordo com a tabela";
-  }
-
-  validationCell.innerHTML = `
-    <div class="validation-result ${statusClass}">
-      <i class="fas ${statusIcon}" data-tooltip-validation="${tooltipContent}"></i>
-    </div>
-  `;
-
-  const iconElement = validationCell.querySelector(
-    "i[data-tooltip-validation]"
+  renderValidValidation(
+    validationCell,
+    tableRow,
+    status,
+    precoTabela,
+    diferenca,
+    percentualDiferenca
   );
-  if (iconElement && typeof tippy !== "undefined") {
-    tippy(iconElement, {
-      content: tooltipContent,
-      placement: "top",
-      delay: [0, 0],
-      theme: "validation-tooltip",
-      arrow: true,
-      allowHTML: true,
-    });
-  }
 };
 
 window.ToolManager.setupFretesButtons = function () {

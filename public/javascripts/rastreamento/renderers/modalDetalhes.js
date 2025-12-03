@@ -16,57 +16,74 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
     if (!obs) return null;
 
     const obsLimitado = obs.substring(0, 200);
+    const cidadePorPadrao = extrairCidadePorPadroes(obsLimitado);
+    if (cidadePorPadrao) {
+      return cidadePorPadrao;
+    }
 
-    const extrairCidadeSegura = (texto, prefixo, sufixo) => {
-      const prefixoLower = prefixo.toLowerCase();
-      const textoLower = texto.toLowerCase();
-      const idxInicio = textoLower.indexOf(prefixoLower);
+    return extrairCidadePorHifen(obsLimitado);
+  };
 
-      if (idxInicio === -1) return null;
-
-      const inicioCidade = idxInicio + prefixoLower.length;
-      const idxFim = sufixo
-        ? textoLower.indexOf(sufixo.toLowerCase(), inicioCidade)
-        : textoLower.indexOf(" - ", inicioCidade);
-
-      if (idxFim === -1 && sufixo) return null;
-
-      const fimCidade =
-        idxFim !== -1 ? idxFim : Math.min(inicioCidade + 50, texto.length);
-      let cidade = texto.substring(inicioCidade, fimCidade).trim();
-
-      const sufixos = [" DO", " DA", " DOS", " DAS"];
-      for (const suf of sufixos) {
-        if (cidade.toLowerCase().endsWith(suf.toLowerCase())) {
-          cidade = cidade.substring(0, cidade.length - suf.length).trim();
-          break;
-        }
+  const removerSufixosCidade = (cidade) => {
+    const sufixos = [" DO", " DA", " DOS", " DAS"];
+    for (const suf of sufixos) {
+      if (cidade.toUpperCase().endsWith(suf.toUpperCase())) {
+        return cidade.substring(0, cidade.length - suf.length).trim();
       }
+    }
+    return cidade;
+  };
 
-      const idxHifenFinal = cidade.lastIndexOf(" - ");
-      if (idxHifenFinal !== -1) {
-        const depoisHifen = cidade.substring(idxHifenFinal + 3).trim();
-        if (
-          depoisHifen.length === 2 &&
-          depoisHifen === depoisHifen.toUpperCase()
-        ) {
-          cidade = cidade.substring(0, idxHifenFinal).trim();
-        }
-      }
+  const removerUFDoFinal = (cidade) => {
+    const idxHifenFinal = cidade.lastIndexOf(" - ");
+    if (idxHifenFinal === -1) {
+      return cidade;
+    }
 
-      if (cidade.length > 0 && cidade.length <= 50) {
-        const primeiraLetra = cidade.charAt(0);
-        if (
-          primeiraLetra === primeiraLetra.toUpperCase() &&
-          primeiraLetra !== primeiraLetra.toLowerCase()
-        ) {
-          return cidade;
-        }
-      }
+    const depoisHifen = cidade.substring(idxHifenFinal + 3).trim();
+    if (depoisHifen.length === 2 && depoisHifen === depoisHifen.toUpperCase()) {
+      return cidade.substring(0, idxHifenFinal).trim();
+    }
+    return cidade;
+  };
 
-      return null;
-    };
+  const validarCidade = (cidade) => {
+    if (!cidade || cidade.length === 0 || cidade.length > 50) {
+      return false;
+    }
 
+    const primeiraLetra = cidade.charAt(0);
+    return (
+      primeiraLetra === primeiraLetra.toUpperCase() &&
+      primeiraLetra !== primeiraLetra.toLowerCase()
+    );
+  };
+
+  const extrairCidadeSegura = (texto, prefixo, sufixo) => {
+    const prefixoLower = prefixo.toLowerCase();
+    const textoLower = texto.toLowerCase();
+    const idxInicio = textoLower.indexOf(prefixoLower);
+
+    if (idxInicio === -1) return null;
+
+    const inicioCidade = idxInicio + prefixoLower.length;
+    const idxFim = sufixo
+      ? textoLower.indexOf(sufixo.toLowerCase(), inicioCidade)
+      : textoLower.indexOf(" - ", inicioCidade);
+
+    if (idxFim === -1 && sufixo) return null;
+
+    const fimCidade =
+      idxFim !== -1 ? idxFim : Math.min(inicioCidade + 50, texto.length);
+    let cidade = texto.substring(inicioCidade, fimCidade).trim();
+
+    cidade = removerSufixosCidade(cidade);
+    cidade = removerUFDoFinal(cidade);
+
+    return validarCidade(cidade) ? cidade : null;
+  };
+
+  const extrairCidadePorPadroes = (obsLimitado) => {
     const padroes = [
       { prefixo: "Saida de ", sufixo: " em" },
       { prefixo: "chegada na base ", sufixo: " em" },
@@ -89,62 +106,68 @@ window.RastreamentoModalRenderers.renderizarTimeline = function (
       }
     }
 
-    try {
-      const idxHifen = obsLimitado.indexOf(" - ");
-      if (idxHifen !== -1) {
-        const antesHifen = obsLimitado.substring(0, idxHifen).trim();
-        const depoisHifen = obsLimitado.substring(idxHifen + 3).trim();
+    return null;
+  };
 
-        if (depoisHifen.length >= 2) {
-          const duasPrimeiras = depoisHifen.substring(0, 2);
-          const isUF =
-            duasPrimeiras === duasPrimeiras.toUpperCase() &&
-            duasPrimeiras !== duasPrimeiras.toLowerCase() &&
-            duasPrimeiras.length === 2;
+  const isUF = (texto) => {
+    if (texto.length < 2) return false;
+    const duasPrimeiras = texto.substring(0, 2);
+    return (
+      duasPrimeiras === duasPrimeiras.toUpperCase() &&
+      duasPrimeiras !== duasPrimeiras.toLowerCase() &&
+      duasPrimeiras.length === 2
+    );
+  };
 
-          if (isUF) {
-            const palavras = antesHifen.split(" ").filter((p) => p.length > 0);
-            let cidade = "";
+  const extrairCidadeDePalavras = (palavras) => {
+    let cidade = "";
 
-            for (
-              let i = Math.max(0, palavras.length - 4);
-              i < palavras.length;
-              i++
-            ) {
-              const palavra = palavras[i];
-              if (palavra.length > 0) {
-                const primeiraLetra = palavra.charAt(0);
-                if (
-                  primeiraLetra === primeiraLetra.toUpperCase() &&
-                  primeiraLetra !== primeiraLetra.toLowerCase()
-                ) {
-                  if (cidade) cidade += " ";
-                  cidade += palavra;
-                  if (cidade.length > 50) break;
-                }
-              }
-            }
+    for (
+      let i = Math.max(0, palavras.length - 4);
+      i < palavras.length;
+      i++
+    ) {
+      const palavra = palavras[i];
+      if (palavra.length === 0) continue;
 
-            if (cidade && cidade.length > 0 && cidade.length <= 50) {
-              const sufixos = [" DO", " DA", " DOS", " DAS"];
-              for (const suf of sufixos) {
-                if (cidade.toUpperCase().endsWith(suf.toUpperCase())) {
-                  cidade = cidade
-                    .substring(0, cidade.length - suf.length)
-                    .trim();
-                  break;
-                }
-              }
-              return cidade;
-            }
-          }
-        }
+      const primeiraLetra = palavra.charAt(0);
+      if (
+        primeiraLetra === primeiraLetra.toUpperCase() &&
+        primeiraLetra !== primeiraLetra.toLowerCase()
+      ) {
+        if (cidade) cidade += " ";
+        cidade += palavra;
+        if (cidade.length > 50) break;
       }
-    } catch (error) {
-      console.warn("Erro ao processar padrão Cidade - UF:", error);
     }
 
-    return null;
+    if (!validarCidade(cidade)) {
+      return null;
+    }
+
+    return removerSufixosCidade(cidade);
+  };
+
+  const extrairCidadePorHifen = (obsLimitado) => {
+    try {
+      const idxHifen = obsLimitado.indexOf(" - ");
+      if (idxHifen === -1) {
+        return null;
+      }
+
+      const antesHifen = obsLimitado.substring(0, idxHifen).trim();
+      const depoisHifen = obsLimitado.substring(idxHifen + 3).trim();
+
+      if (depoisHifen.length < 2 || !isUF(depoisHifen)) {
+        return null;
+      }
+
+      const palavras = antesHifen.split(" ").filter((p) => p.length > 0);
+      return extrairCidadeDePalavras(palavras);
+    } catch (error) {
+      console.warn("Erro ao processar padrão Cidade - UF:", error);
+      return null;
+    }
   };
 
   const removerDuplicados = (historico) => {
