@@ -439,17 +439,38 @@ window.RastreamentoAPI.carregarDadosPrincesa = async function () {
 
     transportadoras[princesaIndex].notas = [];
 
-    data.forEach((item) => {
-      let status = "Aguardando coleta";
-      let ultimaAtualizacao = "";
-
+    // Funções auxiliares para processar dados Princesa
+    const formatPrincesaDateTime = (dateTime) => {
       try {
-        ultimaAtualizacao = window.RastreamentoUtils.formatarDataHora(
-          item.docDate
-        );
+        return window.RastreamentoUtils.formatarDataHora(dateTime);
       } catch (error) {
-        ultimaAtualizacao = item.docDate;
+        return dateTime;
       }
+    };
+
+    const determinePrincesaStatus = (descricao) => {
+      if (!descricao) return "Em trânsito";
+
+      const descLower = descricao.toLowerCase();
+      if (descLower.includes("entrega") || descLower.includes("entregue")) {
+        return "Entregue";
+      }
+      if (
+        descLower.includes("transito") ||
+        descLower.includes("transferencia")
+      ) {
+        return "Em trânsito";
+      }
+      if (descLower.includes("coleta") || descLower.includes("emissao")) {
+        return "Coletado";
+      }
+      return "Em trânsito";
+    };
+
+    const processPrincesaRastreamento = (item) => {
+      const defaultStatus = "Aguardando coleta";
+      let status = defaultStatus;
+      let ultimaAtualizacao = formatPrincesaDateTime(item.docDate);
 
       if (
         item.rastreamento &&
@@ -459,45 +480,28 @@ window.RastreamentoAPI.carregarDadosPrincesa = async function () {
         const rastreamentoData = item.rastreamento.data[0];
         if (rastreamentoData.dados && rastreamentoData.dados.length > 0) {
           const ultimoEvento = rastreamentoData.dados[0];
-
-          const descricao = ultimoEvento.descricao.toLowerCase();
-          if (descricao.includes("entrega") || descricao.includes("entregue")) {
-            status = "Entregue";
-          } else if (
-            descricao.includes("transito") ||
-            descricao.includes("transferencia")
-          ) {
-            status = "Em trânsito";
-          } else if (
-            descricao.includes("coleta") ||
-            descricao.includes("emissao")
-          ) {
-            status = "Coletado";
-          } else {
-            status = "Em trânsito";
-          }
-
-          try {
-            ultimaAtualizacao = window.RastreamentoUtils.formatarDataHora(
-              ultimoEvento.data
-            );
-          } catch (error) {
-            ultimaAtualizacao = ultimoEvento.data;
-          }
+          status = determinePrincesaStatus(ultimoEvento.descricao);
+          ultimaAtualizacao = formatPrincesaDateTime(ultimoEvento.data);
         }
       }
 
-      const nota = {
+      return { status, ultimaAtualizacao };
+    };
+
+    const buildPrincesaNota = (item, rastreamentoData) => {
+      const previsaoEntrega = item.rastreamento?.data?.[0]?.prev_entrega
+        ? item.rastreamento.data[0].prev_entrega.split(" ")[0]
+        : item.docDate.split(" ")[0];
+
+      return {
         numero: item.serial.toString(),
-        status: status,
+        status: rastreamentoData.status,
         origem: `${item.cidadeOrigem}, ${item.estadoOrigem}`,
         destino: `${item.cidadeDestino}, ${item.estadoDestino}`,
         docDate: item.docDate.split(" ")[0],
         dataEnvio: item.docDate.split(" ")[0],
-        previsaoEntrega: item.rastreamento?.data?.[0]?.prev_entrega
-          ? item.rastreamento.data[0].prev_entrega.split(" ")[0]
-          : item.docDate.split(" ")[0],
-        ultimaAtualizacao: ultimaAtualizacao,
+        previsaoEntrega: previsaoEntrega,
+        ultimaAtualizacao: rastreamentoData.ultimaAtualizacao,
         cliente: item.cardName,
         cte: "",
         historico: item.rastreamento?.data?.[0]?.dados || [],
@@ -506,7 +510,11 @@ window.RastreamentoAPI.carregarDadosPrincesa = async function () {
         prevEntrega: item.rastreamento?.data?.[0]?.prev_entrega || null,
         diasEntrega: item.rastreamento?.data?.[0]?.dias_entrega || null,
       };
+    };
 
+    data.forEach((item) => {
+      const rastreamentoData = processPrincesaRastreamento(item);
+      const nota = buildPrincesaNota(item, rastreamentoData);
       transportadoras[princesaIndex].notas.push(nota);
     });
 

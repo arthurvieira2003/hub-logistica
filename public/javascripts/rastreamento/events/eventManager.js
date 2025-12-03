@@ -179,10 +179,10 @@ window.RastreamentoEvents.configurarEventosData = function () {
 
   if (dataInput && btnAtualizar) {
     // Verifica se o event listener já foi adicionado
-    if (btnAtualizar.hasAttribute("data-event-configured")) {
+    if (btnAtualizar.dataset.eventConfigured) {
       return;
     }
-    btnAtualizar.setAttribute("data-event-configured", "true");
+    btnAtualizar.dataset.eventConfigured = "true";
 
     btnAtualizar.addEventListener("click", async function () {
       const novaData = dataInput.value;
@@ -214,7 +214,7 @@ window.RastreamentoEvents.configurarEventosData = function () {
 
     dataInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
-        novoBtnAtualizar.click();
+        btnAtualizar.click();
       }
     });
   } else {
