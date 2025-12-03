@@ -48,7 +48,10 @@ window.AppInitializer.ensureModulesLoaded = async function () {
   }
 
   if (!isAuthModuleLoaded()) {
-    await loadModuleGroupSafely("auth", "Erro ao carregar módulos de autenticação:");
+    await loadModuleGroupSafely(
+      "auth",
+      "Erro ao carregar módulos de autenticação:"
+    );
   }
 
   if (!isCoreModuleLoaded()) {
@@ -163,50 +166,79 @@ window.AppInitializer.forceOpenSidebar = function () {
 };
 
 window.AppInitializer.loadUserData = async function () {
-  const fallbackTimeout = setTimeout(() => {
-    const userNameElement = document.getElementById("userName");
-    const userEmailElement = document.getElementById("userEmail");
-    if (userNameElement && userNameElement.textContent === "Carregando...") {
-      userNameElement.textContent = "Erro ao carregar";
-    }
-    if (userEmailElement && userEmailElement.textContent === "Carregando...") {
-      userEmailElement.textContent = "Timeout - tente recarregar";
-    }
-  }, 12000);
+  // Funções auxiliares
+  const getUserElements = () => {
+    return {
+      userNameElement: document.getElementById("userName"),
+      userEmailElement: document.getElementById("userEmail"),
+    };
+  };
 
-  if (window.UserProfile && window.UserProfile.loadUserData) {
+  const isElementLoading = (element) => {
+    return element && element.textContent === "Carregando...";
+  };
+
+  const updateUserName = (text) => {
+    const { userNameElement } = getUserElements();
+    if (isElementLoading(userNameElement)) {
+      userNameElement.textContent = text;
+    }
+  };
+
+  const updateUserEmail = (text) => {
+    const { userEmailElement } = getUserElements();
+    if (isElementLoading(userEmailElement)) {
+      userEmailElement.textContent = text;
+    }
+  };
+
+  const handleTimeoutFallback = () => {
+    updateUserName("Erro ao carregar");
+    updateUserEmail("Timeout - tente recarregar");
+  };
+
+  const handleLoadError = (error) => {
+    updateUserName("Erro ao carregar");
+    const errorMessage = error.message?.includes("Timeout")
+      ? "Timeout - tente recarregar"
+      : "Erro ao carregar dados";
+    updateUserEmail(errorMessage);
+  };
+
+  const handleModuleUnavailable = () => {
+    updateUserName("Módulo não disponível");
+    updateUserEmail("Recarregue a página");
+  };
+
+  const isUserProfileAvailable = () => {
+    return !!(window.UserProfile && window.UserProfile.loadUserData);
+  };
+
+  const createFallbackTimeout = () => {
+    return setTimeout(handleTimeoutFallback, 12000);
+  };
+
+  const loadUserDataWithTimeout = async (fallbackTimeout) => {
     try {
       const result = await window.UserProfile.loadUserData();
       clearTimeout(fallbackTimeout);
       return result;
     } catch (error) {
       clearTimeout(fallbackTimeout);
-      const userNameElement = document.getElementById("userName");
-      const userEmailElement = document.getElementById("userEmail");
-      if (userNameElement && userNameElement.textContent === "Carregando...") {
-        userNameElement.textContent = "Erro ao carregar";
-      }
-      if (
-        userEmailElement &&
-        userEmailElement.textContent === "Carregando..."
-      ) {
-        userEmailElement.textContent = error.message?.includes("Timeout")
-          ? "Timeout - tente recarregar"
-          : "Erro ao carregar dados";
-      }
+      handleLoadError(error);
       throw error;
     }
-  } else {
-    clearTimeout(fallbackTimeout);
-    const userNameElement = document.getElementById("userName");
-    const userEmailElement = document.getElementById("userEmail");
-    if (userNameElement && userNameElement.textContent === "Carregando...") {
-      userNameElement.textContent = "Módulo não disponível";
-    }
-    if (userEmailElement && userEmailElement.textContent === "Carregando...") {
-      userEmailElement.textContent = "Recarregue a página";
-    }
+  };
+
+  // Função principal
+  const fallbackTimeout = createFallbackTimeout();
+
+  if (isUserProfileAvailable()) {
+    return await loadUserDataWithTimeout(fallbackTimeout);
   }
+
+  clearTimeout(fallbackTimeout);
+  handleModuleUnavailable();
 };
 
 window.AppInitializer.loadUserAvatar = async function () {

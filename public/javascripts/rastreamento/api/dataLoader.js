@@ -285,92 +285,111 @@ window.RastreamentoAPI.carregarDadosOuroNegro = async function () {
 
     transportadoras[ouroNegroIndex].notas = [];
 
-    data.forEach((item) => {
-      let status = "Aguardando coleta";
-      let ultimaAtualizacao = "";
-
+    // Funções auxiliares para processar dados Ouro Negro
+    const formatOuroNegroDateTime = (dateTime) => {
       try {
-        ultimaAtualizacao = window.RastreamentoUtils.formatarDataHora(
-          item.docDate
-        );
+        return window.RastreamentoUtils.formatarDataHora(dateTime);
       } catch (error) {
-        ultimaAtualizacao = item.docDate;
+        return dateTime;
       }
+    };
 
-      let ultimaCidade = item.bplName.split(" - ")[0];
-      let ultimaUF = "";
+    const formatOuroNegroDataHora = (dataOcorrencia, horaOcorrencia) => {
+      try {
+        return `${window.RastreamentoUtils.formatarData(
+          dataOcorrencia
+        )} ${horaOcorrencia}`;
+      } catch (error) {
+        return `${dataOcorrencia} ${horaOcorrencia}`;
+      }
+    };
 
+    const determineOuroNegroStatus = (codigoOcorrencia) => {
+      switch (codigoOcorrencia) {
+        case "101":
+        case "000":
+          return "Em processamento";
+        case "104":
+        case "105":
+          return "Em trânsito";
+        case "106":
+          return "Em rota de entrega";
+        case "108":
+        case "001":
+          return "Entregue";
+        default:
+          return "Em trânsito";
+      }
+    };
+
+    const sortOuroNegroOcorrencias = (ocorrencias) => {
+      return [...ocorrencias].sort((a, b) => {
+        const dataA = new Date(`${a.DATAOCORRENCIA} ${a.HORAOCORRENCIA}`);
+        const dataB = new Date(`${b.DATAOCORRENCIA} ${b.HORAOCORRENCIA}`);
+        return dataB - dataA;
+      });
+    };
+
+    const processOuroNegroRastreamento = (item) => {
       if (item.rastreamento && item.rastreamento.code === "400") {
-        status = "Aguardando coleta";
-        ultimaCidade = item.cidadeOrigem;
-        ultimaUF = item.estadoOrigem;
-      } else if (
-        Array.isArray(item.rastreamento) &&
-        item.rastreamento.length > 0
-      ) {
-        const ocorrencias = [...item.rastreamento].sort((a, b) => {
-          const dataA = new Date(`${a.DATAOCORRENCIA} ${a.HORAOCORRENCIA}`);
-          const dataB = new Date(`${b.DATAOCORRENCIA} ${b.HORAOCORRENCIA}`);
-          return dataB - dataA;
-        });
-
-        const ultimaOcorrencia = ocorrencias[0];
-
-        switch (ultimaOcorrencia.CODOCORRENCIA) {
-          case "101":
-          case "000":
-            status = "Em processamento";
-            break;
-          case "104":
-          case "105":
-            status = "Em trânsito";
-            break;
-          case "106":
-            status = "Em rota de entrega";
-            break;
-          case "108":
-          case "001":
-            status = "Entregue";
-            break;
-          default:
-            status = "Em trânsito";
-        }
-
-        try {
-          ultimaAtualizacao = `${window.RastreamentoUtils.formatarData(
-            ultimaOcorrencia.DATAOCORRENCIA
-          )} ${ultimaOcorrencia.HORAOCORRENCIA}`;
-        } catch (error) {
-          ultimaAtualizacao = `${ultimaOcorrencia.DATAOCORRENCIA} ${ultimaOcorrencia.HORAOCORRENCIA}`;
-        }
-
-        ultimaCidade = ultimaOcorrencia.CIDADE;
-        ultimaUF = ultimaOcorrencia.UF;
+        return {
+          status: "Aguardando coleta",
+          ultimaAtualizacao: formatOuroNegroDateTime(item.docDate),
+          ultimaCidade: item.cidadeOrigem,
+          ultimaUF: item.estadoOrigem,
+        };
       }
 
-      const nota = {
+      if (!Array.isArray(item.rastreamento) || item.rastreamento.length === 0) {
+        return {
+          status: "Aguardando coleta",
+          ultimaAtualizacao: formatOuroNegroDateTime(item.docDate),
+          ultimaCidade: item.bplName.split(" - ")[0],
+          ultimaUF: "",
+        };
+      }
+
+      const ocorrencias = sortOuroNegroOcorrencias(item.rastreamento);
+      const ultimaOcorrencia = ocorrencias[0];
+      const status = determineOuroNegroStatus(ultimaOcorrencia.CODOCORRENCIA);
+      const ultimaAtualizacao = formatOuroNegroDataHora(
+        ultimaOcorrencia.DATAOCORRENCIA,
+        ultimaOcorrencia.HORAOCORRENCIA
+      );
+
+      return {
+        status,
+        ultimaAtualizacao,
+        ultimaCidade: ultimaOcorrencia.CIDADE,
+        ultimaUF: ultimaOcorrencia.UF,
+      };
+    };
+
+    const buildOuroNegroNota = (item, rastreamentoData) => {
+      const hasRastreamento =
+        Array.isArray(item.rastreamento) && item.rastreamento.length > 0;
+      return {
         numero: item.serial.toString(),
-        status: status,
+        status: rastreamentoData.status,
         origem: `${item.cidadeOrigem}, ${item.estadoOrigem}`,
         destino: `${item.cidadeDestino}, ${item.estadoDestino}`,
         docDate: item.docDate.split(" ")[0],
-        dataEnvio:
-          Array.isArray(item.rastreamento) && item.rastreamento.length > 0
-            ? item.rastreamento[0].EMISSAO
-            : item.docDate.split(" ")[0],
-        previsaoEntrega:
-          Array.isArray(item.rastreamento) && item.rastreamento.length > 0
-            ? item.rastreamento[0].PREVISAO
-            : item.docDate.split(" ")[0],
-        ultimaAtualizacao: ultimaAtualizacao,
+        dataEnvio: hasRastreamento
+          ? item.rastreamento[0].EMISSAO
+          : item.docDate.split(" ")[0],
+        previsaoEntrega: hasRastreamento
+          ? item.rastreamento[0].PREVISAO
+          : item.docDate.split(" ")[0],
+        ultimaAtualizacao: rastreamentoData.ultimaAtualizacao,
         cliente: item.cardName,
-        cte:
-          Array.isArray(item.rastreamento) && item.rastreamento.length > 0
-            ? item.rastreamento[0].CTE
-            : "",
+        cte: hasRastreamento ? item.rastreamento[0].CTE : "",
         historico: Array.isArray(item.rastreamento) ? item.rastreamento : [],
       };
+    };
 
+    data.forEach((item) => {
+      const rastreamentoData = processOuroNegroRastreamento(item);
+      const nota = buildOuroNegroNota(item, rastreamentoData);
       transportadoras[ouroNegroIndex].notas.push(nota);
     });
 

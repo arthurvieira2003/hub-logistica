@@ -201,7 +201,7 @@ window.UserProfile.addAdminPanelOption = function () {
 
   const adminButton = document.createElement("div");
   adminButton.className = "tool-button admin-button";
-  adminButton.setAttribute("data-tool", "admin");
+  adminButton.dataset.tool = "admin";
   adminButton.innerHTML = `
     <i class="fas fa-cog"></i>
     <span>Configurações</span>

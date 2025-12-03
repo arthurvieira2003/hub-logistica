@@ -434,16 +434,15 @@ window.RastreamentoDataTablesRenderer.limparFiltros = function () {
 };
 
 window.RastreamentoDataTablesRenderer.aguardarDataTables = function () {
-  return new Promise((resolve, reject) => {
-    if (
-      typeof $ !== "undefined" &&
-      typeof $.fn !== "undefined" &&
-      $.fn.DataTable
-    ) {
-      resolve();
-      return;
-    }
+  // Função auxiliar para verificar se DataTables está disponível
+  const isDataTablesAvailable = () => {
+    return (
+      typeof $ !== "undefined" && typeof $.fn !== "undefined" && $.fn.DataTable
+    );
+  };
 
+  // Função auxiliar para carregar script do DataTables
+  const loadDataTablesScript = (reject) => {
     const existingScript = document.querySelector(
       'script[src*="datatables.net"]'
     );
@@ -456,16 +455,16 @@ window.RastreamentoDataTablesRenderer.aguardarDataTables = function () {
       };
       document.head.appendChild(script);
     }
+  };
 
+  // Função auxiliar para verificar periodicamente se DataTables foi carregado
+  const checkDataTablesLoaded = (resolve, reject) => {
     let attempts = 0;
     const maxAttempts = 50;
+
     const checkInterval = setInterval(() => {
       attempts++;
-      if (
-        typeof $ !== "undefined" &&
-        typeof $.fn !== "undefined" &&
-        $.fn.DataTable
-      ) {
+      if (isDataTablesAvailable()) {
         clearInterval(checkInterval);
         resolve();
       } else if (attempts >= maxAttempts) {
@@ -477,57 +476,74 @@ window.RastreamentoDataTablesRenderer.aguardarDataTables = function () {
         );
       }
     }, 100);
+  };
+
+  return new Promise((resolve, reject) => {
+    if (isDataTablesAvailable()) {
+      resolve();
+      return;
+    }
+
+    loadDataTablesScript(reject);
+    checkDataTablesLoaded(resolve, reject);
   });
 };
 
 window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
   todasNotas
 ) {
-  if (typeof $ === "undefined") {
-    console.error("❌ jQuery não está disponível");
-    return Promise.resolve();
-  }
-
-  try {
-    await window.RastreamentoDataTablesRenderer.aguardarDataTables();
-  } catch (error) {
-    console.error("❌ Erro ao aguardar DataTables:", error);
-    return Promise.resolve();
-  }
-
-  if (typeof $.fn.DataTable === "undefined") {
-    console.error(
-      "❌ DataTables não está disponível. Verifique se o script foi carregado corretamente."
-    );
-    return Promise.resolve();
-  }
-
-  const tabelaElement = $("#rastreamentoDataTable");
-  if (tabelaElement.length === 0) {
-    console.error("❌ Tabela #rastreamentoDataTable não encontrada");
-    return Promise.resolve();
-  }
-
-  if (!Array.isArray(todasNotas)) {
-    console.error("❌ todasNotas não é um array válido:", todasNotas);
-    return Promise.resolve();
-  }
-
-  if (window.dataTableInstance) {
-    try {
-      window.dataTableInstance.destroy();
-    } catch (error) {
-      console.warn("⚠️ Erro ao destruir DataTable anterior:", error);
+  // Funções auxiliares para validações
+  const validateJQuery = () => {
+    if (typeof $ === "undefined") {
+      console.error("❌ jQuery não está disponível");
+      return false;
     }
-    window.dataTableInstance = null;
-  }
+    return true;
+  };
 
-  const dadosDataTables =
-    window.RastreamentoDataTablesRenderer.converterDadosParaDataTables(
-      todasNotas
-    );
+  const validateDataTables = () => {
+    if (typeof $.fn.DataTable === "undefined") {
+      console.error(
+        "❌ DataTables não está disponível. Verifique se o script foi carregado corretamente."
+      );
+      return false;
+    }
+    return true;
+  };
 
-  if (dadosDataTables.length > 0) {
+  const validateTableElement = () => {
+    const tabelaElement = $("#rastreamentoDataTable");
+    if (tabelaElement.length === 0) {
+      console.error("❌ Tabela #rastreamentoDataTable não encontrada");
+      return null;
+    }
+    return tabelaElement;
+  };
+
+  const validateNotasArray = () => {
+    if (!Array.isArray(todasNotas)) {
+      console.error("❌ todasNotas não é um array válido:", todasNotas);
+      return false;
+    }
+    return true;
+  };
+
+  const destroyPreviousInstance = () => {
+    if (window.dataTableInstance) {
+      try {
+        window.dataTableInstance.destroy();
+      } catch (error) {
+        console.warn("⚠️ Erro ao destruir DataTable anterior:", error);
+      }
+      window.dataTableInstance = null;
+    }
+  };
+
+  const validateDataTableFields = (dadosDataTables) => {
+    if (dadosDataTables.length === 0) {
+      return false;
+    }
+
     const primeiroRegistro = dadosDataTables[0];
     const camposObrigatorios = [
       "numero",
@@ -548,13 +564,63 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
           `❌ Campo obrigatório '${campo}' não encontrado no registro:`,
           primeiroRegistro
         );
-        return Promise.resolve();
+        return false;
       }
     }
+    return true;
+  };
+
+  const createInitCompleteHandler = (todasNotas, resolve) => {
+    return function () {
+      if (
+        window.RastreamentoEvents &&
+        window.RastreamentoEvents.configurarEventosDetalhes
+      ) {
+        window.RastreamentoEvents.configurarEventosDetalhes(todasNotas);
+      }
+
+      window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados(
+        $(this).DataTable()
+      );
+
+      resolve();
+    };
+  };
+
+  // Validações iniciais
+  if (!validateJQuery()) {
+    return;
   }
 
-  if (dadosDataTables.length === 0) {
-    return Promise.resolve();
+  try {
+    await window.RastreamentoDataTablesRenderer.aguardarDataTables();
+  } catch (error) {
+    console.error("❌ Erro ao aguardar DataTables:", error);
+    return;
+  }
+
+  if (!validateDataTables()) {
+    return;
+  }
+
+  const tabelaElement = validateTableElement();
+  if (!tabelaElement) {
+    return;
+  }
+
+  if (!validateNotasArray()) {
+    return;
+  }
+
+  destroyPreviousInstance();
+
+  const dadosDataTables =
+    window.RastreamentoDataTablesRenderer.converterDadosParaDataTables(
+      todasNotas
+    );
+
+  if (!validateDataTableFields(dadosDataTables)) {
+    return;
   }
 
   return new Promise((resolve, reject) => {
@@ -647,20 +713,7 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
             type: "string",
           },
         ],
-        initComplete: function () {
-          if (
-            window.RastreamentoEvents &&
-            window.RastreamentoEvents.configurarEventosDetalhes
-          ) {
-            window.RastreamentoEvents.configurarEventosDetalhes(todasNotas);
-          }
-
-          window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados(
-            $(this).DataTable()
-          );
-
-          resolve();
-        },
+        initComplete: createInitCompleteHandler(todasNotas, resolve),
       });
     } catch (error) {
       console.error("❌ Erro ao inicializar DataTable:", error);
@@ -672,8 +725,7 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
     console.error("❌ Erro ao inicializar DataTable:", error);
     console.error("❌ Dados recebidos:", dadosDataTables);
     console.error("❌ Elemento da tabela:", tabelaElement);
-
-    return Promise.resolve();
+    // Retorna undefined em caso de erro (função async retorna Promise resolvida)
   });
 };
 

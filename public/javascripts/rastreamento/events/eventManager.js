@@ -108,27 +108,34 @@ window.RastreamentoEvents.animateCards = function () {
 };
 
 window.RastreamentoEvents.configurarEventosDetalhes = function (todasNotas) {
-  setTimeout(() => {
+  // Função auxiliar para criar handler de click
+  const createDetalhesClickHandler = (notaNumero, todasNotas) => {
+    return function () {
+      const nota = todasNotas.find((n) => n.numero === notaNumero);
+      if (nota) {
+        const conteudoModal =
+          window.RastreamentoModalRenderers.renderizarConteudoModal(nota);
+        window.RastreamentoComponents.abrirModal(
+          conteudoModal,
+          `Detalhes da Nota ${notaNumero}`
+        );
+      } else {
+        console.error("❌ Nota não encontrada:", notaNumero);
+      }
+    };
+  };
+
+  // Função auxiliar para configurar eventos dos botões
+  const configurarBotoesDetalhes = () => {
     const botoesDetalhes = document.querySelectorAll(".detalhes-btn");
-
-    botoesDetalhes.forEach((button, index) => {
-      button.addEventListener("click", function () {
-        const notaNumero = this.dataset.nota;
-
-        const nota = todasNotas.find((n) => n.numero === notaNumero);
-        if (nota) {
-          const conteudoModal =
-            window.RastreamentoModalRenderers.renderizarConteudoModal(nota);
-          window.RastreamentoComponents.abrirModal(
-            conteudoModal,
-            `Detalhes da Nota ${notaNumero}`
-          );
-        } else {
-          console.error("❌ Nota não encontrada:", notaNumero);
-        }
-      });
+    botoesDetalhes.forEach((button) => {
+      const notaNumero = button.dataset.nota;
+      const clickHandler = createDetalhesClickHandler(notaNumero, todasNotas);
+      button.addEventListener("click", clickHandler);
     });
-  }, 100);
+  };
+
+  setTimeout(configurarBotoesDetalhes, 100);
 };
 
 window.RastreamentoEvents.mostrarOverlayLoading = function () {

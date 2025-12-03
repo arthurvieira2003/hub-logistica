@@ -699,6 +699,7 @@ window.ToolManager.renderCTEDetails = function (cte) {
     modalHeader.textContent = `CT-E ${cte.numero || cte.serial}`;
   }
 
+  // Funções auxiliares de formatação
   const formatCurrency = (value) => {
     if (!value) return "R$ 0,00";
     const num = parseFloat(value);
@@ -768,6 +769,159 @@ window.ToolManager.renderCTEDetails = function (cte) {
           <span class="cte-detail-label">${label}</span>
           <span class="cte-detail-value cte-address-value">${enderecoCompleto}</span>
         </div>
+    `;
+  };
+
+  // Funções auxiliares para renderizar seções
+  const renderICMSValue = (icms) => {
+    if (!icms?.valor) return "";
+    return `
+        <div class="cte-value-item">
+          <span class="cte-detail-label">ICMS</span>
+          <span class="cte-detail-value">${formatCurrency(icms.valor)}</span>
+        </div>
+    `;
+  };
+
+  const renderComponentes = (componentes) => {
+    if (!componentes || componentes.length === 0) return "";
+
+    const componentesComValor = componentes.filter(
+      (comp) => comp.valor && parseFloat(comp.valor) > 0
+    );
+
+    if (componentesComValor.length === 0) return "";
+
+    return `
+      <div style="margin-top: 24px;">
+        <h5 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: var(--text-secondary);">Componentes da Prestação</h5>
+        <div class="cte-components-list">
+          ${componentesComValor
+            .map(
+              (comp) => `
+            <div class="cte-component-item">
+              <span class="cte-component-name">${comp.nome || "-"}</span>
+              <span class="cte-component-value">${formatCurrency(comp.valor)}</span>
+            </div>
+          `
+            )
+            .join("")}
+        </div>
+      </div>
+    `;
+  };
+
+  const renderICMSDetails = (icms) => {
+    if (!icms || (!icms.baseCalculo && !icms.aliquota && !icms.cst)) {
+      return "";
+    }
+
+    const renderBaseCalculo = () => {
+      if (!icms.baseCalculo) return "";
+      return `
+        <div class="cte-value-item">
+          <span class="cte-detail-label">Base de Cálculo ICMS</span>
+          <span class="cte-detail-value">${formatCurrency(icms.baseCalculo)}</span>
+        </div>
+      `;
+    };
+
+    const renderAliquota = () => {
+      if (!icms.aliquota) return "";
+      return `
+        <div class="cte-value-item">
+          <span class="cte-detail-label">Alíquota ICMS</span>
+          <span class="cte-detail-value">${parseFloat(icms.aliquota).toFixed(2)}%</span>
+        </div>
+      `;
+    };
+
+    const renderCST = () => {
+      if (!icms.cst) return "";
+      return `
+        <div class="cte-value-item">
+          <span class="cte-detail-label">CST ICMS</span>
+          <span class="cte-detail-value">${icms.cst}</span>
+        </div>
+      `;
+    };
+
+    return `
+      <div class="cte-values-grid" style="margin-top: 16px;">
+        ${renderBaseCalculo()}
+        ${renderAliquota()}
+        ${renderCST()}
+      </div>
+    `;
+  };
+
+  const renderCargaSection = (carga) => {
+    if (!carga || (!carga.quantidade && !carga.valorCarga)) {
+      return "";
+    }
+
+    const renderQuantidade = () => {
+      if (!carga.quantidade) return "";
+      return `
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Quantidade</span>
+          <span class="cte-detail-value">${carga.quantidade} ${carga.especie || ""}</span>
+        </div>
+      `;
+    };
+
+    const renderValorCarga = () => {
+      if (!carga.valorCarga) return "";
+      return `
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Valor da Carga</span>
+          <span class="cte-detail-value">${formatCurrency(carga.valorCarga)}</span>
+        </div>
+      `;
+    };
+
+    const renderValorCargaAverb = () => {
+      if (!carga.valorCargaAverb) return "";
+      return `
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Valor da Carga Averbado</span>
+          <span class="cte-detail-value">${formatCurrency(carga.valorCargaAverb)}</span>
+        </div>
+      `;
+    };
+
+    const renderLacres = () => {
+      if (!carga.lacres || carga.lacres.length === 0) return "";
+      return `
+        <div class="cte-detail-item">
+          <span class="cte-detail-label">Lacres</span>
+          <span class="cte-detail-value">${carga.lacres.join(", ")}</span>
+        </div>
+      `;
+    };
+
+    return `
+    <div class="cte-details-section">
+      <h4><i class="fas fa-weight"></i> Informações de Carga</h4>
+      <div class="cte-details-grid">
+        ${renderQuantidade()}
+        ${renderValorCarga()}
+        ${renderValorCargaAverb()}
+        ${renderLacres()}
+      </div>
+    </div>
+    `;
+  };
+
+  const renderInformacoesComplementares = (informacoes) => {
+    if (!informacoes) return "";
+    return `
+    <div class="cte-details-section">
+      <h4><i class="fas fa-sticky-note"></i> Informações Complementares</h4>
+      <div class="cte-detail-item">
+        <span class="cte-detail-value" style="white-space: pre-wrap;">${informacoes}</span>
+      </div>
+    </div>
     `;
   };
 
@@ -900,168 +1054,17 @@ window.ToolManager.renderCTEDetails = function (cte) {
             cte.valores?.valorTotal || cte.docTotal
           )}</span>
         </div>
-        ${
-          cte.valores?.icms?.valor
-            ? `
-        <div class="cte-value-item">
-          <span class="cte-detail-label">ICMS</span>
-          <span class="cte-detail-value">${formatCurrency(
-            cte.valores.icms.valor
-          )}</span>
-        </div>
-        `
-            : ""
-        }
+        ${renderICMSValue(cte.valores?.icms)}
       </div>
       
-      ${
-        cte.valores?.componentes && cte.valores.componentes.length > 0
-          ? (() => {
-              const componentesComValor = cte.valores.componentes.filter(
-                (comp) => comp.valor && parseFloat(comp.valor) > 0
-              );
-
-              return componentesComValor.length > 0
-                ? `
-      <div style="margin-top: 24px;">
-        <h5 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: var(--text-secondary);">Componentes da Prestação</h5>
-        <div class="cte-components-list">
-          ${componentesComValor
-            .map(
-              (comp) => `
-            <div class="cte-component-item">
-              <span class="cte-component-name">${comp.nome || "-"}</span>
-              <span class="cte-component-value">${formatCurrency(
-                comp.valor
-              )}</span>
-            </div>
-          `
-            )
-            .join("")}
-        </div>
-      </div>
-      `
-                : "";
-            })()
-          : ""
-      }
+      ${renderComponentes(cte.valores?.componentes)}
       
-      ${
-        cte.valores?.icms?.baseCalculo ||
-        cte.valores?.icms?.aliquota ||
-        cte.valores?.icms?.cst
-          ? `
-      <div class="cte-values-grid" style="margin-top: 16px;">
-        ${
-          cte.valores.icms.baseCalculo
-            ? `
-        <div class="cte-value-item">
-          <span class="cte-detail-label">Base de Cálculo ICMS</span>
-          <span class="cte-detail-value">${formatCurrency(
-            cte.valores.icms.baseCalculo
-          )}</span>
-        </div>
-        `
-            : ""
-        }
-        ${
-          cte.valores.icms.aliquota
-            ? `
-        <div class="cte-value-item">
-          <span class="cte-detail-label">Alíquota ICMS</span>
-          <span class="cte-detail-value">${
-            parseFloat(cte.valores.icms.aliquota).toFixed(2) + "%"
-          }</span>
-        </div>
-        `
-            : ""
-        }
-        ${
-          cte.valores.icms.cst
-            ? `
-        <div class="cte-value-item">
-          <span class="cte-detail-label">CST ICMS</span>
-          <span class="cte-detail-value">${cte.valores.icms.cst}</span>
-        </div>
-        `
-            : ""
-        }
-      </div>
-      `
-          : ""
-      }
+      ${renderICMSDetails(cte.valores?.icms)}
     </div>
 
-    ${
-      cte.carga?.quantidade || cte.carga?.valorCarga
-        ? `
-    <div class="cte-details-section">
-      <h4><i class="fas fa-weight"></i> Informações de Carga</h4>
-      <div class="cte-details-grid">
-        ${
-          cte.carga?.quantidade
-            ? `
-        <div class="cte-detail-item">
-          <span class="cte-detail-label">Quantidade</span>
-          <span class="cte-detail-value">${cte.carga.quantidade} ${
-                cte.carga.especie || ""
-              }</span>
-        </div>
-        `
-            : ""
-        }
-        ${
-          cte.carga?.valorCarga
-            ? `
-        <div class="cte-detail-item">
-          <span class="cte-detail-label">Valor da Carga</span>
-          <span class="cte-detail-value">${formatCurrency(
-            cte.carga.valorCarga
-          )}</span>
-        </div>
-        `
-            : ""
-        }
-        ${
-          cte.carga?.valorCargaAverb
-            ? `
-        <div class="cte-detail-item">
-          <span class="cte-detail-label">Valor da Carga Averbado</span>
-          <span class="cte-detail-value">${formatCurrency(
-            cte.carga.valorCargaAverb
-          )}</span>
-        </div>
-        `
-            : ""
-        }
-        ${
-          cte.carga?.lacres && cte.carga.lacres.length > 0
-            ? `
-        <div class="cte-detail-item">
-          <span class="cte-detail-label">Lacres</span>
-          <span class="cte-detail-value">${cte.carga.lacres.join(", ")}</span>
-        </div>
-        `
-            : ""
-        }
-      </div>
-    </div>
-    `
-        : ""
-    }
+    ${renderCargaSection(cte.carga)}
 
-    ${
-      cte.informacoesComplementares
-        ? `
-    <div class="cte-details-section">
-      <h4><i class="fas fa-sticky-note"></i> Informações Complementares</h4>
-      <div class="cte-detail-item">
-        <span class="cte-detail-value" style="white-space: pre-wrap;">${cte.informacoesComplementares}</span>
-      </div>
-    </div>
-    `
-        : ""
-    }
+    ${renderInformacoesComplementares(cte.informacoesComplementares)}
   `;
 };
 
