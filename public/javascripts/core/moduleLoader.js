@@ -52,7 +52,7 @@ window.ModuleLoader.configs = {
 
   rastreamento: {
     basePath: "/javascripts/rastreamento",
-    dependencies: ["core"],
+    dependencies: [], // Versão capada: sem dependências de core/auth
     modules: [
       {
         name: "transportadoras",
@@ -333,8 +333,9 @@ window.ModuleLoader.clearState = function () {
 window.ModuleLoader.init = function () {
   const currentPath = window.location.pathname;
 
-  if (currentPath === "/") {
-    window.ModuleLoader.checkAuthAndRedirect();
+  if (currentPath === "/" || currentPath.includes("rastreamento")) {
+    // Versão capada: carregar rastreamento sem autenticação
+    window.ModuleLoader.loadRastreamentoPage();
   } else if (currentPath.includes("login")) {
     window.ModuleLoader.loadLoginPage();
   } else if (currentPath.includes("administration")) {

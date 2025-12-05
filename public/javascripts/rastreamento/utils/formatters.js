@@ -33,10 +33,22 @@ window.RastreamentoUtils.formatarDataHora = function (dataString) {
 };
 
 window.RastreamentoUtils.obterToken = function () {
-  return document.cookie
+  // Primeiro tenta obter do cookie (se existir)
+  const cookieToken = document.cookie
     .split("; ")
     .find((row) => row.startsWith("token="))
     ?.split("=")[1];
+  
+  if (cookieToken) {
+    return cookieToken;
+  }
+  
+  // Se não houver cookie, usa token padrão do config (versão capada)
+  if (window.APP_CONFIG && window.APP_CONFIG.API_TOKEN) {
+    return window.APP_CONFIG.API_TOKEN;
+  }
+  
+  return null;
 };
 
 window.RastreamentoUtils.verificarNotaAtrasada = function (nota) {

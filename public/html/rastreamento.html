@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rastreamento - HUB Logística</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.ico" />
+    <link rel="stylesheet" href="../styles/rastreamento.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/2.3.4/css/dataTables.dataTables.min.css"
+    />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <link rel="stylesheet" href="../styles/datatables-rastreamento.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: #f5f7fa;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .main-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 2rem;
+      }
+
+      .rastreamento-container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .rastreamento-header h2 {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+      }
+
+      #trackingView {
+        width: 100%;
+        min-height: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-container">
+      <div class="rastreamento-container">
+        <div class="rastreamento-header">
+          <h2><i class="fas fa-location-dot"></i> Rastreamento de Notas</h2>
+        </div>
+        <div id="trackingView" class="tracking-container">
+          <div
+            class="rastreamento-loading-overlay"
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 400px;
+            "
+          >
+            <div class="rastreamento-loading-content">
+              <i
+                class="fas fa-spinner fa-spin"
+                style="font-size: 2rem; color: #247675"
+              ></i>
+              <p style="margin-top: 1rem; color: #666">Carregando dados...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../javascripts/config.js"></script>
+    <script src="../javascripts/utils/apiConfig.js"></script>
+    <script src="../javascripts/core/moduleLoader.js"></script>
+    <script>
+      // Carregar apenas módulos de rastreamento, sem autenticação
+      (async function () {
+        try {
+          await window.ModuleLoader.loadRastreamentoPage();
+
+          // Aguardar um pouco para garantir que tudo foi carregado
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // Inicializar rastreamento
+          if (
+            window.RastreamentoMain &&
+            window.RastreamentoMain.initRastreamento
+          ) {
+            const trackingView = document.getElementById("trackingView");
+            if (trackingView) {
+              await window.RastreamentoMain.initRastreamento(trackingView);
+
+              // Remover overlay de loading
+              const overlay = trackingView.querySelector(
+                ".rastreamento-loading-overlay"
+              );
+              if (overlay) {
+                overlay.remove();
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao carregar rastreamento:", error);
+          const trackingView = document.getElementById("trackingView");
+          if (trackingView) {
+            trackingView.innerHTML = `
+              <div style="text-align: center; padding: 2rem; color: #e74c3c;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p>Erro ao carregar dados de rastreamento.</p>
+              </div>
+            `;
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>

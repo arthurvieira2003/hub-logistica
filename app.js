@@ -29,8 +29,12 @@ if (!API_BASE_URL) {
   }
 }
 
+// Token padrão para versão capada (sem login)
+const API_TOKEN = process.env.API_TOKEN || "";
+
 const configContent = `window.APP_CONFIG = {
-  API_BASE_URL: "${API_BASE_URL}"
+  API_BASE_URL: "${API_BASE_URL}",
+  API_TOKEN: "${API_TOKEN}"
 };`;
 
 const configPath = path.join(__dirname, "public", "javascripts", "config.js");
@@ -59,7 +63,7 @@ app.use("/javascripts", express.static("public/javascripts"));
 app.use("/styles", express.static("public/styles"));
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/html/login.html");
+  res.sendFile(__dirname + "/public/html/rastreamento.html");
 });
 
 app.get("/home", (req, res) => {

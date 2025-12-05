@@ -27,10 +27,3 @@ window.AuthCheckMain.initAuthCheck = function () {
 };
 
 window.LoginCheckMain = window.AuthCheckMain;
-
-if (
-  !window.location.pathname.includes("login") &&
-  window.location.pathname !== "/"
-) {
-  window.AuthCheckMain.initAuthCheck();
-}

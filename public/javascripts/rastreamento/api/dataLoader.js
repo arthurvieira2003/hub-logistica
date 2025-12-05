@@ -206,13 +206,19 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
       (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
       "https://logistica.copapel.com.br/api";
+    
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
     const response = await fetch(
       `${API_BASE_URL}/generic/track/${dataRastreamento}`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: headers,
       }
     );
     if (!response.ok) {
@@ -255,13 +261,19 @@ window.RastreamentoAPI.carregarDadosOuroNegro = async function () {
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
       "https://logistica.copapel.com.br/api";
+    
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
     const response = await fetch(
       `${API_BASE_URL}/ouroNegro/track/${dataRastreamento}`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: headers,
       }
     );
     if (!response.ok) {
@@ -409,13 +421,19 @@ window.RastreamentoAPI.carregarDadosPrincesa = async function () {
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
       "https://logistica.copapel.com.br/api";
+    
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
     const response = await fetch(
       `${API_BASE_URL}/princesa/track/${dataRastreamento}`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: headers,
       }
     );
     if (!response.ok) {
