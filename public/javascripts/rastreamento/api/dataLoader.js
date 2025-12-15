@@ -199,26 +199,19 @@ function processItem(item, transportadoras) {
 
 window.RastreamentoAPI.carregarDadosGenericos = async function () {
   try {
-    const token = window.RastreamentoUtils.obterToken();
     const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
     const API_BASE_URL =
       (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
       "https://logistica.copapel.com.br/api";
-    
-    const headers = {
-      "Content-Type": "application/json",
-    };
-    
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-    
+
     const response = await fetch(
       `${API_BASE_URL}/generic/track/${dataRastreamento}`,
       {
-        headers: headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
     );
     if (!response.ok) {
@@ -232,6 +225,12 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
       data = responseData;
     } else if (responseData.data && Array.isArray(responseData.data)) {
       data = responseData.data;
+    } else if (responseData.status === "error") {
+      console.error(
+        "Erro ao buscar dados genéricos:",
+        responseData.errorMessage
+      );
+      return false;
     } else {
       return true;
     }
@@ -242,6 +241,37 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
 
     const transportadoras = window.RastreamentoConfig.transportadoras;
     data.forEach((item) => {
+      // Ajusta o formato do rastreamento se vier do banco
+      // O banco retorna trackingData diretamente, que pode ser um objeto com { tracking: [...] }
+      if (item.rastreamento) {
+        // Se rastreamento tem a propriedade tracking (formato Generic/SSW do banco)
+        if (
+          item.rastreamento.tracking &&
+          Array.isArray(item.rastreamento.tracking)
+        ) {
+          item.rastreamento = {
+            success: true,
+            tracking: item.rastreamento.tracking,
+          };
+        }
+        // Se rastreamento é um array (formato Ouro Negro), mantém como está
+        // Se rastreamento tem data (formato Princesa), mantém como está
+      }
+
+      // Armazena lastUpdated se disponível
+      if (item.lastUpdated) {
+        if (!window.RastreamentoConfig.ultimaAtualizacao) {
+          window.RastreamentoConfig.ultimaAtualizacao = new Date(
+            item.lastUpdated
+          );
+        } else {
+          const dataAtualizacao = new Date(item.lastUpdated);
+          if (dataAtualizacao > window.RastreamentoConfig.ultimaAtualizacao) {
+            window.RastreamentoConfig.ultimaAtualizacao = dataAtualizacao;
+          }
+        }
+      }
+
       processItem(item, transportadoras);
     });
 
@@ -254,26 +284,19 @@ window.RastreamentoAPI.carregarDadosGenericos = async function () {
 
 window.RastreamentoAPI.carregarDadosOuroNegro = async function () {
   try {
-    const token = window.RastreamentoUtils.obterToken();
     const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
     const API_BASE_URL =
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
       "https://logistica.copapel.com.br/api";
-    
-    const headers = {
-      "Content-Type": "application/json",
-    };
-    
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-    
+
     const response = await fetch(
       `${API_BASE_URL}/ouroNegro/track/${dataRastreamento}`,
       {
-        headers: headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
     );
     if (!response.ok) {
@@ -281,6 +304,12 @@ window.RastreamentoAPI.carregarDadosOuroNegro = async function () {
     }
 
     const data = await response.json();
+
+    // Verifica se é um erro
+    if (data.status === "error") {
+      console.error("Erro ao buscar dados Ouro Negro:", data.errorMessage);
+      return false;
+    }
 
     if (!Array.isArray(data) || data.length === 0) {
       return true;
@@ -400,6 +429,20 @@ window.RastreamentoAPI.carregarDadosOuroNegro = async function () {
     };
 
     data.forEach((item) => {
+      // Armazena lastUpdated se disponível
+      if (item.lastUpdated) {
+        if (!window.RastreamentoConfig.ultimaAtualizacao) {
+          window.RastreamentoConfig.ultimaAtualizacao = new Date(
+            item.lastUpdated
+          );
+        } else {
+          const dataAtualizacao = new Date(item.lastUpdated);
+          if (dataAtualizacao > window.RastreamentoConfig.ultimaAtualizacao) {
+            window.RastreamentoConfig.ultimaAtualizacao = dataAtualizacao;
+          }
+        }
+      }
+
       const rastreamentoData = processOuroNegroRastreamento(item);
       const nota = buildOuroNegroNota(item, rastreamentoData);
       transportadoras[ouroNegroIndex].notas.push(nota);
@@ -414,26 +457,19 @@ window.RastreamentoAPI.carregarDadosOuroNegro = async function () {
 
 window.RastreamentoAPI.carregarDadosPrincesa = async function () {
   try {
-    const token = window.RastreamentoUtils.obterToken();
     const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
     const API_BASE_URL =
       (window.getApiBaseUrl && window.getApiBaseUrl()) ||
       (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
       "https://logistica.copapel.com.br/api";
-    
-    const headers = {
-      "Content-Type": "application/json",
-    };
-    
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-    
+
     const response = await fetch(
       `${API_BASE_URL}/princesa/track/${dataRastreamento}`,
       {
-        headers: headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
     );
     if (!response.ok) {
@@ -441,6 +477,12 @@ window.RastreamentoAPI.carregarDadosPrincesa = async function () {
     }
 
     const data = await response.json();
+
+    // Verifica se é um erro
+    if (data.status === "error") {
+      console.error("Erro ao buscar dados Princesa:", data.errorMessage);
+      return false;
+    }
 
     if (!Array.isArray(data) || data.length === 0) {
       return true;
@@ -531,6 +573,20 @@ window.RastreamentoAPI.carregarDadosPrincesa = async function () {
     };
 
     data.forEach((item) => {
+      // Armazena lastUpdated se disponível
+      if (item.lastUpdated) {
+        if (!window.RastreamentoConfig.ultimaAtualizacao) {
+          window.RastreamentoConfig.ultimaAtualizacao = new Date(
+            item.lastUpdated
+          );
+        } else {
+          const dataAtualizacao = new Date(item.lastUpdated);
+          if (dataAtualizacao > window.RastreamentoConfig.ultimaAtualizacao) {
+            window.RastreamentoConfig.ultimaAtualizacao = dataAtualizacao;
+          }
+        }
+      }
+
       const rastreamentoData = processPrincesaRastreamento(item);
       const nota = buildPrincesaNota(item, rastreamentoData);
       transportadoras[princesaIndex].notas.push(nota);
@@ -546,6 +602,9 @@ window.RastreamentoAPI.carregarDadosPrincesa = async function () {
 window.RastreamentoAPI.recarregarDadosComNovaData = async function (novaData) {
   try {
     window.RastreamentoConfig.atualizarDataRastreamento(novaData);
+
+    // Limpa a última atualização ao recarregar
+    window.RastreamentoConfig.ultimaAtualizacao = null;
 
     const transportadoras = window.RastreamentoConfig.transportadoras;
     let totalNotasAntes = 0;

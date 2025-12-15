@@ -79,6 +79,8 @@ window.RastreamentoConfig.dataRastreamento = new Date()
   .toISOString()
   .split("T")[0];
 
+window.RastreamentoConfig.ultimaAtualizacao = null;
+
 window.RastreamentoConfig.atualizarDataRastreamento = function (novaData) {
   window.RastreamentoConfig.dataRastreamento = novaData;
 };

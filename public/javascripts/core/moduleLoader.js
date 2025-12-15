@@ -61,6 +61,7 @@ window.ModuleLoader.configs = {
       },
       { name: "formatters", path: "/utils/formatters.js", priority: 2 },
       { name: "dataLoader", path: "/api/dataLoader.js", priority: 3 },
+      { name: "buscaAPI", path: "/api/buscaAPI.js", priority: 3.5 },
       { name: "modal", path: "/components/modal.js", priority: 4 },
       { name: "tabela", path: "/renderers/tabela.js", priority: 5 },
       {
@@ -163,14 +164,18 @@ window.ModuleLoader.configs = {
 
 window.ModuleLoader.loadScript = function (src) {
   return new Promise((resolve, reject) => {
+    // Adiciona timestamp para evitar cache do navegador
+    const timestamp = new Date().getTime();
+    const srcWithCacheBust = `${src}?v=${timestamp}`;
+
     const existingScript = document.querySelector(`script[src="${src}"]`);
     if (existingScript) {
-      resolve();
-      return;
+      // Remove script antigo para forçar recarregamento
+      existingScript.remove();
     }
 
     const script = document.createElement("script");
-    script.src = src;
+    script.src = srcWithCacheBust;
     script.onload = () => {
       window.ModuleLoader.state.loadedModules.add(src);
       resolve();

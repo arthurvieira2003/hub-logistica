@@ -1109,7 +1109,7 @@ window.ToolManager.loadRastreamentoTool = async function (contentElement) {
     <div id="trackingView" class="tracking-container">
       <div class="rastreamento-header" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
         <div class="rastreamento-title-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <h2 style="font-size: 1.75rem; font-weight: 600; margin: 0;">Rastreamento de Notas</h2>
+          <h2 style="font-size: 1.75rem; font-weight: 600; margin: 0; color: #247675;">Rastreamento de Notas - Transportadoras</h2>
         </div>
       </div>
       <div id="rastreamentoContainer"></div>

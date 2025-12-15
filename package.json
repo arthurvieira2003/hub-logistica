@@ -5,9 +5,6 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "jest --coverage --watchAll=false",
-    "test:watch": "jest --watch",
-    "test:ci": "jest --coverage --watchAll=false --ci",
     "dev": "nodemon --legacy-watch app.js"
   },
   "keywords": [],
@@ -18,10 +15,5 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "nodemon": "^3.1.11"
-  },
-  "devDependencies": {
-    "@jest/globals": "^29.7.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0"
   }
 }

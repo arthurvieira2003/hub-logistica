@@ -32,39 +32,54 @@ window.RastreamentoUtils.formatarDataHora = function (dataString) {
   )} ${partes[1].substring(0, 5)}`;
 };
 
-window.RastreamentoUtils.obterToken = function () {
-  // Primeiro tenta obter do cookie (se existir)
-  const cookieToken = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("token="))
-    ?.split("=")[1];
-  
-  if (cookieToken) {
-    return cookieToken;
-  }
-  
-  // Se não houver cookie, usa token padrão do config (versão capada)
-  if (window.APP_CONFIG && window.APP_CONFIG.API_TOKEN) {
-    return window.APP_CONFIG.API_TOKEN;
-  }
-  
-  return null;
-};
-
 window.RastreamentoUtils.verificarNotaAtrasada = function (nota) {
+  // Se a nota já foi entregue, não está atrasada
   if (nota.status === "Entregue") return false;
+
+  // Se não tem previsão de entrega, não pode estar atrasada
+  if (!nota.previsaoEntrega || nota.previsaoEntrega === "-" || nota.previsaoEntrega.trim() === "") {
+    return false;
+  }
 
   const hoje = new Date();
   let previsao;
 
   try {
-    if (nota.previsaoEntrega && nota.previsaoEntrega.includes("/")) {
-      const [dia, mes, ano] = nota.previsaoEntrega.split("/");
-      previsao = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
-    } else if (nota.previsaoEntrega && nota.previsaoEntrega.includes("-")) {
-      const [ano, mes, dia] = nota.previsaoEntrega.split("-");
-      previsao = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+    // Tenta diferentes formatos de data
+    if (nota.previsaoEntrega.includes("/")) {
+      // Formato DD/MM/YYYY ou MM/DD/YYYY
+      const partes = nota.previsaoEntrega.split("/");
+      if (partes.length === 3) {
+        // Assumindo formato DD/MM/YYYY (padrão brasileiro)
+        const dia = parseInt(partes[0], 10);
+        const mes = parseInt(partes[1], 10) - 1; // Mês é 0-indexed
+        const ano = parseInt(partes[2], 10);
+        previsao = new Date(ano, mes, dia);
+      } else {
+        previsao = new Date(nota.previsaoEntrega);
+      }
+    } else if (nota.previsaoEntrega.includes("-")) {
+      // Formato YYYY-MM-DD ou DD-MM-YYYY
+      const partes = nota.previsaoEntrega.split("-");
+      if (partes.length === 3) {
+        // Se o primeiro elemento tem 4 dígitos, é YYYY-MM-DD
+        if (partes[0].length === 4) {
+          const ano = parseInt(partes[0], 10);
+          const mes = parseInt(partes[1], 10) - 1;
+          const dia = parseInt(partes[2], 10);
+          previsao = new Date(ano, mes, dia);
+        } else {
+          // DD-MM-YYYY
+          const dia = parseInt(partes[0], 10);
+          const mes = parseInt(partes[1], 10) - 1;
+          const ano = parseInt(partes[2], 10);
+          previsao = new Date(ano, mes, dia);
+        }
+      } else {
+        previsao = new Date(nota.previsaoEntrega);
+      }
     } else {
+      // Tenta parse direto
       previsao = new Date(nota.previsaoEntrega);
     }
 
@@ -82,9 +97,11 @@ window.RastreamentoUtils.verificarNotaAtrasada = function (nota) {
     return false;
   }
 
+  // Zera horas para comparar apenas as datas
   hoje.setHours(0, 0, 0, 0);
   previsao.setHours(0, 0, 0, 0);
 
+  // Verifica se hoje é maior que a previsão (atrasada)
   const isAtrasada = hoje > previsao;
 
   return isAtrasada;

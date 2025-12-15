@@ -8,9 +8,31 @@ window.RastreamentoDataTablesRenderer.renderizarCabecalhoTabela = function (
 ) {
   const dataRastreamento = window.RastreamentoConfig.obterDataRastreamento();
 
+  // Formata a última atualização
+  let ultimaAtualizacaoTexto = "Não disponível";
+  if (window.RastreamentoConfig.ultimaAtualizacao) {
+    try {
+      ultimaAtualizacaoTexto = window.RastreamentoUtils.formatarDataHora(
+        window.RastreamentoConfig.ultimaAtualizacao
+      );
+    } catch (error) {
+      // Se houver erro, tenta formatar manualmente
+      const data = new Date(window.RastreamentoConfig.ultimaAtualizacao);
+      if (!isNaN(data.getTime())) {
+        ultimaAtualizacaoTexto = data.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+    }
+  }
+
   return `
     <div class="header-rastreamento" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #247675;">
-      <div class="stats" style="display: flex; gap: 16px;">
+      <div class="stats" style="display: flex; gap: 16px; flex-wrap: wrap;">
         <div class="stat-item" style="background-color: #f8f9fa; border-radius: 8px; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;">
           <div class="stat-value" style="font-size: 24px; font-weight: 700; color: #247675;">${
             todasNotas.length
@@ -40,12 +62,18 @@ window.RastreamentoDataTablesRenderer.renderizarCabecalhoTabela = function (
         </div>
       </div>
       
-      <div class="date-selector" style="display: flex; align-items: center; gap: 12px;">
-        <label for="dataRastreamento" style="font-size: 14px; font-weight: 600; color: #333;">Data:</label>
-        <input type="date" id="dataRastreamento" value="${dataRastreamento}" style="padding: 8px 12px; border: 2px solid #247675; border-radius: 6px; font-size: 14px; color: #333; background: white; cursor: pointer; transition: all 0.2s ease;">
-        <button id="btnAtualizarData" style="background: #247675; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-          <i class="fas fa-sync-alt"></i> Atualizar
-        </button>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+        <div class="date-selector" style="display: flex; align-items: center; gap: 12px;">
+          <label for="dataRastreamento" style="font-size: 14px; font-weight: 600; color: #333;">Data:</label>
+          <input type="date" id="dataRastreamento" value="${dataRastreamento}" style="padding: 8px 12px; border: 2px solid #247675; border-radius: 6px; font-size: 14px; color: #333; background: white; cursor: pointer; transition: all 0.2s ease;">
+          <button id="btnAtualizarData" style="background: #247675; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <i class="fas fa-sync-alt"></i> Atualizar
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666;">
+          <i class="fas fa-clock" style="color: #247675;"></i>
+          <span><strong>Última atualização:</strong> ${ultimaAtualizacaoTexto}</span>
+        </div>
       </div>
     </div>
   `;
@@ -572,6 +600,8 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
 
   const createInitCompleteHandler = (todasNotas, resolve) => {
     return function () {
+      const dataTable = $(this).DataTable();
+
       if (
         window.RastreamentoEvents &&
         window.RastreamentoEvents.configurarEventosDetalhes
@@ -580,8 +610,13 @@ window.RastreamentoDataTablesRenderer.inicializarDataTable = async function (
       }
 
       window.RastreamentoDataTablesRenderer.adicionarFiltrosAvancados(
-        $(this).DataTable()
+        dataTable
       );
+
+      // Configura busca customizada no backend (com delay para garantir que o input esteja renderizado)
+      setTimeout(() => {
+        window.RastreamentoDataTablesRenderer.configurarBuscaBackend(dataTable);
+      }, 100);
 
       resolve();
     };
@@ -753,12 +788,18 @@ window.RastreamentoDataTablesRenderer.renderizarMensagemVazia = function () {
         </div>
       </div>
       
-      <div class="date-selector" style="display: flex; align-items: center; gap: 12px;">
-        <label for="dataRastreamento" style="font-size: 14px; font-weight: 600; color: #333;">Data:</label>
-        <input type="date" id="dataRastreamento" value="${dataRastreamento}" style="padding: 8px 12px; border: 2px solid #247675; border-radius: 6px; font-size: 14px; color: #333; background: white; cursor: pointer; transition: all 0.2s ease;">
-        <button id="btnAtualizarData" style="background: #247675; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
-          <i class="fas fa-sync-alt"></i> Atualizar
-        </button>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+        <div class="date-selector" style="display: flex; align-items: center; gap: 12px;">
+          <label for="dataRastreamento" style="font-size: 14px; font-weight: 600; color: #333;">Data:</label>
+          <input type="date" id="dataRastreamento" value="${dataRastreamento}" style="padding: 8px 12px; border: 2px solid #247675; border-radius: 6px; font-size: 14px; color: #333; background: white; cursor: pointer; transition: all 0.2s ease;">
+          <button id="btnAtualizarData" style="background: #247675; color: white; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <i class="fas fa-sync-alt"></i> Atualizar
+          </button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666;">
+          <i class="fas fa-clock" style="color: #247675;"></i>
+          <span><strong>Última atualização:</strong> Não disponível</span>
+        </div>
       </div>
     </div>
     
@@ -1114,3 +1155,233 @@ window.RastreamentoDataTablesRenderer.atualizarDados = function (todasNotas) {
     window.RastreamentoEvents.configurarEventosDetalhes(todasNotas);
   }
 };
+
+/**
+ * Configura busca customizada que consulta o backend
+ */
+window.RastreamentoDataTablesRenderer.configurarBuscaBackend = function (
+  dataTableInstance
+) {
+  if (!dataTableInstance) {
+    dataTableInstance = window.dataTableInstance;
+  }
+
+  if (!dataTableInstance) {
+    console.error("❌ DataTable instance não encontrada para configurar busca");
+    return;
+  }
+
+  let buscaTimeout = null;
+  let buscandoBackend = false;
+  let ultimoTermoBusca = "";
+
+  // Encontra o input de busca do DataTables - tenta múltiplas seletores
+  let searchInput = $(".dataTables_filter input[type='search']");
+
+  // Se não encontrou, tenta outros seletores
+  if (searchInput.length === 0) {
+    searchInput = $("input[type='search'].dt-input");
+  }
+
+  if (searchInput.length === 0) {
+    searchInput = $("#rastreamentoDataTable_filter input");
+  }
+
+  if (searchInput.length === 0) {
+    searchInput = $(".dataTables_filter input");
+  }
+
+  if (searchInput.length === 0) {
+    // Tenta encontrar pelo container do DataTable
+    const tableElement = $("#rastreamentoDataTable");
+    if (tableElement.length > 0) {
+      const tableWrapper = tableElement.closest(".dataTables_wrapper");
+      if (tableWrapper.length > 0) {
+        searchInput = tableWrapper.find("input[type='search']");
+      }
+    }
+  }
+
+  if (searchInput.length === 0) {
+    console.warn(
+      "⚠️ Input de busca do DataTables não encontrado. Tentando novamente em 200ms..."
+    );
+    // Tenta novamente após um delay
+    setTimeout(() => {
+      window.RastreamentoDataTablesRenderer.configurarBuscaBackend(
+        dataTableInstance
+      );
+    }, 200);
+    return;
+  }
+
+  // Remove o handler padrão do DataTables
+  searchInput.off("keyup.DT input.DT");
+
+  // Adiciona handler customizado
+  searchInput.on("keyup input", async function (e) {
+    const termo = $(this).val().trim();
+
+    // Se o termo for muito curto (menos de 3 caracteres), usa busca local
+    if (termo.length < 3) {
+      clearTimeout(buscaTimeout);
+      buscandoBackend = false;
+
+      // Se tinha busca no backend, recarrega dados originais
+      if (ultimoTermoBusca.length >= 3) {
+        ultimoTermoBusca = "";
+        await window.RastreamentoDataTablesRenderer.recarregarDadosOriginais();
+      } else {
+        // Busca local normal do DataTables
+        dataTableInstance.search(termo).draw();
+      }
+      return;
+    }
+
+    // Se o termo mudou, cancela busca anterior
+    if (termo !== ultimoTermoBusca) {
+      clearTimeout(buscaTimeout);
+
+      // Debounce: aguarda 500ms antes de buscar
+      buscaTimeout = setTimeout(async () => {
+        if (buscandoBackend) return;
+
+        buscandoBackend = true;
+        ultimoTermoBusca = termo;
+
+        try {
+          // Mostra indicador de carregamento
+          dataTableInstance.processing(true);
+
+          // Busca no backend
+          if (
+            !window.RastreamentoBuscaAPI ||
+            !window.RastreamentoBuscaAPI.buscarNotas
+          ) {
+            console.error("❌ RastreamentoBuscaAPI não está disponível");
+            dataTableInstance.search(termo).draw();
+            return;
+          }
+
+          const resultados = await window.RastreamentoBuscaAPI.buscarNotas(
+            termo,
+            30
+          );
+
+          if (resultados && resultados.length > 0) {
+            // Processa os resultados
+            const notasProcessadas =
+              window.RastreamentoBuscaAPI.processarResultadosBusca(resultados);
+
+            // Adiciona transportadora a cada nota
+            const transportadoras = window.RastreamentoConfig.transportadoras;
+            notasProcessadas.forEach((nota) => {
+              // Verifica se está atrasada
+              if (
+                window.RastreamentoUtils &&
+                window.RastreamentoUtils.verificarNotaAtrasada
+              ) {
+                if (window.RastreamentoUtils.verificarNotaAtrasada(nota)) {
+                  nota.atrasada = true;
+                  nota.statusExibicao = "Atrasado";
+                } else {
+                  nota.atrasada = false;
+                  nota.statusExibicao = nota.status;
+                }
+              }
+
+              // Encontra a transportadora
+              const transportadora = transportadoras.find(
+                (t) => t.nome === nota.transportadoraNome
+              );
+
+              if (transportadora) {
+                nota.transportadora = {
+                  id: transportadora.id,
+                  nome: transportadora.nome,
+                  cor: transportadora.cor,
+                  logo: transportadora.logo,
+                };
+              } else {
+                // Cria transportadora genérica se não encontrar
+                nota.transportadora = {
+                  id: 999,
+                  nome: nota.transportadoraNome,
+                  cor: "52, 152, 219",
+                  logo: "fas fa-truck",
+                };
+              }
+            });
+
+            // Converte para formato DataTables
+            const dadosDataTables =
+              window.RastreamentoDataTablesRenderer.converterDadosParaDataTables(
+                notasProcessadas
+              );
+
+            // Atualiza a tabela
+            dataTableInstance.clear();
+            dataTableInstance.rows.add(dadosDataTables);
+            dataTableInstance.draw();
+
+            // Reconfigura eventos de detalhes
+            if (
+              window.RastreamentoEvents &&
+              window.RastreamentoEvents.configurarEventosDetalhes
+            ) {
+              window.RastreamentoEvents.configurarEventosDetalhes(
+                notasProcessadas
+              );
+            }
+          } else {
+            // Nenhum resultado encontrado
+            dataTableInstance.clear();
+            dataTableInstance.draw();
+          }
+        } catch (error) {
+          console.error("❌ Erro ao buscar no backend:", error);
+          // Em caso de erro, tenta busca local
+          dataTableInstance.search(termo).draw();
+        } finally {
+          dataTableInstance.processing(false);
+          buscandoBackend = false;
+        }
+      }, 500);
+    }
+  });
+};
+
+/**
+ * Recarrega os dados originais (da data selecionada)
+ */
+window.RastreamentoDataTablesRenderer.recarregarDadosOriginais =
+  async function () {
+    try {
+      // Limpa a busca
+      const searchInput = $(".dataTables_filter input[type='search']");
+      if (searchInput.length > 0) {
+        searchInput.val("");
+      }
+
+      // Recarrega dados da data atual
+      const transportadoras = window.RastreamentoConfig.transportadoras;
+
+      // Limpa notas
+      transportadoras.forEach((transportadora) => {
+        transportadora.notas = [];
+      });
+
+      // Limpa última atualização
+      window.RastreamentoConfig.ultimaAtualizacao = null;
+
+      // Recarrega dados
+      await window.RastreamentoAPI.carregarDadosOuroNegro();
+      await window.RastreamentoAPI.carregarDadosPrincesa();
+      await window.RastreamentoAPI.carregarDadosGenericos();
+
+      // Re-renderiza a tabela
+      await window.RastreamentoMain.reRenderizarTabela();
+    } catch (error) {
+      console.error("❌ Erro ao recarregar dados originais:", error);
+    }
+  };

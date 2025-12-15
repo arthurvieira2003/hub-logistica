@@ -100,6 +100,15 @@ window.RastreamentoMain.initRastreamento = async function (contentElement) {
     transportadoras.forEach((transportadora) => {
       if (transportadora.notas && transportadora.notas.length > 0) {
         transportadora.notas.forEach((nota) => {
+          // Verifica novamente se a nota está atrasada
+          if (window.RastreamentoUtils.verificarNotaAtrasada(nota)) {
+            nota.atrasada = true;
+            nota.statusExibicao = "Atrasado";
+          } else {
+            nota.atrasada = false;
+            nota.statusExibicao = nota.status;
+          }
+          
           nota.transportadora = {
             id: transportadora.id,
             nome: transportadora.nome,
@@ -193,6 +202,15 @@ window.RastreamentoMain.reRenderizarTabela = async function () {
   transportadoras.forEach((transportadora) => {
     if (transportadora.notas && transportadora.notas.length > 0) {
       transportadora.notas.forEach((nota) => {
+        // Verifica novamente se a nota está atrasada antes de renderizar
+        if (window.RastreamentoUtils.verificarNotaAtrasada(nota)) {
+          nota.atrasada = true;
+          nota.statusExibicao = "Atrasado";
+        } else {
+          nota.atrasada = false;
+          nota.statusExibicao = nota.status;
+        }
+        
         nota.transportadora = {
           id: transportadora.id,
           nome: transportadora.nome,
