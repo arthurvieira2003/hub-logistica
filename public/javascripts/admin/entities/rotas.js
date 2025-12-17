@@ -163,16 +163,25 @@ window.Administration.renderRotas = function (rotas) {
           rota.ativa ? "Ativa" : "Inativa"
         }</span></td>
         <td>
-          <button class="btn-icon edit-entity" data-entity-type="rota" data-id="${
-            rota.id_rota
-          }" title="Editar">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="btn-icon delete-entity" data-entity-type="rota" data-id="${
-            rota.id_rota
-          }" title="Excluir">
-            <i class="fas fa-trash"></i>
-          </button>
+          ${
+            rota.ativa
+              ? `
+            <button class="btn-icon manage-transportadoras" data-entity-type="rota" data-id="${rota.id_rota}" title="Gerenciar Transportadoras" style="color: #007bff; margin-right: 5px;">
+              <i class="fas fa-truck"></i>
+            </button>
+            <button class="btn-icon edit-entity" data-entity-type="rota" data-id="${rota.id_rota}" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-icon delete-entity" data-entity-type="rota" data-id="${rota.id_rota}" title="Excluir">
+              <i class="fas fa-trash"></i>
+            </button>
+          `
+              : `
+            <button class="btn-icon reactivate-entity" data-entity-type="rota" data-id="${rota.id_rota}" title="Reativar">
+              <i class="fas fa-redo"></i>
+            </button>
+          `
+          }
         </td>
       </tr>
     `;
@@ -227,16 +236,25 @@ window.Administration.renderRotas = function (rotas) {
           rota.ativa ? "Ativa" : "Inativa"
         }</span></td>
         <td>
-          <button class="btn-icon edit-entity" data-entity-type="rota" data-id="${
-            rota.id_rota
-          }" title="Editar">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="btn-icon delete-entity" data-entity-type="rota" data-id="${
-            rota.id_rota
-          }" title="Excluir">
-            <i class="fas fa-trash"></i>
-          </button>
+          ${
+            rota.ativa
+              ? `
+            <button class="btn-icon manage-transportadoras" data-entity-type="rota" data-id="${rota.id_rota}" title="Gerenciar Transportadoras" style="color: #007bff; margin-right: 5px;">
+              <i class="fas fa-truck"></i>
+            </button>
+            <button class="btn-icon edit-entity" data-entity-type="rota" data-id="${rota.id_rota}" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-icon delete-entity" data-entity-type="rota" data-id="${rota.id_rota}" title="Excluir">
+              <i class="fas fa-trash"></i>
+            </button>
+          `
+              : `
+            <button class="btn-icon reactivate-entity" data-entity-type="rota" data-id="${rota.id_rota}" title="Reativar">
+              <i class="fas fa-redo"></i>
+            </button>
+          `
+          }
         </td>
       </tr>
     `;
@@ -258,6 +276,15 @@ window.Administration.renderRotas = function (rotas) {
 
   // Adiciona event listeners aos botões
   document
+    .querySelectorAll(".manage-transportadoras[data-entity-type='rota']")
+    .forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.dataset.id;
+        window.Administration.openRotaTransportadorasModal(id);
+      });
+    });
+
+  document
     .querySelectorAll(".edit-entity[data-entity-type='rota']")
     .forEach((btn) => {
       btn.addEventListener("click", (e) => {
@@ -272,6 +299,15 @@ window.Administration.renderRotas = function (rotas) {
       btn.addEventListener("click", (e) => {
         const id = e.currentTarget.dataset.id;
         window.Administration.deleteRota(id);
+      });
+    });
+
+  document
+    .querySelectorAll(".reactivate-entity[data-entity-type='rota']")
+    .forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.dataset.id;
+        window.Administration.reactivateRota(id);
       });
     });
 };
@@ -317,6 +353,14 @@ window.Administration.openRotaModal = async function (id = null) {
         window.Administration.showError("Erro ao carregar dados da rota");
         return;
       }
+    }
+
+    // Validação: não permite editar rota inativa
+    if (rota && !rota.ativa) {
+      window.Administration.showError(
+        "Não é possível editar uma rota inativa. Reative-a primeiro."
+      );
+      return;
     }
 
     if (rota) {
@@ -454,5 +498,69 @@ window.Administration.deleteRota = async function (id) {
   } catch (error) {
     console.error("❌ Erro ao buscar informações de exclusão:", error);
     window.Administration.showError("Erro ao buscar informações de exclusão");
+  }
+};
+
+window.Administration.reactivateRota = async function (id) {
+  try {
+    // Buscar informações da rota para exibir no modal
+    let rota = window.Administration.state.rotas.find((r) => r.id_rota == id);
+
+    if (!rota) {
+      try {
+        rota = await window.Administration.apiRequest(`/rotas/${id}`);
+      } catch (error) {
+        console.error("❌ Erro ao buscar rota:", error);
+        window.Administration.showError("Erro ao buscar dados da rota");
+        return;
+      }
+    }
+
+    let rotaNome = "esta rota";
+    if (rota) {
+      const origem = rota.Cidade || rota.CidadeOrigem;
+      const destino = rota.CidadeDestino;
+      const origemNome = origem ? origem.nome_cidade : "N/A";
+      const destinoNome = destino ? destino.nome_cidade : "N/A";
+      rotaNome = `${origemNome} → ${destinoNome}`;
+    }
+
+    const title = "Reativar Rota";
+    const message = `Tem certeza que deseja reativar a rota ${rotaNome}?`;
+    const counts = {};
+
+    window.Administration.openDeleteConfirmModal(
+      title,
+      message,
+      counts,
+      async () => {
+        try {
+          await window.Administration.apiRequest(`/rotas/${id}`, {
+            method: "PUT",
+            body: JSON.stringify({ ativa: true }),
+          });
+          window.Administration.showSuccess("Rota reativada com sucesso");
+
+          // Recarrega a página atual
+          const pagination = window.Administration.state.pagination["rotas"];
+          if (pagination) {
+            window.Administration.loadRotas(
+              pagination.currentPage,
+              pagination.itemsPerPage
+            );
+          } else {
+            window.Administration.loadRotas(1, 50);
+          }
+        } catch (error) {
+          console.error("❌ Erro ao reativar rota:", error);
+          window.Administration.showError(
+            error.message || "Erro ao reativar rota"
+          );
+        }
+      }
+    );
+  } catch (error) {
+    console.error("❌ Erro ao buscar informações:", error);
+    window.Administration.showError("Erro ao buscar informações");
   }
 };

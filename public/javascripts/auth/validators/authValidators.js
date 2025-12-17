@@ -128,7 +128,7 @@ window.AuthValidators.advancedTokenCheck = async function () {
     }
 
     window.AuthUI.hideLoading();
-    window.location.href = "/home";
+    window.location.href = "/rastreamento";
     return true;
   } catch (error) {
     console.error("❌ Erro ao validar token:", error);
@@ -161,7 +161,7 @@ window.AuthValidators.adminCheck = async function () {
   const token = window.AuthCore.getToken();
 
   if (!token) {
-    window.location.href = "/home";
+    window.location.href = "/rastreamento";
     return false;
   }
 
@@ -172,19 +172,19 @@ window.AuthValidators.adminCheck = async function () {
 
     if (!userData) {
       window.AuthUI.hideLoading();
-      window.location.href = "/home";
+      window.location.href = "/rastreamento";
       return false;
     }
 
     if (window.AuthCore.isTokenExpired(userData)) {
       window.AuthUI.hideLoading();
-      window.location.href = "/home";
+      window.location.href = "/rastreamento";
       return false;
     }
 
     if (!userData.isAdmin) {
       window.AuthUI.hideLoading();
-      window.location.href = "/home";
+      window.location.href = "/rastreamento";
       return false;
     }
 
@@ -193,7 +193,7 @@ window.AuthValidators.adminCheck = async function () {
   } catch (error) {
     console.error("❌ Erro ao validar acesso administrativo:", error);
     window.AuthUI.hideLoading();
-    window.location.href = "/home";
+    window.location.href = "/rastreamento";
     return false;
   }
 };
@@ -243,7 +243,7 @@ window.AuthValidators.redirectToHome = function (message) {
   }
 
   localStorage.setItem("auth_error", message);
-  window.location.href = "/home";
+  window.location.href = "/rastreamento";
 };
 
 window.LoginValidation = window.AuthValidators;

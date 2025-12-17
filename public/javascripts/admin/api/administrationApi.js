@@ -1,9 +1,11 @@
 window.Administration = window.Administration || {};
 
-const API_BASE_URL =
-  (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
-  (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-  "https://logistica.copapel.com.br/api";
+if (typeof API_BASE_URL === 'undefined') {
+  var API_BASE_URL =
+    (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
+    (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+    "https://logistica.copapel.com.br/api";
+}
 
 function getToken() {
   const cookies = document.cookie.split("; ");

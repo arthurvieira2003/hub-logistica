@@ -1,0 +1,39 @@
+/* Estilos para o overlay de carregamento da página de rastreamento */
+
+.rastreamento-loading-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.rastreamento-loading-content {
+  text-align: center;
+}
+
+.rastreamento-loading-content i {
+  font-size: 2rem;
+  color: #247675;
+}
+
+.rastreamento-loading-content p {
+  margin-top: 1rem;
+  color: #666;
+}
+
+/* Estilos para mensagens de erro */
+.rastreamento-error-container {
+  text-align: center;
+  padding: 2rem;
+  color: #e74c3c;
+}
+
+.rastreamento-error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.rastreamento-error-message {
+  margin: 0;
+}
+

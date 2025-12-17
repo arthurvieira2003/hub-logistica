@@ -314,9 +314,7 @@ window.AppInitializer.reinitialize = async function () {
   await window.AppInitializer.init();
 };
 
-const isManagedByModuleLoader =
-  window.location.pathname === "/home" ||
-  window.location.pathname.includes("home");
+const isManagedByModuleLoader = false;
 
 if (
   !window.location.pathname.includes("login") &&

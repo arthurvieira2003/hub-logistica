@@ -4,6 +4,7 @@ window.ModuleLoader.state = {
   loadedModules: new Set(),
   isLoading: false,
   moduleConfigs: new Map(),
+  eventTarget: document.createElement("div"),
 };
 
 window.ModuleLoader.configs = {
@@ -144,9 +145,14 @@ window.ModuleLoader.configs = {
       },
       { name: "administrationRotas", path: "/entities/rotas.js", priority: 14 },
       {
+        name: "administrationRotaTransportadoras",
+        path: "/entities/rotaTransportadoras.js",
+        priority: 15,
+      },
+      {
         name: "administrationPrecosFaixas",
         path: "/entities/precosFaixas.js",
-        priority: 15,
+        priority: 16,
       },
       {
         name: "administrationEvents",
@@ -164,15 +170,23 @@ window.ModuleLoader.configs = {
 
 window.ModuleLoader.loadScript = function (src) {
   return new Promise((resolve, reject) => {
-    // Adiciona timestamp para evitar cache do navegador
+    if (window.ModuleLoader.state.loadedModules.has(src)) {
+      resolve();
+      return;
+    }
+
+    const baseSrc = src.split("?")[0];
+    const existingScripts = document.querySelectorAll(
+      `script[src^="${baseSrc}"]`
+    );
+    if (existingScripts.length > 0) {
+      window.ModuleLoader.state.loadedModules.add(src);
+      resolve();
+      return;
+    }
+
     const timestamp = new Date().getTime();
     const srcWithCacheBust = `${src}?v=${timestamp}`;
-
-    const existingScript = document.querySelector(`script[src="${src}"]`);
-    if (existingScript) {
-      // Remove script antigo para forçar recarregamento
-      existingScript.remove();
-    }
 
     const script = document.createElement("script");
     script.src = srcWithCacheBust;
@@ -194,6 +208,11 @@ window.ModuleLoader.loadScripts = async function (scripts) {
   for (const script of sortedScripts) {
     try {
       await window.ModuleLoader.loadScript(script.path);
+      window.ModuleLoader.state.eventTarget.dispatchEvent(
+        new CustomEvent("moduleLoaded", {
+          detail: { name: script.name, path: script.path },
+        })
+      );
     } catch (error) {
       console.error(`Erro ao carregar módulo ${script.name}:`, error);
     }
@@ -220,6 +239,10 @@ window.ModuleLoader.loadModuleGroup = async function (groupName) {
     }));
 
     await window.ModuleLoader.loadScripts(scripts);
+
+    window.ModuleLoader.state.eventTarget.dispatchEvent(
+      new CustomEvent("moduleGroupLoaded", { detail: { groupName } })
+    );
   } catch (error) {
     console.error(`Erro ao carregar grupo ${groupName}:`, error);
   }
@@ -231,7 +254,28 @@ window.ModuleLoader.loadLoginPage = async function () {
 
     await window.ModuleLoader.loadModuleGroup("auth");
 
+    if (window.AuthCore && window.AuthCore.getToken) {
+      const token = window.AuthCore.getToken();
+      if (token && token !== "undefined" && token !== "null") {
+        try {
+          const userData = await window.AuthCore.validateToken(token);
+          if (userData && !window.AuthCore.isTokenExpired(userData)) {
+            window.ModuleLoader.state.isLoading = false;
+            window.location.href = "/rastreamento";
+            return;
+          }
+        } catch (error) {
+          // Token inválido ou expirado, continua com o login
+          console.error("Token inválido ou expirado, mostrando tela de login");
+        }
+      }
+    }
+
     await window.ModuleLoader.loadModuleGroup("login");
+
+    if (window.LoginMain && window.LoginMain.initLogin) {
+      await window.LoginMain.initLogin();
+    }
 
     window.ModuleLoader.state.isLoading = false;
   } catch (error) {
@@ -254,7 +298,7 @@ window.ModuleLoader.checkAuthAndRedirect = async function () {
     if (window.AuthCore && window.AuthCore.validateToken) {
       const userData = await window.AuthCore.validateToken(token);
       if (userData && !window.AuthCore.isTokenExpired(userData)) {
-        window.location.href = "/home";
+        window.location.href = "/rastreamento";
         return;
       }
     }
@@ -272,12 +316,52 @@ window.ModuleLoader.loadRastreamentoPage = async function () {
   try {
     window.ModuleLoader.state.isLoading = true;
 
+    // Carrega módulos de autenticação primeiro
+    await window.ModuleLoader.loadModuleGroup("auth");
+
+    // Verifica se o usuário está autenticado
+    if (window.AuthCore && window.AuthCore.getToken) {
+      const token = window.AuthCore.getToken();
+      if (!token || token === "undefined" || token === "null") {
+        // Não há token, redireciona para login
+        window.ModuleLoader.state.isLoading = false;
+        window.location.href = "/";
+        return;
+      }
+
+      // Valida o token no servidor
+      try {
+        const userData = await window.AuthCore.validateToken(token);
+        if (!userData || window.AuthCore.isTokenExpired(userData)) {
+          // Token inválido ou expirado, redireciona para login
+          window.AuthCore.removeToken();
+          window.ModuleLoader.state.isLoading = false;
+          window.location.href = "/";
+          return;
+        }
+      } catch (error) {
+        // Erro ao validar token, redireciona para login
+        window.AuthCore.removeToken();
+        window.ModuleLoader.state.isLoading = false;
+        window.location.href = "/";
+        return;
+      }
+    } else {
+      // AuthCore não disponível, redireciona para login
+      window.ModuleLoader.state.isLoading = false;
+      window.location.href = "/";
+      return;
+    }
+
+    // Usuário autenticado, carrega módulos de rastreamento
     await window.ModuleLoader.loadModuleGroup("rastreamento");
 
     window.ModuleLoader.state.isLoading = false;
   } catch (error) {
     window.ModuleLoader.state.isLoading = false;
     console.error("❌ [ModuleLoader] Erro ao carregar rastreamento:", error);
+    // Em caso de erro, redireciona para login
+    window.location.href = "/";
     throw error;
   }
 };
@@ -286,34 +370,65 @@ window.ModuleLoader.loadAdminPage = async function () {
   try {
     window.ModuleLoader.state.isLoading = true;
 
+    // Carrega módulos de autenticação primeiro
+    await window.ModuleLoader.loadModuleGroup("auth");
+
+    // Verifica se o usuário está autenticado
+    if (window.AuthCore && window.AuthCore.getToken) {
+      const token = window.AuthCore.getToken();
+      if (!token || token === "undefined" || token === "null") {
+        // Não há token, redireciona para login
+        window.ModuleLoader.state.isLoading = false;
+        window.location.href = "/";
+        return;
+      }
+
+      // Valida o token no servidor
+      try {
+        const userData = await window.AuthCore.validateToken(token);
+        if (!userData || window.AuthCore.isTokenExpired(userData)) {
+          // Token inválido ou expirado, redireciona para login
+          window.AuthCore.removeToken();
+          window.ModuleLoader.state.isLoading = false;
+          window.location.href = "/";
+          return;
+        }
+
+        // Verifica se o usuário é administrador
+        if (userData.isAdmin !== 1 && userData.isAdmin !== true) {
+          // Usuário não é administrador, redireciona para rastreamento
+          window.ModuleLoader.state.isLoading = false;
+          window.location.href = "/rastreamento";
+          return;
+        }
+      } catch (error) {
+        // Erro ao validar token, redireciona para login
+        window.AuthCore.removeToken();
+        window.ModuleLoader.state.isLoading = false;
+        window.location.href = "/";
+        return;
+      }
+    } else {
+      // AuthCore não disponível, redireciona para login
+      window.ModuleLoader.state.isLoading = false;
+      window.location.href = "/";
+      return;
+    }
+
+    // Usuário autenticado e é administrador, carrega módulos de admin
     await window.ModuleLoader.loadModuleGroup("admin");
+
+    // Dispara evento quando a página admin é completamente carregada
+    window.ModuleLoader.state.eventTarget.dispatchEvent(
+      new CustomEvent("adminPageLoaded")
+    );
 
     window.ModuleLoader.state.isLoading = false;
   } catch (error) {
     window.ModuleLoader.state.isLoading = false;
     console.error("❌ [ModuleLoader] Erro ao carregar administração:", error);
-    throw error;
-  }
-};
-
-window.ModuleLoader.loadHomePage = async function () {
-  try {
-    window.ModuleLoader.state.isLoading = true;
-
-    await window.ModuleLoader.loadModuleGroup("core");
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    if (window.AppInitializer && window.AppInitializer.init) {
-      await window.AppInitializer.init();
-    } else {
-      console.error("AppInitializer não está disponível");
-    }
-
-    window.ModuleLoader.state.isLoading = false;
-  } catch (error) {
-    window.ModuleLoader.state.isLoading = false;
-    console.error("Erro ao carregar página home:", error);
+    // Em caso de erro, redireciona para login
+    window.location.href = "/";
     throw error;
   }
 };
@@ -336,17 +451,22 @@ window.ModuleLoader.clearState = function () {
 };
 
 window.ModuleLoader.init = function () {
+  // Evita múltiplas inicializações
+  if (window.ModuleLoader._initialized) {
+    return;
+  }
+  window.ModuleLoader._initialized = true;
+
   const currentPath = window.location.pathname;
 
-  if (currentPath === "/" || currentPath.includes("rastreamento")) {
-    // Versão capada: carregar rastreamento sem autenticação
-    window.ModuleLoader.loadRastreamentoPage();
-  } else if (currentPath.includes("login")) {
+  if (currentPath === "/" || currentPath.includes("login")) {
+    // Página de login - verifica se já está autenticado
     window.ModuleLoader.loadLoginPage();
+  } else if (currentPath.includes("rastreamento")) {
+    // Carregar rastreamento com verificação de autenticação
+    window.ModuleLoader.loadRastreamentoPage();
   } else if (currentPath.includes("administration")) {
     window.ModuleLoader.loadAdminPage();
-  } else if (currentPath === "/home" || currentPath.includes("home")) {
-    window.ModuleLoader.loadHomePage();
   }
 };
 

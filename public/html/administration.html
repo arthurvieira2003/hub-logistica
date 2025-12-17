@@ -24,7 +24,7 @@
         <div class="admin-logo">
           <h1><i class="fas fa-user-shield"></i> Painel Administrativo</h1>
         </div>
-        <a href="/home" class="home-button">
+        <a href="/rastreamento" class="home-button">
           <i class="fas fa-home"></i>
           <span>Voltar ao Hub</span>
         </a>
@@ -37,7 +37,7 @@
           <div class="admin-tab active" data-tab="users">
             <i class="fas fa-users"></i> Usuários
           </div>
-          <div class="admin-tab" data-tab="sessions">
+          <div class="admin-tab" data-tab="sessions" style="display: none">
             <i class="fas fa-clock"></i> Sessões Ativas
           </div>
           <div class="admin-tab" data-tab="estados">
@@ -49,13 +49,13 @@
           <div class="admin-tab" data-tab="transportadoras">
             <i class="fas fa-truck"></i> Transportadoras
           </div>
-          <div class="admin-tab" data-tab="faixas-peso">
+          <div class="admin-tab" data-tab="faixas-peso" style="display: none">
             <i class="fas fa-weight"></i> Faixas de Peso
           </div>
           <div class="admin-tab" data-tab="rotas">
             <i class="fas fa-route"></i> Rotas
           </div>
-          <div class="admin-tab" data-tab="precos-faixas">
+          <div class="admin-tab" data-tab="precos-faixas" style="display: none">
             <i class="fas fa-dollar-sign"></i> Preços de Faixas
           </div>
         </nav>
@@ -101,7 +101,7 @@
             <div id="usersPagination"></div>
           </div>
 
-          <div class="admin-content-tab" id="sessionsTab">
+          <div class="admin-content-tab" id="sessionsTab" style="display: none">
             <div class="admin-toolbar">
               <button id="refreshSessionsBtn" class="btn btn-secondary">
                 <i class="fas fa-sync-alt"></i> Atualizar
@@ -253,7 +253,11 @@
             <div id="transportadorasPagination"></div>
           </div>
 
-          <div class="admin-content-tab" id="faixas-pesoTab">
+          <div
+            class="admin-content-tab"
+            id="faixas-pesoTab"
+            style="display: none"
+          >
             <div class="admin-toolbar">
               <button id="createFaixaPesoBtn" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Nova Faixa
@@ -328,7 +332,11 @@
             <div id="rotasPagination"></div>
           </div>
 
-          <div class="admin-content-tab" id="precos-faixasTab">
+          <div
+            class="admin-content-tab"
+            id="precos-faixasTab"
+            style="display: none"
+          >
             <div class="admin-toolbar">
               <button id="createPrecoFaixaBtn" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Novo Preço
@@ -394,8 +402,15 @@
                 class="form-control"
                 required
               />
+              <small id="emailHelpText" class="help-text" style="display: none">
+                Um e-mail será enviado para o usuário criar sua senha.
+              </small>
             </div>
-            <div class="form-group">
+            <div
+              class="form-group"
+              id="userPasswordGroup"
+              style="display: none"
+            >
               <label for="userPassword">Senha</label>
               <input type="password" id="userPassword" class="form-control" />
               <small id="passwordHelpText" class="help-text"
@@ -408,7 +423,11 @@
                 <label for="userIsAdmin">Administrador</label>
               </div>
             </div>
-            <div class="form-group">
+            <div
+              class="form-group"
+              id="userIsActiveGroup"
+              style="display: none"
+            >
               <div class="checkbox-group">
                 <input type="checkbox" id="userIsActive" checked />
                 <label for="userIsActive">Ativo</label>
@@ -678,6 +697,177 @@
             <i class="fas fa-times"></i> Cancelar
           </button>
           <button type="submit" form="rotaForm" class="btn btn-primary">
+            <i class="fas fa-save"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="rotaTransportadorasModal" class="admin-modal">
+      <div class="admin-modal-content" style="max-width: 900px">
+        <div class="admin-modal-header">
+          <h3 id="rotaTransportadorasModalTitle">
+            Gerenciar Transportadoras da Rota
+          </h3>
+          <button class="admin-modal-close" id="closeRotaTransportadorasModal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <div
+            id="rotaTransportadorasInfo"
+            style="
+              margin-bottom: 20px;
+              padding: 15px;
+              background: #f5f5f5;
+              border-radius: 5px;
+            "
+          >
+            <p
+              id="rotaTransportadorasRotaNome"
+              style="margin: 0; font-weight: 600; font-size: 16px"
+            ></p>
+          </div>
+
+          <div style="margin-bottom: 20px">
+            <button id="addTransportadoraToRotaBtn" class="btn btn-primary">
+              <i class="fas fa-plus"></i> Adicionar Transportadora
+            </button>
+          </div>
+
+          <div
+            class="admin-table-container"
+            style="max-height: 400px; overflow-y: auto"
+          >
+            <table class="admin-table" id="rotaTransportadorasTable">
+              <thead>
+                <tr>
+                  <th>Transportadora</th>
+                  <th>Prazo (dias)</th>
+                  <th>Dias da Semana</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5" class="loading-data">
+                    <i class="fas fa-spinner fa-spin"></i> Carregando
+                    transportadoras...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="admin-modal-footer">
+          <button
+            id="closeRotaTransportadorasModalBtn"
+            class="btn btn-secondary"
+          >
+            <i class="fas fa-times"></i> Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="addTransportadoraToRotaModal" class="admin-modal">
+      <div class="admin-modal-content">
+        <div class="admin-modal-header">
+          <h3 id="addTransportadoraToRotaModalTitle">
+            Adicionar Transportadora à Rota
+          </h3>
+          <button
+            class="admin-modal-close"
+            id="closeAddTransportadoraToRotaModal"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="addTransportadoraToRotaForm">
+            <input type="hidden" id="rotaTransportadoraId" value="" />
+            <input type="hidden" id="rotaTransportadoraRotaId" value="" />
+            <div class="form-group">
+              <label for="rotaTransportadoraTransportadora"
+                >Transportadora</label
+              >
+              <select
+                id="rotaTransportadoraTransportadora"
+                class="form-control"
+                required
+              >
+                <option value="">Selecione uma transportadora</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="rotaTransportadoraPrazo"
+                >Prazo de Entrega (dias úteis)</label
+              >
+              <input
+                type="number"
+                id="rotaTransportadoraPrazo"
+                class="form-control"
+                min="0"
+                placeholder="Ex: 3"
+              />
+              <small class="help-text">Número de dias úteis para entrega</small>
+            </div>
+            <div class="form-group">
+              <label>Dias da Semana</label>
+              <div
+                class="checkbox-group"
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(2, 1fr);
+                  gap: 10px;
+                  margin-top: 10px;
+                "
+              >
+                <div>
+                  <input type="checkbox" id="diaSegunda" value="2" />
+                  <label for="diaSegunda">Segunda-feira</label>
+                </div>
+                <div>
+                  <input type="checkbox" id="diaTerca" value="3" />
+                  <label for="diaTerca">Terça-feira</label>
+                </div>
+                <div>
+                  <input type="checkbox" id="diaQuarta" value="4" />
+                  <label for="diaQuarta">Quarta-feira</label>
+                </div>
+                <div>
+                  <input type="checkbox" id="diaQuinta" value="5" />
+                  <label for="diaQuinta">Quinta-feira</label>
+                </div>
+                <div>
+                  <input type="checkbox" id="diaSexta" value="6" />
+                  <label for="diaSexta">Sexta-feira</label>
+                </div>
+                <div>
+                  <input type="checkbox" id="diaSabado" value="7" />
+                  <label for="diaSabado">Sábado</label>
+                </div>
+                <div>
+                  <input type="checkbox" id="diaDomingo" value="1" />
+                  <label for="diaDomingo">Domingo</label>
+                </div>
+              </div>
+              <small class="help-text"
+                >Selecione os dias da semana que a transportadora atende esta
+                rota</small
+              >
+            </div>
+          </form>
+        </div>
+        <div class="admin-modal-footer">
+          <button
+            id="cancelAddTransportadoraToRotaBtn"
+            class="btn btn-secondary"
+          >
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button id="saveTransportadoraToRotaBtn" class="btn btn-primary">
             <i class="fas fa-save"></i> Salvar
           </button>
         </div>

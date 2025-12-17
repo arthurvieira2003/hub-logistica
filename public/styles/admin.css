@@ -657,6 +657,27 @@ body {
   accent-color: var(--admin-primary);
 }
 
+/* Para checkbox-group com grid (dias da semana) */
+.checkbox-group[style*="grid"] {
+  display: grid;
+}
+
+.checkbox-group[style*="grid"] > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-group[style*="grid"] > div input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.checkbox-group[style*="grid"] > div label {
+  margin: 0;
+  cursor: pointer;
+}
+
 .admin-modal-footer {
   display: flex;
   justify-content: flex-end;

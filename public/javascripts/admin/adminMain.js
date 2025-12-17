@@ -3,19 +3,20 @@ window.AdminMain = window.AdminMain || {};
 window.AdminMain.initAdmin = async function () {
   try {
     if (window.ModuleLoader) {
+      const adminPageLoadedPromise = new Promise((resolve) => {
+        window.ModuleLoader.state.eventTarget.addEventListener(
+          "adminPageLoaded",
+          resolve,
+          { once: true }
+        );
+      });
+
       await window.ModuleLoader.loadAdminPage();
-    }
-
-    let attempts = 0;
-    const maxAttempts = 50;
-
-    while (!window.Administration && attempts < maxAttempts) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      attempts++;
+      await adminPageLoadedPromise;
     }
 
     if (!window.Administration) {
-      console.error("❌ Módulo Administration não foi carregado após aguardar");
+      console.error("❌ Módulo Administration não foi carregado");
       return;
     }
 
@@ -33,6 +34,33 @@ window.AdminMain.initAdmin = async function () {
 
 window.AdminMain.initAdministrationPage = async function () {
   try {
+    if (window.Administration && window.Administration.init) {
+      await window.Administration.init();
+      return;
+    }
+
+    const administrationLoadedPromise = new Promise((resolve) => {
+      const handleAdministrationReady = () => {
+        window.ModuleLoader.state.eventTarget.removeEventListener(
+          "administrationModuleReady",
+          handleAdministrationReady
+        );
+        resolve();
+      };
+
+      window.ModuleLoader.state.eventTarget.addEventListener(
+        "administrationModuleReady",
+        handleAdministrationReady,
+        { once: true }
+      );
+
+      if (window.Administration && window.Administration.init) {
+        handleAdministrationReady();
+      }
+    });
+
+    await administrationLoadedPromise;
+
     if (window.Administration && window.Administration.init) {
       await window.Administration.init();
     } else {

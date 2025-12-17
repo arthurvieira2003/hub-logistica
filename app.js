@@ -71,7 +71,51 @@ app.get("/", (req, res) => {
   );
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
+  res.sendFile(__dirname + "/public/html/login.html");
+});
+
+app.get("/rastreamento", (req, res) => {
+  // Desabilitar cache para a página HTML
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, private"
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   res.sendFile(__dirname + "/public/html/rastreamento.html");
+});
+
+app.get("/login", (req, res) => {
+  // Desabilitar cache para a página HTML
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, private"
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.sendFile(__dirname + "/public/html/login.html");
+});
+
+app.get("/administration", (req, res) => {
+  // Desabilitar cache para a página HTML
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, private"
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.sendFile(__dirname + "/public/html/administration.html");
+});
+
+app.get("/setup-password", (req, res) => {
+  // Desabilitar cache para a página HTML
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, private"
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.sendFile(__dirname + "/public/html/setup-password.html");
 });
 
 const PORT = process.env.PORT;

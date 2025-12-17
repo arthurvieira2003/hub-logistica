@@ -1,6 +1,8 @@
 window.Administration = window.Administration || {};
 
-let deleteConfirmCallback = null;
+if (typeof deleteConfirmCallback === 'undefined') {
+  var deleteConfirmCallback = null;
+}
 
 function getModalElements() {
   return {

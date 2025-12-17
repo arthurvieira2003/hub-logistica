@@ -121,16 +121,38 @@ window.Administration.renderSessions = function (sessions) {
 };
 
 window.Administration.terminateSession = async function (sessionId) {
-  if (!confirm("Tem certeza que deseja encerrar esta sessão?")) return;
-
   try {
-    await window.Administration.apiRequest(`/session/${sessionId}/terminate`, {
-      method: "DELETE",
-    });
-    window.Administration.showSuccess("Sessão encerrada com sucesso");
-    window.Administration.loadSessions();
+    // Buscar informações da sessão para exibir no modal
+    const sessions = window.Administration.state.sessions || [];
+    const session = sessions.find((s) => s.id == sessionId);
+
+    const user = session?.User || session?.user;
+    const userName = user?.name || user?.email || "usuário desconhecido";
+    const title = "Encerrar Sessão";
+    const message = `Tem certeza que deseja encerrar a sessão do usuário "${userName}"?`;
+    const counts = {}; // Não há registros relacionados para sessões
+
+    window.Administration.openDeleteConfirmModal(
+      title,
+      message,
+      counts,
+      async () => {
+        try {
+          await window.Administration.apiRequest(`/session/${sessionId}/terminate`, {
+            method: "DELETE",
+          });
+          window.Administration.showSuccess("Sessão encerrada com sucesso");
+          window.Administration.loadSessions();
+        } catch (error) {
+          console.error("❌ Erro ao encerrar sessão:", error);
+          window.Administration.showError(
+            error.message || "Erro ao encerrar sessão"
+          );
+        }
+      }
+    );
   } catch (error) {
-    console.error("❌ Erro ao encerrar sessão:", error);
-    window.Administration.showError("Erro ao encerrar sessão");
+    console.error("❌ Erro ao buscar informações da sessão:", error);
+    window.Administration.showError("Erro ao buscar informações da sessão");
   }
 };

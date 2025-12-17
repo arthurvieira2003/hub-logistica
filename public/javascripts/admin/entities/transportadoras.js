@@ -159,16 +159,26 @@ window.Administration.renderTransportadoras = function (transportadoras) {
           transp.ativa ? "Ativa" : "Inativa"
         }</span></td>
         <td>
-          <button class="btn-icon edit-entity" data-entity-type="transportadora" data-id="${
-            transp.id_transportadora
-          }" title="Editar">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="btn-icon delete-entity" data-entity-type="transportadora" data-id="${
-            transp.id_transportadora
-          }" title="Excluir">
-            <i class="fas fa-trash"></i>
-          </button>
+          ${transp.ativa
+            ? `
+            <button class="btn-icon edit-entity" data-entity-type="transportadora" data-id="${
+              transp.id_transportadora
+            }" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-icon delete-entity" data-entity-type="transportadora" data-id="${
+              transp.id_transportadora
+            }" title="Excluir">
+              <i class="fas fa-trash"></i>
+            </button>
+          `
+            : `
+            <button class="btn-icon reactivate-entity" data-entity-type="transportadora" data-id="${
+              transp.id_transportadora
+            }" title="Reativar">
+              <i class="fas fa-redo"></i>
+            </button>
+          `}
         </td>
       </tr>
     `
@@ -217,16 +227,26 @@ window.Administration.renderTransportadoras = function (transportadoras) {
           transp.ativa ? "Ativa" : "Inativa"
         }</span></td>
         <td>
-          <button class="btn-icon edit-entity" data-entity-type="transportadora" data-id="${
-            transp.id_transportadora
-          }" title="Editar">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="btn-icon delete-entity" data-entity-type="transportadora" data-id="${
-            transp.id_transportadora
-          }" title="Excluir">
-            <i class="fas fa-trash"></i>
-          </button>
+          ${transp.ativa
+            ? `
+            <button class="btn-icon edit-entity" data-entity-type="transportadora" data-id="${
+              transp.id_transportadora
+            }" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-icon delete-entity" data-entity-type="transportadora" data-id="${
+              transp.id_transportadora
+            }" title="Excluir">
+              <i class="fas fa-trash"></i>
+            </button>
+          `
+            : `
+            <button class="btn-icon reactivate-entity" data-entity-type="transportadora" data-id="${
+              transp.id_transportadora
+            }" title="Reativar">
+              <i class="fas fa-redo"></i>
+            </button>
+          `}
         </td>
       </tr>
     `
@@ -264,6 +284,15 @@ window.Administration.renderTransportadoras = function (transportadoras) {
         window.Administration.deleteTransportadora(id);
       });
     });
+
+  document
+    .querySelectorAll(".reactivate-entity[data-entity-type='transportadora']")
+    .forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.dataset.id;
+        window.Administration.reactivateTransportadora(id);
+      });
+    });
 };
 
 window.Administration.openTransportadoraModal = async function (id = null) {
@@ -288,6 +317,14 @@ window.Administration.openTransportadoraModal = async function (id = null) {
         window.Administration.showError("Erro ao carregar dados da transportadora");
         return;
       }
+    }
+
+    // Validação: não permite editar transportadora inativa
+    if (transp && !transp.ativa) {
+      window.Administration.showError(
+        "Não é possível editar uma transportadora inativa. Reative-a primeiro."
+      );
+      return;
     }
     
     if (transp) {
@@ -420,5 +457,73 @@ window.Administration.deleteTransportadora = async function (id) {
   } catch (error) {
     console.error("❌ Erro ao buscar informações de exclusão:", error);
     window.Administration.showError("Erro ao buscar informações de exclusão");
+  }
+};
+
+window.Administration.reactivateTransportadora = async function (id) {
+  try {
+    // Buscar informações da transportadora para exibir no modal
+    let transportadora = window.Administration.state.transportadoras.find(
+      (t) => t.id_transportadora == id
+    );
+
+    if (!transportadora) {
+      try {
+        transportadora = await window.Administration.apiRequest(
+          `/transportadoras/${id}`
+        );
+      } catch (error) {
+        console.error("❌ Erro ao buscar transportadora:", error);
+        window.Administration.showError("Erro ao buscar dados da transportadora");
+        return;
+      }
+    }
+
+    const transportadoraNome = transportadora
+      ? transportadora.nome_transportadora
+      : "esta transportadora";
+    const title = "Reativar Transportadora";
+    const message = `Tem certeza que deseja reativar "${transportadoraNome}"?`;
+    const counts = {};
+
+    window.Administration.openDeleteConfirmModal(
+      title,
+      message,
+      counts,
+      async () => {
+        try {
+          await window.Administration.apiRequest(`/transportadoras/${id}`, {
+            method: "PUT",
+            body: JSON.stringify({ ativa: true }),
+          });
+          window.Administration.showSuccess(
+            "Transportadora reativada com sucesso"
+          );
+
+          // Recarrega a página atual mantendo a busca se houver
+          const pagination =
+            window.Administration.state.pagination["transportadoras"];
+          const searchTerm =
+            window.Administration.state.currentSearchTransportadoras || null;
+          if (pagination) {
+            window.Administration.loadTransportadoras(
+              pagination.currentPage,
+              pagination.itemsPerPage,
+              searchTerm
+            );
+          } else {
+            window.Administration.loadTransportadoras(1, 50, searchTerm);
+          }
+        } catch (error) {
+          console.error("❌ Erro ao reativar transportadora:", error);
+          window.Administration.showError(
+            error.message || "Erro ao reativar transportadora"
+          );
+        }
+      }
+    );
+  } catch (error) {
+    console.error("❌ Erro ao buscar informações:", error);
+    window.Administration.showError("Erro ao buscar informações");
   }
 };

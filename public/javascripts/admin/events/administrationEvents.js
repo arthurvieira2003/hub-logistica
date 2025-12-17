@@ -51,17 +51,17 @@ window.Administration.initSearch = function () {
 
   // Debounce para evitar muitas requisições enquanto o usuário digita
   let estadoSearchTimeout = null;
-  
+
   document
     .getElementById("estadoSearchInput")
     ?.addEventListener("input", (e) => {
       const searchTerm = e.target.value.trim();
-      
+
       // Limpa o timeout anterior
       if (estadoSearchTimeout) {
         clearTimeout(estadoSearchTimeout);
       }
-      
+
       // Aguarda 500ms após o usuário parar de digitar antes de fazer a busca
       estadoSearchTimeout = setTimeout(async () => {
         if (!searchTerm) {
@@ -72,7 +72,7 @@ window.Administration.initSearch = function () {
           await window.Administration.loadEstados(1, 50, null);
           return;
         }
-        
+
         // Busca no servidor
         window.Administration.resetPagination("estados");
         await window.Administration.loadEstados(1, 50, searchTerm);
@@ -81,17 +81,17 @@ window.Administration.initSearch = function () {
 
   // Debounce para evitar muitas requisições enquanto o usuário digita
   let cidadeSearchTimeout = null;
-  
+
   document
     .getElementById("cidadeSearchInput")
     ?.addEventListener("input", (e) => {
       const searchTerm = e.target.value.trim();
-      
+
       // Limpa o timeout anterior
       if (cidadeSearchTimeout) {
         clearTimeout(cidadeSearchTimeout);
       }
-      
+
       // Aguarda 500ms após o usuário parar de digitar antes de fazer a busca
       cidadeSearchTimeout = setTimeout(async () => {
         if (!searchTerm) {
@@ -102,7 +102,7 @@ window.Administration.initSearch = function () {
           await window.Administration.loadCidades(1, 50, null);
           return;
         }
-        
+
         // Busca no servidor
         window.Administration.resetPagination("cidades");
         await window.Administration.loadCidades(1, 50, searchTerm);
@@ -111,17 +111,17 @@ window.Administration.initSearch = function () {
 
   // Debounce para evitar muitas requisições enquanto o usuário digita
   let transportadoraSearchTimeout = null;
-  
+
   document
     .getElementById("transportadoraSearchInput")
     ?.addEventListener("input", (e) => {
       const searchTerm = e.target.value.trim();
-      
+
       // Limpa o timeout anterior
       if (transportadoraSearchTimeout) {
         clearTimeout(transportadoraSearchTimeout);
       }
-      
+
       // Aguarda 500ms após o usuário parar de digitar antes de fazer a busca
       transportadoraSearchTimeout = setTimeout(async () => {
         if (!searchTerm) {
@@ -132,7 +132,7 @@ window.Administration.initSearch = function () {
           await window.Administration.loadTransportadoras(1, 50, null);
           return;
         }
-        
+
         // Busca no servidor
         window.Administration.resetPagination("transportadoras");
         await window.Administration.loadTransportadoras(1, 50, searchTerm);
@@ -141,17 +141,17 @@ window.Administration.initSearch = function () {
 
   // Debounce para evitar muitas requisições enquanto o usuário digita
   let faixaPesoSearchTimeout = null;
-  
+
   document
     .getElementById("faixaPesoSearchInput")
     ?.addEventListener("input", (e) => {
       const searchTerm = e.target.value.trim();
-      
+
       // Limpa o timeout anterior
       if (faixaPesoSearchTimeout) {
         clearTimeout(faixaPesoSearchTimeout);
       }
-      
+
       // Aguarda 500ms após o usuário parar de digitar antes de fazer a busca
       faixaPesoSearchTimeout = setTimeout(async () => {
         if (!searchTerm) {
@@ -162,7 +162,7 @@ window.Administration.initSearch = function () {
           await window.Administration.loadFaixasPeso(1, 50, null);
           return;
         }
-        
+
         // Busca no servidor
         window.Administration.resetPagination("faixasPeso");
         await window.Administration.loadFaixasPeso(1, 50, searchTerm);
@@ -171,15 +171,15 @@ window.Administration.initSearch = function () {
 
   // Debounce para evitar muitas requisições enquanto o usuário digita
   let rotaSearchTimeout = null;
-  
+
   document.getElementById("rotaSearchInput")?.addEventListener("input", (e) => {
     const searchTerm = e.target.value.trim();
-    
+
     // Limpa o timeout anterior
     if (rotaSearchTimeout) {
       clearTimeout(rotaSearchTimeout);
     }
-    
+
     // Aguarda 500ms após o usuário parar de digitar antes de fazer a busca
     rotaSearchTimeout = setTimeout(async () => {
       if (!searchTerm) {
@@ -190,7 +190,7 @@ window.Administration.initSearch = function () {
         await window.Administration.loadRotas(1, 50, null);
         return;
       }
-      
+
       // Busca no servidor
       window.Administration.resetPagination("rotas");
       await window.Administration.loadRotas(1, 50, searchTerm);
@@ -199,17 +199,17 @@ window.Administration.initSearch = function () {
 
   // Debounce para evitar muitas requisições enquanto o usuário digita
   let precoFaixaSearchTimeout = null;
-  
+
   document
     .getElementById("precoFaixaSearchInput")
     ?.addEventListener("input", (e) => {
       const searchTerm = e.target.value.trim();
-      
+
       // Limpa o timeout anterior
       if (precoFaixaSearchTimeout) {
         clearTimeout(precoFaixaSearchTimeout);
       }
-      
+
       // Aguarda 500ms após o usuário parar de digitar antes de fazer a busca
       precoFaixaSearchTimeout = setTimeout(async () => {
         if (!searchTerm) {
@@ -220,7 +220,7 @@ window.Administration.initSearch = function () {
           await window.Administration.loadPrecosFaixas(1, 50, null);
           return;
         }
-        
+
         // Busca no servidor
         window.Administration.resetPagination("precosFaixas");
         await window.Administration.loadPrecosFaixas(1, 50, searchTerm);
@@ -342,4 +342,73 @@ window.Administration.initEntityEvents = function () {
     ?.addEventListener("click", () => {
       document.getElementById("precoFaixaModal")?.classList.remove("active");
     });
+
+  // Event listeners para modais de rota-transportadora
+  document
+    .getElementById("closeRotaTransportadorasModal")
+    ?.addEventListener("click", () => {
+      document
+        .getElementById("rotaTransportadorasModal")
+        ?.classList.remove("active");
+    });
+  document
+    .getElementById("closeRotaTransportadorasModalBtn")
+    ?.addEventListener("click", () => {
+      document
+        .getElementById("rotaTransportadorasModal")
+        ?.classList.remove("active");
+    });
+
+  document
+    .getElementById("closeAddTransportadoraToRotaModal")
+    ?.addEventListener("click", () => {
+      document
+        .getElementById("addTransportadoraToRotaModal")
+        ?.classList.remove("active");
+    });
+  document
+    .getElementById("cancelAddTransportadoraToRotaBtn")
+    ?.addEventListener("click", () => {
+      document
+        .getElementById("addTransportadoraToRotaModal")
+        ?.classList.remove("active");
+    });
+
+  document
+    .getElementById("saveTransportadoraToRotaBtn")
+    ?.addEventListener("click", () => {
+      window.Administration.saveTransportadoraToRota();
+    });
+
+  document
+    .getElementById("addTransportadoraToRotaBtn")
+    ?.addEventListener("click", () => {
+      const idRota = window.Administration.state.currentRotaId;
+      if (idRota) {
+        window.Administration.openAddTransportadoraToRotaModal(idRota);
+      }
+    });
+
+  // Fechar modais ao clicar fora (backdrop)
+  const rotaTransportadorasModal = document.getElementById(
+    "rotaTransportadorasModal"
+  );
+  if (rotaTransportadorasModal) {
+    rotaTransportadorasModal.addEventListener("click", (e) => {
+      if (e.target === rotaTransportadorasModal) {
+        rotaTransportadorasModal.classList.remove("active");
+      }
+    });
+  }
+
+  const addTransportadoraToRotaModal = document.getElementById(
+    "addTransportadoraToRotaModal"
+  );
+  if (addTransportadoraToRotaModal) {
+    addTransportadoraToRotaModal.addEventListener("click", (e) => {
+      if (e.target === addTransportadoraToRotaModal) {
+        addTransportadoraToRotaModal.classList.remove("active");
+      }
+    });
+  }
 };

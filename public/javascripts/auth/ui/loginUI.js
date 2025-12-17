@@ -93,6 +93,30 @@ window.LoginUI.setupPasswordToggle = function () {
   });
 };
 
+window.LoginUI.setLoadingState = function (isLoading) {
+  const submitButton = document.querySelector('button[type="submit"]');
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+
+  if (submitButton) {
+    if (isLoading) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Entrando...';
+    } else {
+      submitButton.disabled = false;
+      submitButton.innerHTML = "Entrar";
+    }
+  }
+
+  if (emailInput) {
+    emailInput.disabled = isLoading;
+  }
+
+  if (passwordInput) {
+    passwordInput.disabled = isLoading;
+  }
+};
+
 window.LoginUI.setupLoginForm = function () {
   const form = document.querySelector("form");
 
@@ -110,6 +134,7 @@ window.LoginUI.setupLoginForm = function () {
     const password = passwordInput ? passwordInput.value : "";
 
     if (window.LoginAuth && window.LoginAuth.authenticateUser) {
+      window.LoginUI.setLoadingState(true);
       window.LoginAuth.authenticateUser(email, password);
     }
   });

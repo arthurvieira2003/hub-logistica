@@ -1,0 +1,93 @@
+/* Estilos para o header e layout da página de rastreamento */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  background: #f5f7fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 2rem;
+}
+
+.rastreamento-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#trackingView {
+  width: 100%;
+  min-height: 400px;
+}
+
+.rastreamento-header {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  flex-wrap: nowrap !important;
+  gap: 1rem;
+}
+
+.rastreamento-header h2 {
+  font-size: 2rem !important;
+  font-weight: 600;
+  color: #247675;
+  margin: 0 !important;
+  padding: 0;
+  text-align: left !important;
+  flex: 0 1 auto;
+  white-space: nowrap;
+  width: auto;
+}
+
+.admin-button {
+  display: none;
+  padding: 0.75rem 1.5rem;
+  background-color: #247675;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: auto;
+}
+
+.admin-button.show {
+  display: flex !important;
+}
+
+.admin-button:hover {
+  background-color: #1a5a59;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(36, 118, 117, 0.3);
+}
+
+.admin-button i {
+  font-size: 1.1rem;
+}
+

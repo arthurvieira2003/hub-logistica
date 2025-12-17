@@ -25,7 +25,7 @@ function normalizeFaixasPesoSearchTerm(search) {
 }
 
 function buildFaixasPesoUrl(page, limit, searchTerm) {
-  let url = `/faixas-peso?page=${page}&limit=${limit}`;
+  let url = `/faixasPeso?page=${page}&limit=${limit}`;
   if (searchTerm) {
     url += `&search=${encodeURIComponent(searchTerm)}`;
   }
@@ -155,16 +155,26 @@ window.Administration.renderFaixasPeso = function (faixas) {
           faixa.ativa ? "Ativa" : "Inativa"
         }</span></td>
         <td>
-          <button class="btn-icon edit-entity" data-entity-type="faixa-peso" data-id="${
-            faixa.id_faixa
-          }" title="Editar">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="btn-icon delete-entity" data-entity-type="faixa-peso" data-id="${
-            faixa.id_faixa
-          }" title="Excluir">
-            <i class="fas fa-trash"></i>
-          </button>
+          ${faixa.ativa
+            ? `
+            <button class="btn-icon edit-entity" data-entity-type="faixa-peso" data-id="${
+              faixa.id_faixa
+            }" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-icon delete-entity" data-entity-type="faixa-peso" data-id="${
+              faixa.id_faixa
+            }" title="Excluir">
+              <i class="fas fa-trash"></i>
+            </button>
+          `
+            : `
+            <button class="btn-icon reactivate-entity" data-entity-type="faixa-peso" data-id="${
+              faixa.id_faixa
+            }" title="Reativar">
+              <i class="fas fa-redo"></i>
+            </button>
+          `}
         </td>
       </tr>
     `
@@ -214,16 +224,26 @@ window.Administration.renderFaixasPeso = function (faixas) {
           faixa.ativa ? "Ativa" : "Inativa"
         }</span></td>
         <td>
-          <button class="btn-icon edit-entity" data-entity-type="faixa-peso" data-id="${
-            faixa.id_faixa
-          }" title="Editar">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="btn-icon delete-entity" data-entity-type="faixa-peso" data-id="${
-            faixa.id_faixa
-          }" title="Excluir">
-            <i class="fas fa-trash"></i>
-          </button>
+          ${faixa.ativa
+            ? `
+            <button class="btn-icon edit-entity" data-entity-type="faixa-peso" data-id="${
+              faixa.id_faixa
+            }" title="Editar">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-icon delete-entity" data-entity-type="faixa-peso" data-id="${
+              faixa.id_faixa
+            }" title="Excluir">
+              <i class="fas fa-trash"></i>
+            </button>
+          `
+            : `
+            <button class="btn-icon reactivate-entity" data-entity-type="faixa-peso" data-id="${
+              faixa.id_faixa
+            }" title="Reativar">
+              <i class="fas fa-redo"></i>
+            </button>
+          `}
         </td>
       </tr>
     `
@@ -261,6 +281,15 @@ window.Administration.renderFaixasPeso = function (faixas) {
         window.Administration.deleteFaixaPeso(id);
       });
     });
+
+  document
+    .querySelectorAll(".reactivate-entity[data-entity-type='faixa-peso']")
+    .forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const id = e.currentTarget.dataset.id;
+        window.Administration.reactivateFaixaPeso(id);
+      });
+    });
 };
 
 window.Administration.openFaixaPesoModal = async function (id = null) {
@@ -279,12 +308,20 @@ window.Administration.openFaixaPesoModal = async function (id = null) {
     if (!faixa) {
       // Se a faixa não estiver na página atual, busca do servidor
       try {
-        faixa = await window.Administration.apiRequest(`/faixas-peso/${id}`);
+        faixa = await window.Administration.apiRequest(`/faixasPeso/${id}`);
       } catch (error) {
         console.error("❌ Erro ao buscar faixa de peso:", error);
         window.Administration.showError("Erro ao carregar dados da faixa de peso");
         return;
       }
+    }
+
+    // Validação: não permite editar faixa inativa
+    if (faixa && !faixa.ativa) {
+      window.Administration.showError(
+        "Não é possível editar uma faixa de peso inativa. Reative-a primeiro."
+      );
+      return;
     }
     
     if (faixa) {
@@ -319,12 +356,12 @@ window.Administration.saveFaixaPeso = async function () {
 
   try {
     if (id) {
-      await window.Administration.apiRequest(`/faixas-peso/${id}`, {
+      await window.Administration.apiRequest(`/faixasPeso/${id}`, {
         method: "PUT",
         body: JSON.stringify(faixaData),
       });
     } else {
-      await window.Administration.apiRequest("/faixas-peso", {
+      await window.Administration.apiRequest("/faixasPeso", {
         method: "POST",
         body: JSON.stringify(faixaData),
       });
@@ -355,7 +392,7 @@ window.Administration.saveFaixaPeso = async function () {
 window.Administration.deleteFaixaPeso = async function (id) {
   try {
     const counts = await window.Administration.apiRequest(
-      `/faixas-peso/${id}/count-related`
+      `/faixasPeso/${id}/count-related`
     );
 
     // Busca a faixa no estado atual ou faz uma requisição se não estiver disponível
@@ -366,7 +403,7 @@ window.Administration.deleteFaixaPeso = async function (id) {
     if (!faixa) {
       // Se a faixa não estiver na página atual, busca do servidor
       try {
-        faixa = await window.Administration.apiRequest(`/faixas-peso/${id}`);
+        faixa = await window.Administration.apiRequest(`/faixasPeso/${id}`);
       } catch (error) {
         console.error("❌ Erro ao buscar faixa de peso:", error);
         window.Administration.showError("Erro ao carregar dados da faixa de peso");
@@ -387,7 +424,7 @@ window.Administration.deleteFaixaPeso = async function (id) {
       counts,
       async () => {
         try {
-          await window.Administration.apiRequest(`/faixas-peso/${id}`, {
+          await window.Administration.apiRequest(`/faixasPeso/${id}`, {
             method: "DELETE",
           });
           window.Administration.showSuccess(
@@ -411,5 +448,65 @@ window.Administration.deleteFaixaPeso = async function (id) {
   } catch (error) {
     console.error("❌ Erro ao buscar informações de exclusão:", error);
     window.Administration.showError("Erro ao buscar informações de exclusão");
+  }
+};
+
+window.Administration.reactivateFaixaPeso = async function (id) {
+  try {
+    // Buscar informações da faixa para exibir no modal
+    let faixa = window.Administration.state.faixasPeso.find(
+      (f) => f.id_faixa == id
+    );
+
+    if (!faixa) {
+      try {
+        faixa = await window.Administration.apiRequest(`/faixasPeso/${id}`);
+      } catch (error) {
+        console.error("❌ Erro ao buscar faixa de peso:", error);
+        window.Administration.showError("Erro ao buscar dados da faixa de peso");
+        return;
+      }
+    }
+
+    const faixaNome = faixa
+      ? faixa.descricao || `Faixa ${faixa.peso_minimo} - ${faixa.peso_maximo}kg`
+      : "esta faixa de peso";
+    const title = "Reativar Faixa de Peso";
+    const message = `Tem certeza que deseja reativar ${faixaNome}?`;
+    const counts = {};
+
+    window.Administration.openDeleteConfirmModal(
+      title,
+      message,
+      counts,
+      async () => {
+        try {
+          await window.Administration.apiRequest(`/faixasPeso/${id}`, {
+            method: "PUT",
+            body: JSON.stringify({ ativa: true }),
+          });
+          window.Administration.showSuccess(
+            "Faixa de peso reativada com sucesso"
+          );
+
+          // Recarrega a página atual mantendo a busca se houver
+          const pagination = window.Administration.state.pagination["faixasPeso"];
+          const searchTerm = window.Administration.state.currentSearchFaixasPeso || null;
+          if (pagination) {
+            window.Administration.loadFaixasPeso(pagination.currentPage, pagination.itemsPerPage, searchTerm);
+          } else {
+            window.Administration.loadFaixasPeso(1, 50, searchTerm);
+          }
+        } catch (error) {
+          console.error("❌ Erro ao reativar faixa de peso:", error);
+          window.Administration.showError(
+            error.message || "Erro ao reativar faixa de peso"
+          );
+        }
+      }
+    );
+  } catch (error) {
+    console.error("❌ Erro ao buscar informações:", error);
+    window.Administration.showError("Erro ao buscar informações");
   }
 };

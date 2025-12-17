@@ -42,7 +42,7 @@ window.LoginAuth.processServerError = function (error) {
     errorMessage = error.message;
   }
 
-  window.LoginUI.showNotification(errorTitle, errorMessage, 6000);
+  window.LoginUI.showNotification("error", errorTitle, errorMessage, 6000);
 };
 
 window.LoginAuth.processConnectionError = function (error) {
@@ -83,7 +83,7 @@ window.LoginAuth.processLoginSuccess = function (data) {
     }
 
     setTimeout(() => {
-      window.location.href = "/home";
+      window.location.href = "/rastreamento";
     }, 1500);
   } else {
     window.LoginAuth.processServerError(data);
@@ -92,10 +92,16 @@ window.LoginAuth.processLoginSuccess = function (data) {
 
 window.LoginAuth.authenticateUser = function (email, password) {
   if (!window.LoginValidation || !window.LoginValidation.validateLoginData) {
+    if (window.LoginUI && window.LoginUI.setLoadingState) {
+      window.LoginUI.setLoadingState(false);
+    }
     return;
   }
 
   if (!window.LoginValidation.validateLoginData(email, password)) {
+    if (window.LoginUI && window.LoginUI.setLoadingState) {
+      window.LoginUI.setLoadingState(false);
+    }
     return;
   }
 
@@ -122,6 +128,9 @@ window.LoginAuth.authenticateUser = function (email, password) {
       window.LoginAuth.processLoginSuccess(data);
     })
     .catch((error) => {
+      if (window.LoginUI && window.LoginUI.setLoadingState) {
+        window.LoginUI.setLoadingState(false);
+      }
       if (error.data) {
         window.LoginAuth.processServerError(error);
       } else {
@@ -177,7 +186,7 @@ window.LoginAuth.registerUser = function (email, password, confirmPassword) {
       }
 
       setTimeout(() => {
-        window.location.href = "/home";
+        window.location.href = "/rastreamento";
       }, 1500);
     })
     .catch((error) => {

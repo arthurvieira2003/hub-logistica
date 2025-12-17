@@ -1,6 +1,8 @@
 window.Administration = window.Administration || {};
 
-const ITEMS_PER_PAGE = 10;
+if (typeof ITEMS_PER_PAGE === 'undefined') {
+  var ITEMS_PER_PAGE = 10;
+}
 
 window.Administration.initPagination = function (
   entityType,

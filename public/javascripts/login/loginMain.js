@@ -2,9 +2,8 @@ window.LoginMain = window.LoginMain || {};
 
 window.LoginMain.initLogin = async function () {
   try {
-    if (window.ModuleLoader) {
-      await window.ModuleLoader.loadLoginPage();
-    }
+    // Aguarda um pouco para garantir que todos os módulos foram carregados
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     if (window.LoginUI && window.LoginUI.initUI) {
       window.LoginUI.initUI();
@@ -26,9 +25,17 @@ window.LoginMain.init = function () {
   }
 };
 
+// Inicialização automática como fallback caso o ModuleLoader não seja usado
+// O ModuleLoader normalmente inicializa o login através de loadLoginPage()
 if (
-  window.location.pathname.includes("login") ||
-  window.location.pathname === "/"
+  (window.location.pathname.includes("login") ||
+    window.location.pathname === "/") &&
+  !window.ModuleLoader?.state?.isLoading
 ) {
-  window.LoginMain.init();
+  // Aguarda um pouco para ver se o ModuleLoader vai inicializar
+  setTimeout(() => {
+    if (!window.LoginUI?.initUI) {
+      window.LoginMain.init();
+    }
+  }, 500);
 }
