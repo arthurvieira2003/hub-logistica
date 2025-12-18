@@ -27,14 +27,14 @@ window.Administration.initTabs = function () {
         window.Administration.loadEstados();
       } else if (tabName === "cidades") {
         window.Administration.loadCidades();
-      } else if (tabName === "transportadoras") {
-        window.Administration.loadTransportadoras();
       } else if (tabName === "faixas-peso") {
         window.Administration.loadFaixasPeso();
       } else if (tabName === "rotas") {
         window.Administration.loadRotas();
       } else if (tabName === "precos-faixas") {
         window.Administration.loadPrecosFaixas();
+      } else if (tabName === "transportadoras-excluidas") {
+        window.Administration.loadTransportadorasExcluidas();
       }
     });
   });

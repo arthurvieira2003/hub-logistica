@@ -125,13 +125,14 @@ window.Administration.loadRotaTransportadoras = async function (idRota) {
 
     tbody.innerHTML = rotaTransportadoras
       .map((rt) => {
-        const transportadora = rt.Transportadora || rt;
+        const transportadora = rt.Transportadora || {};
+        const nomeTransportadora = transportadora.CardName || transportadora.CardFName || "N/A";
         const prazo = rt.prazo_entrega ? `${rt.prazo_entrega} dias` : "Não especificado";
         const dias = formatarDiasSemana(rt.dias_semana);
 
         return `
           <tr>
-            <td>${transportadora.nome_transportadora || "N/A"}</td>
+            <td>${nomeTransportadora}</td>
             <td>${prazo}</td>
             <td>${dias}</td>
             <td>
@@ -200,16 +201,27 @@ window.Administration.openAddTransportadoraToRotaModal = async function (
     return;
   }
 
-  // Carregar transportadoras se necessário
-  if (window.Administration.state.transportadoras.length === 0) {
-    await window.Administration.loadTransportadoras(1, 100);
-  }
-
   const transportadoraSelect = document.getElementById(
     "rotaTransportadoraTransportadora"
   );
   transportadoraSelect.innerHTML =
-    '<option value="">Selecione uma transportadora</option>';
+    '<option value="">Carregando transportadoras...</option>';
+
+  // Buscar transportadoras do SAP B1 via carrier service
+  let carriers = [];
+  try {
+    // Buscar via rota de transportadoras (que deve retornar dados do SAP B1)
+    const response = await window.Administration.apiRequest(
+      `/transportadoras?page=1&limit=1000`
+    );
+    carriers = response.data || [];
+  } catch (error) {
+    console.error("Erro ao buscar transportadoras:", error);
+    transportadoraSelect.innerHTML =
+      '<option value="">Erro ao carregar transportadoras</option>';
+    window.Administration.showError("Erro ao carregar transportadoras");
+    return;
+  }
 
   // Buscar transportadoras já associadas à rota para filtrar
   let transportadorasAssociadas = [];
@@ -218,23 +230,29 @@ window.Administration.openAddTransportadoraToRotaModal = async function (
       `/rotaTransportadoras/rota/${idRota}`
     );
     transportadorasAssociadas = rotaTransportadoras.map(
-      (rt) => rt.Transportadora?.id_transportadora || rt.id_transportadora
+      (rt) => rt.Transportadora?.CardCode || rt.card_code
     );
   } catch (error) {
     console.error("Erro ao buscar transportadoras associadas:", error);
   }
 
   // Preencher select com transportadoras disponíveis
-  window.Administration.state.transportadoras.forEach((transp) => {
+  transportadoraSelect.innerHTML =
+    '<option value="">Selecione uma transportadora</option>';
+  
+  carriers.forEach((carrier) => {
+    const cardCode = carrier.CardCode || carrier.card_code;
+    const nome = carrier.CardName || carrier.CardFName || carrier.nome_transportadora || "N/A";
+    
     // Se estiver editando, mostrar a transportadora atual
     // Se estiver criando, não mostrar transportadoras já associadas
     if (
       idRotaTransportadora ||
-      !transportadorasAssociadas.includes(transp.id_transportadora)
+      !transportadorasAssociadas.includes(cardCode)
     ) {
       const option = document.createElement("option");
-      option.value = transp.id_transportadora;
-      option.textContent = transp.nome_transportadora;
+      option.value = cardCode;
+      option.textContent = nome;
       transportadoraSelect.appendChild(option);
     }
   });
@@ -249,7 +267,7 @@ window.Administration.openAddTransportadoraToRotaModal = async function (
       document.getElementById("rotaTransportadoraId").value = rt.id_rota_transportadora;
       document.getElementById("rotaTransportadoraRotaId").value = rt.id_rota;
       document.getElementById("rotaTransportadoraTransportadora").value = 
-        rt.Transportadora?.id_transportadora || rt.id_transportadora;
+        rt.Transportadora?.CardCode || rt.card_code || "";
       document.getElementById("rotaTransportadoraPrazo").value = rt.prazo_entrega || "";
       
       preencherDiasSemana(rt.dias_semana);
@@ -277,20 +295,18 @@ window.Administration.saveTransportadoraToRota = async function () {
   const form = document.getElementById("addTransportadoraToRotaForm");
   const id = document.getElementById("rotaTransportadoraId").value;
   const idRota = document.getElementById("rotaTransportadoraRotaId").value;
-  const idTransportadora = parseInt(
-    document.getElementById("rotaTransportadoraTransportadora").value
-  );
+  const cardCode = document.getElementById("rotaTransportadoraTransportadora").value;
   const prazo = document.getElementById("rotaTransportadoraPrazo").value;
   const diasSemana = obterDiasSelecionados();
 
-  if (!idTransportadora) {
+  if (!cardCode) {
     window.Administration.showError("Selecione uma transportadora");
     return;
   }
 
   const data = {
     id_rota: parseInt(idRota),
-    id_transportadora: idTransportadora,
+    card_code: cardCode,
     prazo_entrega: prazo ? parseInt(prazo) : null,
     dias_semana: diasSemana,
     ativa: true, // Sempre ativa ao criar/editar
@@ -346,7 +362,7 @@ window.Administration.deleteRotaTransportadora = async function (id) {
       destino.nome_cidade || "N/A"
     }`;
     const transportadoraNome =
-      transportadora.nome_transportadora || "N/A";
+      transportadora.CardName || transportadora.CardFName || "N/A";
 
     const title = "Confirmar Remoção";
     const message = `Tem certeza que deseja remover a transportadora "${transportadoraNome}" da rota "${rotaNome}"?`;

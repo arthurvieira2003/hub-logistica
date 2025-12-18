@@ -134,11 +134,6 @@ window.ModuleLoader.configs = {
         priority: 11,
       },
       {
-        name: "administrationTransportadoras",
-        path: "/entities/transportadoras.js",
-        priority: 12,
-      },
-      {
         name: "administrationFaixasPeso",
         path: "/entities/faixasPeso.js",
         priority: 13,
@@ -155,9 +150,14 @@ window.ModuleLoader.configs = {
         priority: 16,
       },
       {
+        name: "administrationTransportadorasExcluidas",
+        path: "/entities/transportadorasExcluidas.js",
+        priority: 16.5,
+      },
+      {
         name: "administrationEvents",
         path: "/events/administrationEvents.js",
-        priority: 16,
+        priority: 17,
       },
       {
         name: "administrationMain",

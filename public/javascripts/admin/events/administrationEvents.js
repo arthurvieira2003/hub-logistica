@@ -110,36 +110,6 @@ window.Administration.initSearch = function () {
     });
 
   // Debounce para evitar muitas requisições enquanto o usuário digita
-  let transportadoraSearchTimeout = null;
-
-  document
-    .getElementById("transportadoraSearchInput")
-    ?.addEventListener("input", (e) => {
-      const searchTerm = e.target.value.trim();
-
-      // Limpa o timeout anterior
-      if (transportadoraSearchTimeout) {
-        clearTimeout(transportadoraSearchTimeout);
-      }
-
-      // Aguarda 500ms após o usuário parar de digitar antes de fazer a busca
-      transportadoraSearchTimeout = setTimeout(async () => {
-        if (!searchTerm) {
-          window.Administration.state.filteredData.transportadoras = null;
-          window.Administration.state.currentSearchTransportadoras = null;
-          window.Administration.resetPagination("transportadoras");
-          // Recarrega a primeira página quando limpa a busca
-          await window.Administration.loadTransportadoras(1, 50, null);
-          return;
-        }
-
-        // Busca no servidor
-        window.Administration.resetPagination("transportadoras");
-        await window.Administration.loadTransportadoras(1, 50, searchTerm);
-      }, 500);
-    });
-
-  // Debounce para evitar muitas requisições enquanto o usuário digita
   let faixaPesoSearchTimeout = null;
 
   document
@@ -238,12 +208,6 @@ window.Administration.initEntityEvents = function () {
   });
 
   document
-    .getElementById("createTransportadoraBtn")
-    ?.addEventListener("click", () => {
-      window.Administration.openTransportadoraModal();
-    });
-
-  document
     .getElementById("createFaixaPesoBtn")
     ?.addEventListener("click", () => {
       window.Administration.openFaixaPesoModal();
@@ -280,27 +244,6 @@ window.Administration.initEntityEvents = function () {
   document.getElementById("cancelCidadeBtn")?.addEventListener("click", () => {
     document.getElementById("cidadeModal")?.classList.remove("active");
   });
-
-  document
-    .getElementById("transportadoraForm")
-    ?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      window.Administration.saveTransportadora();
-    });
-  document
-    .getElementById("closeTransportadoraModal")
-    ?.addEventListener("click", () => {
-      document
-        .getElementById("transportadoraModal")
-        ?.classList.remove("active");
-    });
-  document
-    .getElementById("cancelTransportadoraBtn")
-    ?.addEventListener("click", () => {
-      document
-        .getElementById("transportadoraModal")
-        ?.classList.remove("active");
-    });
 
   document.getElementById("faixaPesoForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -341,6 +284,101 @@ window.Administration.initEntityEvents = function () {
     .getElementById("cancelPrecoFaixaBtn")
     ?.addEventListener("click", () => {
       document.getElementById("precoFaixaModal")?.classList.remove("active");
+    });
+
+  // Event listeners para transportadoras sem rastreamento
+  document
+    .getElementById("createTransportadoraExcluidaBtn")
+    ?.addEventListener("click", () => {
+      window.Administration.openTransportadoraExcluidaModal();
+    });
+
+  document
+    .getElementById("transportadoraExcluidaForm")
+    ?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      window.Administration.saveTransportadoraExcluida();
+    });
+
+  document
+    .getElementById("closeTransportadoraExcluidaModal")
+    ?.addEventListener("click", () => {
+      document
+        .getElementById("transportadoraExcluidaModal")
+        ?.classList.remove("active");
+    });
+
+  document
+    .getElementById("cancelTransportadoraExcluidaBtn")
+    ?.addEventListener("click", () => {
+      document
+        .getElementById("transportadoraExcluidaModal")
+        ?.classList.remove("active");
+    });
+
+  // Event listeners para selecionar/desmarcar todas transportadoras
+  document.getElementById("selectAllTransportadorasBtn")?.addEventListener("click", () => {
+    const transportadorasList = document.getElementById("transportadorasExcluidasList");
+    if (transportadorasList) {
+      transportadorasList.querySelectorAll('input[type="checkbox"]:not(:disabled)').forEach(cb => {
+        cb.checked = true;
+      });
+      if (window.Administration.updateSelectedCount) {
+        window.Administration.updateSelectedCount();
+      }
+    }
+  });
+
+  document.getElementById("deselectAllTransportadorasBtn")?.addEventListener("click", () => {
+    const transportadorasList = document.getElementById("transportadorasExcluidasList");
+    if (transportadorasList) {
+      transportadorasList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+      });
+      if (window.Administration.updateSelectedCount) {
+        window.Administration.updateSelectedCount();
+      }
+    }
+  });
+
+  // Event listener para busca de transportadoras no modal
+  let transportadoraExcluidaModalSearchTimeout = null;
+  document.getElementById("transportadoraExcluidaSearchInput")?.addEventListener("input", (e) => {
+    if (transportadoraExcluidaModalSearchTimeout) {
+      clearTimeout(transportadoraExcluidaModalSearchTimeout);
+    }
+
+    transportadoraExcluidaModalSearchTimeout = setTimeout(() => {
+      if (window.Administration.renderTransportadorasList) {
+        window.Administration.renderTransportadorasList();
+      }
+    }, 300);
+  });
+
+  // Debounce para busca de transportadoras sem rastreamento
+  let transportadoraExcluidaSearchTimeout = null;
+
+  document
+    .getElementById("transportadoraExcluidaSearchInput")
+    ?.addEventListener("input", (e) => {
+      const searchTerm = e.target.value.trim();
+
+      if (transportadoraExcluidaSearchTimeout) {
+        clearTimeout(transportadoraExcluidaSearchTimeout);
+      }
+
+      transportadoraExcluidaSearchTimeout = setTimeout(async () => {
+        if (!searchTerm) {
+          window.Administration.state.filteredData.transportadorasExcluidas = null;
+          window.Administration.state.currentSearchTransportadorasExcluidas = null;
+          window.Administration.resetPagination("transportadorasExcluidas");
+          await window.Administration.loadTransportadorasExcluidas(1, 50, null);
+          return;
+        }
+
+        window.Administration.resetPagination("transportadorasExcluidas");
+        await window.Administration.loadTransportadorasExcluidas(1, 50, searchTerm);
+      }, 500);
     });
 
   // Event listeners para modais de rota-transportadora

@@ -46,9 +46,6 @@
           <div class="admin-tab" data-tab="cidades">
             <i class="fas fa-city"></i> Cidades
           </div>
-          <div class="admin-tab" data-tab="transportadoras">
-            <i class="fas fa-truck"></i> Transportadoras
-          </div>
           <div class="admin-tab" data-tab="faixas-peso" style="display: none">
             <i class="fas fa-weight"></i> Faixas de Peso
           </div>
@@ -57,6 +54,9 @@
           </div>
           <div class="admin-tab" data-tab="precos-faixas" style="display: none">
             <i class="fas fa-dollar-sign"></i> Preços de Faixas
+          </div>
+          <div class="admin-tab" data-tab="transportadoras-excluidas">
+            <i class="fas fa-ban"></i> Transportadoras sem Rastreamento
           </div>
         </nav>
 
@@ -215,44 +215,6 @@
             <div id="cidadesPagination"></div>
           </div>
 
-          <div class="admin-content-tab" id="transportadorasTab">
-            <div class="admin-toolbar">
-              <button id="createTransportadoraBtn" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nova Transportadora
-              </button>
-              <div class="search-container">
-                <input
-                  type="text"
-                  id="transportadoraSearchInput"
-                  placeholder="Buscar transportadoras..."
-                />
-                <i class="fas fa-search"></i>
-              </div>
-            </div>
-            <div class="admin-table-container">
-              <table class="admin-table" id="transportadorasTable">
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Razão Social</th>
-                    <th>CNPJ</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colspan="5" class="loading-data">
-                      <i class="fas fa-spinner fa-spin"></i> Carregando
-                      transportadoras...
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div id="transportadorasPagination"></div>
-          </div>
-
           <div
             class="admin-content-tab"
             id="faixas-pesoTab"
@@ -330,6 +292,46 @@
               </table>
             </div>
             <div id="rotasPagination"></div>
+          </div>
+
+          <div class="admin-content-tab" id="transportadoras-excluidasTab">
+            <div class="admin-toolbar">
+              <button
+                id="createTransportadoraExcluidaBtn"
+                class="btn btn-primary"
+              >
+                <i class="fas fa-plus"></i> Nova Exclusão
+              </button>
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="transportadoraExcluidaSearchInput"
+                  placeholder="Buscar transportadoras sem rastreamento..."
+                />
+                <i class="fas fa-search"></i>
+              </div>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table" id="transportadorasExcluidasTable">
+                <thead>
+                  <tr>
+                    <th>Transportadora</th>
+                    <th>CardCode</th>
+                    <th>Motivo</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="4" class="loading-data">
+                      <i class="fas fa-spinner fa-spin"></i> Carregando
+                      transportadoras sem rastreamento...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="transportadorasExcluidasPagination"></div>
           </div>
 
           <div
@@ -501,23 +503,25 @@
           <form id="cidadeForm">
             <input type="hidden" id="cidadeId" value="" />
             <div class="form-group">
-              <label for="cidadeNome">Nome da Cidade</label>
-              <input
-                type="text"
-                id="cidadeNome"
-                class="form-control"
-                required
-              />
-            </div>
-            <div class="form-group">
               <label for="cidadeEstado">Estado</label>
               <select id="cidadeEstado" class="form-control" required>
                 <option value="">Selecione um estado</option>
               </select>
             </div>
+            <div class="form-group" id="municipioGroup" style="display: none">
+              <label for="cidadeMunicipio">Município</label>
+              <select id="cidadeMunicipio" class="form-control" required>
+                <option value="">Selecione um município</option>
+              </select>
+            </div>
             <div class="form-group">
               <label for="cidadeIbge">Código IBGE</label>
-              <input type="number" id="cidadeIbge" class="form-control" />
+              <input
+                type="number"
+                id="cidadeIbge"
+                class="form-control"
+                readonly
+              />
             </div>
           </form>
         </div>
@@ -526,71 +530,6 @@
             <i class="fas fa-times"></i> Cancelar
           </button>
           <button type="submit" form="cidadeForm" class="btn btn-primary">
-            <i class="fas fa-save"></i> Salvar
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div id="transportadoraModal" class="admin-modal">
-      <div class="admin-modal-content">
-        <div class="admin-modal-header">
-          <h3 id="transportadoraModalTitle">Nova Transportadora</h3>
-          <button class="admin-modal-close" id="closeTransportadoraModal">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="admin-modal-body">
-          <form id="transportadoraForm">
-            <input type="hidden" id="transportadoraId" value="" />
-            <div class="form-group">
-              <label for="transportadoraNome">Nome</label>
-              <input
-                type="text"
-                id="transportadoraNome"
-                class="form-control"
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label for="transportadoraRazao">Razão Social</label>
-              <input
-                type="text"
-                id="transportadoraRazao"
-                class="form-control"
-              />
-            </div>
-            <div class="form-group">
-              <label for="transportadoraCnpj">CNPJ</label>
-              <input type="text" id="transportadoraCnpj" class="form-control" />
-            </div>
-            <div class="form-group">
-              <label for="transportadoraTelefone">Telefone</label>
-              <input
-                type="text"
-                id="transportadoraTelefone"
-                class="form-control"
-              />
-            </div>
-            <div class="form-group">
-              <label for="transportadoraEmail">Email</label>
-              <input
-                type="email"
-                id="transportadoraEmail"
-                class="form-control"
-              />
-            </div>
-          </form>
-        </div>
-        <div class="admin-modal-footer">
-          <button id="cancelTransportadoraBtn" class="btn btn-secondary">
-            <i class="fas fa-times"></i> Cancelar
-          </button>
-          <button
-            type="submit"
-            form="transportadoraForm"
-            class="btn btn-primary"
-          >
             <i class="fas fa-save"></i> Salvar
           </button>
         </div>
@@ -1015,6 +954,163 @@
           </button>
           <button type="submit" form="precoFaixaForm" class="btn btn-primary">
             <i class="fas fa-save"></i> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="transportadoraExcluidaModal" class="admin-modal">
+      <div class="admin-modal-content" style="max-width: 700px">
+        <div class="admin-modal-header">
+          <h3 id="transportadoraExcluidaModalTitle">
+            <i class="fas fa-ban"></i> Nova Transportadora sem Rastreamento
+          </h3>
+          <button
+            class="admin-modal-close"
+            id="closeTransportadoraExcluidaModal"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="admin-modal-body">
+          <form id="transportadoraExcluidaForm">
+            <!-- Seção de Transportadoras -->
+            <div class="form-group">
+              <label
+                style="font-weight: 600; margin-bottom: 12px; display: block"
+              >
+                <i class="fas fa-truck"></i> Transportadoras
+              </label>
+
+              <!-- Barra de ações e busca -->
+              <div
+                style="
+                  display: flex;
+                  gap: 8px;
+                  margin-bottom: 12px;
+                  flex-wrap: wrap;
+                  align-items: center;
+                "
+              >
+                <button
+                  type="button"
+                  id="selectAllTransportadorasBtn"
+                  class="btn btn-sm btn-secondary"
+                  style="flex: 0 0 auto"
+                >
+                  <i class="fas fa-check-square"></i> Selecionar Todas
+                </button>
+                <button
+                  type="button"
+                  id="deselectAllTransportadorasBtn"
+                  class="btn btn-sm btn-secondary"
+                  style="flex: 0 0 auto"
+                >
+                  <i class="fas fa-square"></i> Desmarcar Todas
+                </button>
+                <div style="flex: 1; min-width: 200px; position: relative">
+                  <input
+                    type="text"
+                    id="transportadoraExcluidaModalSearchInput"
+                    class="form-control"
+                    placeholder="Buscar transportadora..."
+                    style="padding-left: 35px"
+                  />
+                  <i
+                    class="fas fa-search"
+                    style="
+                      position: absolute;
+                      left: 12px;
+                      top: 50%;
+                      transform: translateY(-50%);
+                      color: #999;
+                    "
+                  ></i>
+                </div>
+                <div
+                  id="transportadorasSelecionadasCount"
+                  style="
+                    flex: 0 0 auto;
+                    padding: 6px 12px;
+                    background: rgba(36, 118, 117, 0.1);
+                    border-radius: 4px;
+                    font-weight: 600;
+                    color: #247675;
+                    font-size: 0.9em;
+                  "
+                >
+                  <i class="fas fa-check-circle"></i>
+                  <span id="countSelected">0</span> selecionada(s)
+                </div>
+              </div>
+
+              <!-- Lista de transportadoras -->
+              <div
+                id="transportadorasExcluidasList"
+                style="
+                  max-height: 350px;
+                  overflow-y: auto;
+                  border: 2px solid #e2e8f0;
+                  border-radius: 6px;
+                  padding: 12px;
+                  background: #f8fafc;
+                "
+              >
+                <div
+                  style="text-align: center; padding: 40px 20px; color: #666"
+                >
+                  <i
+                    class="fas fa-spinner fa-spin"
+                    style="font-size: 24px; margin-bottom: 10px; display: block"
+                  ></i>
+                  <span>Carregando transportadoras...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção de Motivo -->
+            <div
+              class="form-group"
+              style="
+                margin-top: 20px;
+                padding-top: 20px;
+                border-top: 1px solid #e2e8f0;
+              "
+            >
+              <label
+                for="transportadoraExcluidaMotivo"
+                style="font-weight: 600; margin-bottom: 8px; display: block"
+              >
+                <i class="fas fa-comment-alt"></i> Motivo da Exclusão
+                <span style="color: #999; font-weight: normal">(opcional)</span>
+              </label>
+              <textarea
+                id="transportadoraExcluidaMotivo"
+                class="form-control"
+                rows="3"
+                placeholder="Ex: Transportadora não possui sistema de rastreamento integrado ou API disponível"
+                style="resize: vertical"
+              ></textarea>
+            </div>
+          </form>
+        </div>
+        <div
+          class="admin-modal-footer"
+          style="border-top: 1px solid #e2e8f0; padding-top: 16px"
+        >
+          <button
+            id="cancelTransportadoraExcluidaBtn"
+            class="btn btn-secondary"
+          >
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button
+            type="submit"
+            form="transportadoraExcluidaForm"
+            class="btn btn-primary"
+            id="saveTransportadoraExcluidaBtn"
+          >
+            <i class="fas fa-save"></i> Salvar Exclusões
           </button>
         </div>
       </div>
