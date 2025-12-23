@@ -114,6 +114,10 @@ function handleStepError(step, error) {
 window.AppInitializer.executeInitializationSteps = async function () {
   const steps = [
     {
+      name: "Inicializar Keycloak",
+      func: window.AppInitializer.initKeycloak,
+    },
+    {
       name: "Forçar sidebar aberta",
       func: window.AppInitializer.forceOpenSidebar,
     },
@@ -155,6 +159,28 @@ window.AppInitializer.executeInitializationSteps = async function () {
       recordStepSuccess(step.name);
     } catch (error) {
       handleStepError(step, error);
+    }
+  }
+};
+
+window.AppInitializer.initKeycloak = async function () {
+  if (window.KeycloakAuth && window.KeycloakAuth.init) {
+    try {
+      await window.KeycloakAuth.init();
+      
+      // Se não estiver autenticado e não estiver na página de login, redirecionar
+      if (!window.KeycloakAuth.isAuthenticated() && 
+          !window.location.pathname.includes("login") && 
+          window.location.pathname !== "/") {
+        // Verificar se há token tradicional como fallback
+        const token = window.AuthCore?.getToken();
+        if (!token || token === "undefined" || token === "null") {
+          window.location.href = "/";
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao inicializar Keycloak:", error);
+      // Continua mesmo se Keycloak falhar (fallback para autenticação tradicional)
     }
   }
 };
@@ -278,6 +304,22 @@ window.AppInitializer.initUserDropdown = function () {
 
   if (!userProfileButton || !template) {
     return;
+  }
+
+  // Configurar botão de logout
+  const logoutButton = document.getElementById("logoutButton");
+  if (logoutButton) {
+    logoutButton.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (window.AuthCore && window.AuthCore.logout) {
+        await window.AuthCore.logout();
+      } else {
+        // Fallback caso o módulo de autenticação não esteja disponível
+        window.location.href = "/";
+      }
+    });
   }
 };
 

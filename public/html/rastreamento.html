@@ -32,10 +32,16 @@
             <i class="fas fa-location-dot"></i> Rastreamento de Notas -
             Transportadoras
           </h2>
-          <a href="/administration" id="adminButton" class="admin-button">
-            <i class="fas fa-user-shield"></i>
-            <span>Painel Administrativo</span>
-          </a>
+          <div class="header-actions">
+            <a href="/administration" id="adminButton" class="admin-button">
+              <i class="fas fa-user-shield"></i>
+              <span>Painel Administrativo</span>
+            </a>
+            <button id="logoutButtonRastreamento" class="logout-button">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Sair</span>
+            </button>
+          </div>
         </div>
         <div id="trackingView" class="tracking-container">
           <div class="rastreamento-loading-overlay">
@@ -48,6 +54,7 @@
       </div>
     </div>
 
+    <!-- Keycloak será carregado dinamicamente pelo keycloakAuth.js -->
     <script src="../javascripts/config.js"></script>
     <script src="../javascripts/utils/apiConfig.js"></script>
     <script src="../javascripts/core/moduleLoader.js"></script>

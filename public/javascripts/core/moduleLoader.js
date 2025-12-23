@@ -30,6 +30,7 @@ window.ModuleLoader.configs = {
     basePath: "/javascripts/auth",
     dependencies: [],
     modules: [
+      { name: "keycloakAuth", path: "/keycloak/keycloakAuth.js", priority: 0 },
       { name: "authCore", path: "/core/authCore.js", priority: 1 },
       { name: "authUI", path: "/ui/authUI.js", priority: 2 },
       {

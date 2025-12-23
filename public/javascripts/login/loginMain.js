@@ -5,6 +5,22 @@ window.LoginMain.initLogin = async function () {
     // Aguarda um pouco para garantir que todos os módulos foram carregados
     await new Promise((resolve) => setTimeout(resolve, 100));
 
+    // Inicializar Keycloak se disponível
+    if (window.KeycloakAuth && window.KeycloakAuth.init) {
+      try {
+        await window.KeycloakAuth.init();
+        
+        // Se já estiver autenticado via Keycloak, redirecionar
+        if (window.KeycloakAuth.isAuthenticated()) {
+          window.location.href = "/rastreamento";
+          return;
+        }
+      } catch (error) {
+        console.error("Erro ao inicializar Keycloak:", error);
+        // Continua com o login tradicional se Keycloak falhar
+      }
+    }
+
     if (window.LoginUI && window.LoginUI.initUI) {
       window.LoginUI.initUI();
     } else {

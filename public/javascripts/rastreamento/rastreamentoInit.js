@@ -11,6 +11,66 @@ window.RastreamentoInit.init = async function () {
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
+    // Inicializar Keycloak se disponível
+    if (window.KeycloakAuth && window.KeycloakAuth.init) {
+      try {
+        // Verificar se há parâmetros de callback do Keycloak na URL
+        const urlParams = new URLSearchParams(
+          window.location.hash.substring(1)
+        );
+        const hasKeycloakCallback =
+          urlParams.has("code") || urlParams.has("state");
+
+        // Inicializar Keycloak (isso processará o callback se houver)
+        await window.KeycloakAuth.init();
+
+        // Aguardar um pouco para o Keycloak processar o callback
+        if (hasKeycloakCallback) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+
+        // Verificar autenticação após processar callback
+        const isAuthenticated = window.KeycloakAuth.isAuthenticated();
+        const token = window.AuthCore?.getToken();
+
+        // Se não estiver autenticado e não houver token, redirecionar para login
+        if (
+          !isAuthenticated &&
+          (!token || token === "undefined" || token === "null")
+        ) {
+          // Limpar parâmetros da URL antes de redirecionar
+          if (hasKeycloakCallback) {
+            window.history.replaceState(
+              {},
+              document.title,
+              window.location.pathname
+            );
+          }
+          window.location.href = "/";
+          return;
+        }
+      } catch (error) {
+        console.error("Erro ao inicializar Keycloak:", error);
+        // Continua mesmo se Keycloak falhar (fallback para autenticação tradicional)
+      }
+    }
+
+    // Configurar botão de logout
+    const logoutButton = document.getElementById("logoutButtonRastreamento");
+    if (logoutButton) {
+      logoutButton.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (window.AuthCore && window.AuthCore.logout) {
+          await window.AuthCore.logout();
+        } else {
+          // Fallback caso o módulo de autenticação não esteja disponível
+          window.location.href = "/";
+        }
+      });
+    }
+
     // Verificar se o usuário é administrador e mostrar botão
     if (window.AuthCore && window.AuthCore.getToken) {
       const token = window.AuthCore.getToken();
@@ -33,10 +93,7 @@ window.RastreamentoInit.init = async function () {
     }
 
     // Inicializar o rastreamento
-    if (
-      window.RastreamentoMain &&
-      window.RastreamentoMain.initRastreamento
-    ) {
+    if (window.RastreamentoMain && window.RastreamentoMain.initRastreamento) {
       const trackingView = document.getElementById("trackingView");
       if (trackingView) {
         await window.RastreamentoMain.initRastreamento(trackingView);
@@ -75,4 +132,3 @@ if (document.readyState === "loading") {
 } else {
   window.RastreamentoInit.init();
 }
-

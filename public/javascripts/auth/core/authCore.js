@@ -23,6 +23,15 @@ window.AuthCore.tokenCache = {
 };
 
 window.AuthCore.getToken = function () {
+  // Se Keycloak estiver disponível, obter token do Keycloak
+  if (window.KeycloakAuth && window.KeycloakAuth.getToken) {
+    const keycloakToken = window.KeycloakAuth.getToken();
+    if (keycloakToken) {
+      return keycloakToken;
+    }
+  }
+
+  // Fallback para token do cookie
   return document.cookie
     .split("; ")
     .find((row) => row.startsWith("token="))
@@ -39,6 +48,12 @@ window.AuthCore.removeToken = function () {
 };
 
 window.AuthCore.isAuthenticated = function () {
+  // Verificar primeiro se Keycloak está autenticado
+  if (window.KeycloakAuth && window.KeycloakAuth.isAuthenticated()) {
+    return true;
+  }
+
+  // Fallback para verificação tradicional
   const token = window.AuthCore.getToken();
   return token && token !== "undefined" && token !== "null";
 };
@@ -58,6 +73,20 @@ window.AuthCore.checkAuth = function () {
 };
 
 window.AuthCore.validateToken = async function (token) {
+  // Se Keycloak estiver disponível e autenticado, usar dados do Keycloak
+  if (window.KeycloakAuth && window.KeycloakAuth.isAuthenticated()) {
+    try {
+      const userInfo = await window.KeycloakAuth.getUserInfo();
+      if (userInfo) {
+        window.AuthCore.tokenCache.set(userInfo);
+        return userInfo;
+      }
+    } catch (error) {
+      console.error("Erro ao obter informações do Keycloak:", error);
+    }
+  }
+
+  // Fallback para validação tradicional
   const cachedData = window.AuthCore.tokenCache.get();
   if (cachedData) {
     return cachedData;
@@ -138,10 +167,43 @@ window.AuthCore.validateTokenExpiration = async function () {
   return userData;
 };
 
-window.AuthCore.logout = function () {
-  window.AuthCore.removeToken();
+window.AuthCore.logout = async function () {
+  // Se Keycloak estiver disponível, usar logout do Keycloak
+  if (window.KeycloakAuth && window.KeycloakAuth.state.isInitialized) {
+    window.KeycloakAuth.logout();
+    return;
+  }
 
-  window.AuthCore.redirectToLogin("Logout realizado com sucesso.");
+  // Fallback para logout tradicional
+  try {
+    const token = window.AuthCore.getToken();
+
+    if (token) {
+      const API_BASE_URL =
+        (window.getApiBaseUrl && window.getApiBaseUrl()) ||
+        (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+        "https://logistica.copapel.com.br/api";
+
+      try {
+        await fetch(`${API_BASE_URL}/session/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+        });
+      } catch (error) {
+        console.error("Erro ao encerrar sessão no servidor:", error);
+        // Continua com o logout mesmo se houver erro na chamada
+      }
+    }
+  } catch (error) {
+    console.error("Erro ao fazer logout:", error);
+  } finally {
+    // Sempre remove o token e redireciona, mesmo se houver erro
+    window.AuthCore.removeToken();
+    window.location.href = "/";
+  }
 };
 
 window.AuthCore.authenticatedFetch = async function (url, options = {}) {

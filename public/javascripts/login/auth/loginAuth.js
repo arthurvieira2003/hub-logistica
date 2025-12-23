@@ -90,7 +90,58 @@ window.LoginAuth.processLoginSuccess = function (data) {
   }
 };
 
-window.LoginAuth.authenticateUser = function (email, password) {
+window.LoginAuth.authenticateUser = async function (email, password) {
+  // Se Keycloak estiver disponível, usar Keycloak para login direto
+  if (window.KeycloakAuth) {
+    try {
+      // Inicializar Keycloak se não estiver inicializado
+      if (!window.KeycloakAuth.state.isInitialized) {
+        await window.KeycloakAuth.init();
+      }
+      
+      // Tentar login direto com credenciais (sem redirecionamento)
+      try {
+        await window.KeycloakAuth.loginWithCredentials(email, password);
+        return; // Sucesso - handleAuthSuccess já redireciona
+      } catch (loginError) {
+        // Se Direct Access Grants não estiver habilitado, usar redirecionamento
+        if (loginError.message && loginError.message.includes('grant_type')) {
+          console.log("Direct Access Grants não disponível, usando redirecionamento");
+          await window.KeycloakAuth.login();
+          return;
+        }
+        throw loginError;
+      }
+    } catch (error) {
+      console.error("Erro ao fazer login com Keycloak:", error);
+      
+      // Mensagens de erro mais específicas
+      let errorMessage = "Não foi possível fazer login. Tente novamente.";
+      if (error.message) {
+        if (error.message.includes("Invalid user credentials") || 
+            error.message.includes("invalid_grant")) {
+          errorMessage = "Email ou senha incorretos.";
+        } else if (error.message.includes("User is disabled")) {
+          errorMessage = "Usuário desabilitado. Entre em contato com o administrador.";
+        } else if (error.message.includes("Account is temporarily locked")) {
+          errorMessage = "Conta temporariamente bloqueada. Tente novamente mais tarde.";
+        }
+      }
+      
+      window.LoginUI.showNotification(
+        "error",
+        "Erro de autenticação",
+        errorMessage,
+        5000
+      );
+      if (window.LoginUI && window.LoginUI.setLoadingState) {
+        window.LoginUI.setLoadingState(false);
+      }
+      return;
+    }
+  }
+
+  // Fallback para autenticação tradicional (caso Keycloak não esteja disponível)
   if (!window.LoginValidation || !window.LoginValidation.validateLoginData) {
     if (window.LoginUI && window.LoginUI.setLoadingState) {
       window.LoginUI.setLoadingState(false);

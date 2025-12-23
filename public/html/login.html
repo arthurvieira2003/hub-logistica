@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hub Logística - Login</title>
 
+    <!-- Keycloak será carregado dinamicamente pelo keycloakAuth.js -->
     <script src="../javascripts/config.js"></script>
     <script src="../javascripts/utils/apiConfig.js"></script>
     <script src="../javascripts/core/moduleLoader.js"></script>
@@ -54,6 +55,7 @@
                   class="form-control"
                   id="email"
                   placeholder="E-mail"
+                  autocomplete="email"
                 />
               </div>
               <div class="mb-3 input-group">
@@ -65,6 +67,7 @@
                   class="form-control"
                   id="password"
                   placeholder="Senha"
+                  autocomplete="current-password"
                 />
                 <button
                   class="btn btn-outline-secondary"
