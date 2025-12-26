@@ -91,103 +91,112 @@ window.LoginAuth.processLoginSuccess = function (data) {
 };
 
 window.LoginAuth.authenticateUser = async function (email, password) {
-  // Se Keycloak estiver disponível, usar Keycloak para login direto
-  if (window.KeycloakAuth) {
-    try {
-      // Inicializar Keycloak se não estiver inicializado
-      if (!window.KeycloakAuth.state.isInitialized) {
-        await window.KeycloakAuth.init();
-      }
-      
-      // Tentar login direto com credenciais (sem redirecionamento)
-      try {
-        await window.KeycloakAuth.loginWithCredentials(email, password);
-        return; // Sucesso - handleAuthSuccess já redireciona
-      } catch (loginError) {
-        // Se Direct Access Grants não estiver habilitado, usar redirecionamento
-        if (loginError.message && loginError.message.includes('grant_type')) {
-          console.log("Direct Access Grants não disponível, usando redirecionamento");
-          await window.KeycloakAuth.login();
-          return;
-        }
-        throw loginError;
-      }
-    } catch (error) {
-      console.error("Erro ao fazer login com Keycloak:", error);
-      
-      // Mensagens de erro mais específicas
-      let errorMessage = "Não foi possível fazer login. Tente novamente.";
-      if (error.message) {
-        if (error.message.includes("Invalid user credentials") || 
-            error.message.includes("invalid_grant")) {
-          errorMessage = "Email ou senha incorretos.";
-        } else if (error.message.includes("User is disabled")) {
-          errorMessage = "Usuário desabilitado. Entre em contato com o administrador.";
-        } else if (error.message.includes("Account is temporarily locked")) {
-          errorMessage = "Conta temporariamente bloqueada. Tente novamente mais tarde.";
-        }
-      }
-      
-      window.LoginUI.showNotification(
-        "error",
-        "Erro de autenticação",
-        errorMessage,
-        5000
-      );
+  // Login exclusivamente via Keycloak
+  if (!window.KeycloakAuth) {
+    window.LoginUI.showNotification(
+      "error",
+      "Erro de configuração",
+      "Sistema de autenticação Keycloak não está disponível. Entre em contato com o administrador.",
+      5000
+    );
+    if (window.LoginUI && window.LoginUI.setLoadingState) {
+      window.LoginUI.setLoadingState(false);
+    }
+    return;
+  }
+
+  try {
+    // Validar dados de entrada
+    if (!window.LoginValidation || !window.LoginValidation.validateLoginData) {
       if (window.LoginUI && window.LoginUI.setLoadingState) {
         window.LoginUI.setLoadingState(false);
       }
       return;
     }
-  }
 
-  // Fallback para autenticação tradicional (caso Keycloak não esteja disponível)
-  if (!window.LoginValidation || !window.LoginValidation.validateLoginData) {
-    if (window.LoginUI && window.LoginUI.setLoadingState) {
-      window.LoginUI.setLoadingState(false);
-    }
-    return;
-  }
-
-  if (!window.LoginValidation.validateLoginData(email, password)) {
-    if (window.LoginUI && window.LoginUI.setLoadingState) {
-      window.LoginUI.setLoadingState(false);
-    }
-    return;
-  }
-
-  const API_BASE_URL =
-    (window.API_CONFIG && window.API_CONFIG.getBaseUrl()) ||
-    (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-    "https://logistica.copapel.com.br/api";
-  fetch(`${API_BASE_URL}/user/authenticate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  })
-    .then((response) => {
-      return response.json().then((data) => {
-        if (!response.ok) {
-          throw { status: response.status, data: data };
-        }
-        return data;
-      });
-    })
-    .then((data) => {
-      window.LoginAuth.processLoginSuccess(data);
-    })
-    .catch((error) => {
+    if (!window.LoginValidation.validateLoginData(email, password)) {
       if (window.LoginUI && window.LoginUI.setLoadingState) {
         window.LoginUI.setLoadingState(false);
       }
-      if (error.data) {
-        window.LoginAuth.processServerError(error);
-      } else {
-        window.LoginAuth.processConnectionError(error);
+      return;
+    }
+
+    // Inicializar Keycloak se não estiver inicializado
+    if (!window.KeycloakAuth.state.isInitialized) {
+      await window.KeycloakAuth.init();
+    }
+
+    // Tentar login direto com credenciais (Direct Access Grants)
+    try {
+      await window.KeycloakAuth.loginWithCredentials(email, password);
+      
+      // Sucesso - handleAuthSuccess já redireciona
+      window.LoginUI.showNotification(
+        "success",
+        "Login realizado!",
+        "Redirecionando...",
+        2000
+      );
+      return;
+    } catch (loginError) {
+      // Se Direct Access Grants não estiver habilitado, usar redirecionamento
+      if (
+        loginError.message &&
+        (loginError.message.includes("grant_type") ||
+          loginError.message.includes("not allowed") ||
+          loginError.message.includes("Direct Access Grants"))
+      ) {
+        console.log(
+          "Direct Access Grants não disponível, usando redirecionamento para Keycloak"
+        );
+        // Redirecionar para página de login do Keycloak
+        await window.KeycloakAuth.login({
+          redirectUri: window.location.origin + "/rastreamento",
+        });
+        return;
       }
-    });
+      throw loginError;
+    }
+  } catch (error) {
+    console.error("Erro ao fazer login com Keycloak:", error);
+
+    // Mensagens de erro mais específicas
+    let errorTitle = "Erro de autenticação";
+    let errorMessage = "Não foi possível fazer login. Tente novamente.";
+
+    if (error.message) {
+      if (
+        error.message.includes("Invalid user credentials") ||
+        error.message.includes("invalid_grant") ||
+        error.message.includes("invalid_client")
+      ) {
+        errorTitle = "Credenciais inválidas";
+        errorMessage =
+          "Email ou senha incorretos. Verifique suas credenciais e tente novamente.";
+      } else if (error.message.includes("User is disabled")) {
+        errorTitle = "Usuário desabilitado";
+        errorMessage =
+          "Sua conta está desabilitada. Entre em contato com o administrador.";
+      } else if (error.message.includes("Account is temporarily locked")) {
+        errorTitle = "Conta bloqueada";
+        errorMessage =
+          "Sua conta está temporariamente bloqueada. Tente novamente mais tarde.";
+      } else if (
+        error.message.includes("Connection") ||
+        error.message.includes("Network")
+      ) {
+        errorTitle = "Erro de conexão";
+        errorMessage =
+          "Não foi possível conectar ao servidor de autenticação. Verifique sua conexão.";
+      }
+    }
+
+    window.LoginUI.showNotification("error", errorTitle, errorMessage, 5000);
+    if (window.LoginUI && window.LoginUI.setLoadingState) {
+      window.LoginUI.setLoadingState(false);
+    }
+    return;
+  }
 };
 
 window.LoginAuth.registerUser = function (email, password, confirmPassword) {

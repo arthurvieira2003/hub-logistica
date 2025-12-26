@@ -164,24 +164,42 @@ window.AppInitializer.executeInitializationSteps = async function () {
 };
 
 window.AppInitializer.initKeycloak = async function () {
-  if (window.KeycloakAuth && window.KeycloakAuth.init) {
-    try {
-      await window.KeycloakAuth.init();
-      
-      // Se não estiver autenticado e não estiver na página de login, redirecionar
-      if (!window.KeycloakAuth.isAuthenticated() && 
-          !window.location.pathname.includes("login") && 
-          window.location.pathname !== "/") {
-        // Verificar se há token tradicional como fallback
-        const token = window.AuthCore?.getToken();
-        if (!token || token === "undefined" || token === "null") {
-          window.location.href = "/";
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao inicializar Keycloak:", error);
-      // Continua mesmo se Keycloak falhar (fallback para autenticação tradicional)
+  // Keycloak é obrigatório - não há fallback
+  if (!window.KeycloakAuth || !window.KeycloakAuth.init) {
+    console.error(
+      "Keycloak não está disponível. O sistema requer autenticação via Keycloak."
+    );
+    // Se não estiver na página de login, redirecionar
+    if (
+      !window.location.pathname.includes("login") &&
+      window.location.pathname !== "/"
+    ) {
+      window.location.href = "/";
     }
+    return;
+  }
+
+  try {
+    await window.KeycloakAuth.init();
+
+    // Se não estiver autenticado e não estiver na página de login, redirecionar
+    if (
+      !window.KeycloakAuth.isAuthenticated() &&
+      !window.location.pathname.includes("login") &&
+      window.location.pathname !== "/"
+    ) {
+      window.location.href = "/";
+    }
+  } catch (error) {
+    console.error("Erro ao inicializar Keycloak:", error);
+    // Se não estiver na página de login, redirecionar para login
+    if (
+      !window.location.pathname.includes("login") &&
+      window.location.pathname !== "/"
+    ) {
+      window.location.href = "/";
+    }
+    throw error; // Propagar erro para que seja tratado
   }
 };
 
@@ -312,7 +330,7 @@ window.AppInitializer.initUserDropdown = function () {
     logoutButton.addEventListener("click", async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       if (window.AuthCore && window.AuthCore.logout) {
         await window.AuthCore.logout();
       } else {

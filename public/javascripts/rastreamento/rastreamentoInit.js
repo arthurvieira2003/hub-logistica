@@ -11,33 +11,79 @@ window.RastreamentoInit.init = async function () {
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
+    // Verificar se já temos token antes de inicializar Keycloak
+    const existingToken = window.AuthCore?.getToken();
+    console.log("Token existente antes de inicializar Keycloak:", {
+      hasToken: !!existingToken,
+      tokenValue: existingToken ? "presente" : "ausente",
+      tokenLength: existingToken?.length,
+      cookies: document.cookie,
+    });
+
     // Inicializar Keycloak se disponível
     if (window.KeycloakAuth && window.KeycloakAuth.init) {
       try {
-        // Verificar se há parâmetros de callback do Keycloak na URL
-        const urlParams = new URLSearchParams(
-          window.location.hash.substring(1)
-        );
-        const hasKeycloakCallback =
-          urlParams.has("code") || urlParams.has("state");
+        // Verificar se Keycloak já está inicializado e autenticado
+        if (window.KeycloakAuth.state.isInitialized) {
+          console.log("Keycloak já inicializado, verificando autenticação...");
 
-        // Inicializar Keycloak (isso processará o callback se houver)
-        await window.KeycloakAuth.init();
+          // Se já está inicializado, verificar se tem token
+          const keycloakToken = window.KeycloakAuth.getToken();
+          if (keycloakToken || existingToken) {
+            console.log("Token encontrado, Keycloak já autenticado");
+            // Não precisa fazer nada, já está autenticado
+          } else {
+            console.log(
+              "Keycloak inicializado mas sem token, precisa verificar"
+            );
+          }
+        } else {
+          // Verificar se há parâmetros de callback do Keycloak na URL
+          const urlParams = new URLSearchParams(
+            window.location.hash.substring(1)
+          );
+          const hasKeycloakCallback =
+            urlParams.has("code") || urlParams.has("state");
 
-        // Aguardar um pouco para o Keycloak processar o callback
-        if (hasKeycloakCallback) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          // Inicializar Keycloak (isso processará o callback se houver)
+          await window.KeycloakAuth.init();
+
+          // Aguardar um pouco para o Keycloak processar o callback
+          if (hasKeycloakCallback) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
         }
+
+        // Aguardar um pouco para garantir que o token foi processado
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Verificar autenticação após processar callback
         const isAuthenticated = window.KeycloakAuth.isAuthenticated();
         const token = window.AuthCore?.getToken();
 
-        // Se não estiver autenticado e não houver token, redirecionar para login
-        if (
-          !isAuthenticated &&
-          (!token || token === "undefined" || token === "null")
-        ) {
+        console.log("Verificação de autenticação em rastreamento:", {
+          isAuthenticated,
+          hasToken: !!token,
+          tokenValue: token ? "presente" : "ausente",
+        });
+
+        // Se não estiver autenticado E não houver token, redirecionar para login
+        // Mas se houver token, considerar autenticado mesmo se isAuthenticated for false
+        // (isso pode acontecer com login via Direct Access Grants)
+        const hasValidToken =
+          token && token !== "undefined" && token !== "null";
+        const shouldRedirect = !isAuthenticated && !hasValidToken;
+
+        console.log("Decisão de redirecionamento:", {
+          isAuthenticated,
+          hasValidToken,
+          shouldRedirect,
+        });
+
+        if (shouldRedirect) {
+          console.log(
+            "Não autenticado e sem token - redirecionando para login"
+          );
           // Limpar parâmetros da URL antes de redirecionar
           if (hasKeycloakCallback) {
             window.history.replaceState(
@@ -48,6 +94,10 @@ window.RastreamentoInit.init = async function () {
           }
           window.location.href = "/";
           return;
+        } else {
+          console.log(
+            "Autenticado - continuando com inicialização do rastreamento"
+          );
         }
       } catch (error) {
         console.error("Erro ao inicializar Keycloak:", error);

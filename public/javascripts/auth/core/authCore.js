@@ -32,14 +32,26 @@ window.AuthCore.getToken = function () {
   }
 
   // Fallback para token do cookie
-  return document.cookie
+  const cookieToken = document.cookie
     .split("; ")
     .find((row) => row.startsWith("token="))
     ?.split("=")[1];
+
+  return cookieToken;
 };
 
 window.AuthCore.setToken = function (token) {
-  document.cookie = `token=${token}; path=/`;
+  if (!token || token === "undefined" || token === "null") {
+    console.warn("Tentativa de armazenar token inválido:", token);
+    return;
+  }
+
+  // Armazenar token no cookie com path=/ para estar disponível em todas as páginas
+  document.cookie = `token=${token}; path=/; max-age=86400`; // 24 horas
+  console.log("Token armazenado no cookie:", {
+    tokenLength: token.length,
+    cookieSet: document.cookie.includes("token="),
+  });
 };
 
 window.AuthCore.removeToken = function () {
@@ -73,6 +85,17 @@ window.AuthCore.checkAuth = function () {
 };
 
 window.AuthCore.validateToken = async function (token) {
+  console.log("validateToken chamado com token:", {
+    hasToken: !!token,
+    tokenLength: token?.length,
+    tokenPreview: token ? token.substring(0, 50) + "..." : "null",
+  });
+
+  if (!token || token === "undefined" || token === "null") {
+    console.warn("Token inválido ou ausente");
+    return null;
+  }
+
   // Se Keycloak estiver disponível e autenticado, usar dados do Keycloak
   if (window.KeycloakAuth && window.KeycloakAuth.isAuthenticated()) {
     try {
@@ -86,9 +109,10 @@ window.AuthCore.validateToken = async function (token) {
     }
   }
 
-  // Fallback para validação tradicional
+  // Fallback para validação tradicional (cache)
   const cachedData = window.AuthCore.tokenCache.get();
   if (cachedData) {
+    console.log("Usando dados do cache");
     return cachedData;
   }
 
@@ -97,34 +121,102 @@ window.AuthCore.validateToken = async function (token) {
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
-      const API_BASE_URL =
-        (window.getApiBaseUrl && window.getApiBaseUrl()) ||
-        (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
-        "https://logistica.copapel.com.br/api";
-      const response = await fetch(`${API_BASE_URL}/session/validate`, {
-        method: "GET",
+      // Usar endpoint de introspect do Keycloak
+      const introspectUrl =
+        window.KeycloakAuth?.config?.introspectEndpoint ||
+        window.KeycloakAuth?.config?.tokenEndpoint?.replace(
+          "/token",
+          "/token/introspect"
+        ) ||
+        "https://auth.copapel.com.br/realms/Operacao/protocol/openid-connect/token/introspect";
+
+      const clientId = window.KeycloakAuth?.config?.clientId || "hublogistica";
+      const clientSecret =
+        window.KeycloakAuth?.config?.clientSecret ||
+        "bUCDRQOHfyNQWzU1Tn33718D0P0jDeMX";
+
+      console.log(
+        "Fazendo requisição para validar token via Keycloak introspect:",
+        {
+          url: introspectUrl,
+          clientId: clientId,
+          hasToken: !!token,
+        }
+      );
+
+      // Preparar body em formato x-www-form-urlencoded
+      const params = new URLSearchParams({
+        token: token,
+        client_id: clientId,
+        client_secret: clientSecret,
+      });
+
+      const response = await fetch(introspectUrl, {
+        method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
+          "Content-Type": "application/x-www-form-urlencoded",
         },
+        body: params.toString(),
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
+      console.log("Resposta da validação (introspect):", {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+      });
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Erro na validação:", errorText);
         throw new Error(
-          `Falha na validação do token: ${response.status} ${response.statusText}`
+          `Falha na validação do token: ${response.status} ${response.statusText} - ${errorText}`
         );
       }
 
-      const data = await response.json();
+      const introspectData = await response.json();
+      console.log("Dados do introspect:", introspectData);
 
-      window.AuthCore.tokenCache.set(data);
+      // Verificar se o token está ativo
+      if (!introspectData.active) {
+        console.warn("Token não está ativo");
+        return null;
+      }
 
-      return data;
+      // Converter dados do introspect para o formato esperado pelo sistema
+      const userData = {
+        id: introspectData.sub,
+        email: introspectData.email,
+        name:
+          introspectData.name ||
+          introspectData.preferred_username ||
+          introspectData.email,
+        given_name: introspectData.given_name,
+        family_name: introspectData.family_name,
+        preferred_username: introspectData.preferred_username,
+        email_verified: introspectData.email_verified,
+        isAdmin:
+          introspectData.realm_access?.roles?.includes("admin") ||
+          introspectData.resource_access?.[clientId]?.roles?.includes(
+            "admin"
+          ) ||
+          false,
+        roles: introspectData.realm_access?.roles || [],
+        exp: introspectData.exp,
+        iat: introspectData.iat,
+        token: token,
+      };
+
+      console.log("Dados validados e convertidos:", userData);
+
+      window.AuthCore.tokenCache.set(userData);
+
+      return userData;
     } catch (fetchError) {
       clearTimeout(timeoutId);
+      console.error("Erro na requisição de validação:", fetchError);
       if (fetchError.name === "AbortError") {
         throw new Error("Timeout ao validar token");
       }

@@ -5,20 +5,32 @@ window.LoginMain.initLogin = async function () {
     // Aguarda um pouco para garantir que todos os módulos foram carregados
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Inicializar Keycloak se disponível
-    if (window.KeycloakAuth && window.KeycloakAuth.init) {
-      try {
-        await window.KeycloakAuth.init();
-        
-        // Se já estiver autenticado via Keycloak, redirecionar
-        if (window.KeycloakAuth.isAuthenticated()) {
-          window.location.href = "/rastreamento";
-          return;
-        }
-      } catch (error) {
-        console.error("Erro ao inicializar Keycloak:", error);
-        // Continua com o login tradicional se Keycloak falhar
+    // Inicializar Keycloak (obrigatório)
+    if (!window.KeycloakAuth || !window.KeycloakAuth.init) {
+      console.error(
+        "Keycloak não está disponível. O sistema requer autenticação via Keycloak."
+      );
+      alert(
+        "Sistema de autenticação não disponível. Por favor, recarregue a página."
+      );
+      return;
+    }
+
+    try {
+      await window.KeycloakAuth.init();
+
+      // Se já estiver autenticado via Keycloak, redirecionar
+      if (window.KeycloakAuth.isAuthenticated()) {
+        window.location.href = "/rastreamento";
+        return;
       }
+    } catch (error) {
+      console.error("Erro ao inicializar Keycloak:", error);
+      // Não continuar se Keycloak falhar - é obrigatório
+      alert(
+        "Erro ao inicializar sistema de autenticação. Por favor, recarregue a página."
+      );
+      return;
     }
 
     if (window.LoginUI && window.LoginUI.initUI) {
